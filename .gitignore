@@ -1,3 +1,9 @@
+#added files
+
+*.html
+*.css.map
+*.css
+
 # Logs
 logs
 *.log

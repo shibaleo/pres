@@ -1,0 +1,35 @@
+//// fonts ////
+@font-face {
+    font-family: "Computer Modern";
+    src: url(../fonts/cmu.serif-roman.ttf) format("truetype");
+}
+@font-face {
+    font-family: "Computer Modern bold";
+    src: url(../fonts/cmu.serif-bold.ttf) format("truetype");
+}
+@font-face {
+    font-family: "Noto Serif JP";
+    src: url(../fonts/NotoSerifJP-VariableFont_wght.ttf) format("truetype");
+}
+@font-face {
+    font-family: "Noto Sans JP";
+    src: url(../fonts/NotoSansJP-VariableFont_wght.ttf) format("truetype");
+}
+@font-face {
+    font-family: "GenShinGothic Monospace";
+    src: url(../fonts/GenShinGothic-Monospace-Regular.ttf) format("truetype");
+}
+@font-face {
+    font-family: "number";
+    src: url(../fonts/cmu.serif-roman.ttf) format("truetype");
+    font-weight: bolder;
+    /*include numbers only from Computer modern fonts */
+    unicode-range: U+0030-0039;
+}
+
+$base-font-family: 'number',"Computer Modern", 'Noto Serif JP', serif;
+$bold-font-family: 'Computer Modern bold', 'Noto Sans JP', sans-serif;
+$monosapce-font-family: "GenShinGothic Monospace";
+////////////////////
+
+

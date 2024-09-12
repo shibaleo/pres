@@ -1,0 +1,21 @@
+:docinfo: shared
+:lang: ja
+:revealjsdir: ./reveal.js
+:revealjs_theme: white
+:customcss: ./styles/css/custom.css
+:toc:
+:stem:
+//:eqnums: all
+:icons: font
+:sectids:
+:sectnums:
+:sectnumlevels: 3
+:revealjs_center: false
+:revealjs_slideNumber: c/t
+:revealjs_navigationMode: linear
+//:revealjs_disablelayout: true
+:revealjs_margin: 0
+:revealjs_width: 960
+:revealjs_height: 700
+:figure-caption!:
+:table-caption!:

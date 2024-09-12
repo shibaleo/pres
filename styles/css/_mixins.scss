@@ -1,0 +1,23 @@
+@use "variables" as var;
+
+$base-font-family: var.$base-font-family;
+$bold-font-family: var.$bold-font-family;
+$equation-background-color: var.$equation-background-color;
+
+@mixin frame($color: orangered){
+    .content{
+        background-color: mix(white, $color, 85%);
+        padding: 0.1em 0.2em;
+        margin: 0.2em;
+        /*margin-bottom: 0.5em;*/
+        .paragraph {
+            padding-left: 1em;
+        }
+        .title {
+            font-family: $bold-font-family;
+              font-weight: bold;
+              margin: 10px;
+              border-bottom: 3px solid $color;
+          }
+    }
+}
