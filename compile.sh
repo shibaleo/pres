@@ -1,3 +1,7 @@
+# complie stylesheet
 npx sass ./styles/css/custom.scss ./styles/css/custom.css
-npx asciidoctor-revealjs slides.adoc
-#sed -i '/Reveal.initialize({/r ./insert.txt' ./slides.html
+# render html
+npx asciidoctor-revealjs pres.adoc
+# add plugin configuations
+sed -i "s/<script>window.MathJax = {/<script>window.MathJax = {\"chtml\": { displayAlign: \"left\" },/g" ./pres.html
+sed -i '/Reveal.initialize({/r ./insert.txt' ./pres.html
