@@ -1,0 +1,20 @@
+:role: center
+:institution: 日本語であそぼ
+:presenter: shibaleo
+:date: 2024-09-14
+
+++++
+<div class="anything">
+<!-- { "initialize": "function(container,options) {globe(container);}" } -->
+</div>
+++++
+
+[#top-slide]
+****
+{institution}
+
+{presenter}
+
+{date}
+****
+:!role:

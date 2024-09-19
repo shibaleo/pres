@@ -1,0 +1,33 @@
+= pass:c,q[shibaleo/pres]
+// basic settings
+include::./attributes.adoc[]
+
+include::./top_slide.adoc[]
+
+== Level 2 heading
+
+[.frame-gray.NoBreak, title='a nice frame']
+********
+Good Job!
+
+********
+
+[.frame-blue.NoBreak, title='Formula']
+********
+[.highlightformula]
+\begin{align*}
+    \int ^{a} _{b} f(x) dx = S
+\end{align*}
+
+********
+
+:thm-something: 定理 {section}.{counter:num}. some theorem
+[#thm-something.theorem.NoBreak, title='{thm-something}']
+[[thm-something, {section}.{num}]]
+****
+何か
+****
+
+[data-file=./eclipses.html]
+****
+****
