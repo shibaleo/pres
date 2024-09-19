@@ -3,7 +3,7 @@
 @use "variables" as var;
 $base-font-family: var.$base-font-family;
 $bold-font-family: var.$bold-font-family;
-$equation-background-color: var.$equation-background-color;
+$eq-bg-color: var.$equation-background-color;
 $monosapce-font-family: var.$monosapce-font-family;
 /*-- scss:defaults --*/
 
@@ -389,7 +389,7 @@ div.dlist>dl>dd>p {
 
 span.highlightformula mjx-container mjx-math.MJX-TEX {
   padding: 0.2em;
-  background-color: var(--r-equation-background-color);
+  background-color: $eq-bg-color;
 }
 
 mjx-container .MathJax.CtxtMenu_Attached_0[jax=CHTML][display=true] {
@@ -402,7 +402,7 @@ mjx-container .MathJax.CtxtMenu_Attached_0[jax=CHTML][display=true] {
   padding-bottom: 0.2em;
   padding-left: 0.4em;
   padding-right: 0.4em;
-  background-color: var(--r-equation-background-color);
+  background-color: $eq-bg-color;
 }
 
 .highlightformula-lemonchiffon p mjx-container mjx-math.MJX-TEX[display=true] {
@@ -439,21 +439,16 @@ mjx-container[jax=CHTML][display=true] {
   text-align: left !important;
 }
 
-.theorem, .definition, .proposition, .proof, .lemma, .corollary, .example, .answer, .remark {
-    .content {
-        background-color: lighten($equation-background-color, $amount: 10%);
-        padding: 0.1em 0.2em;
-        margin: 0.2em;
-        /*margin-bottom: 0.5em;*/
-        .paragraph {
-            padding-left: 1em;
-        }
-    } .title {
-      font-family: $base-font-family;
-      font-weight: bold;
-      border-bottom: 3px solid var(--r-link-color);
-      margin: 10px;
-  }
+.theorem,
+.definition,
+.proposition,
+.proof,
+.lemma,
+.corollary,
+.example,
+.answer,
+.remark {
+    @include mixin.math-frame(#4360f4)
 }
 
 
@@ -477,33 +472,6 @@ mjx-container[jax=CHTML][display=true] {
 @include mixin.frame(gold);
 }
 
-
-.gray-background {
-  background-color: lighten($equation-background-color, $amount: 10%);
-}
-
-.text-red{
-  color: tomato;
-}
-.text-green{
-  color: green;
-}
-
-.paragraph.text-center p{
-  text-align: center;
-}
-
-.text-small {
-  font-size: small;
-}
-.text-smaller {
-  font-size: smaller;
-}
-.underline{
-  text-decoration: underline;
-}
-
-
 table.grid-all > tbody > tr > .tableblock {
   border-width: 0;
 }
@@ -514,10 +482,7 @@ table.frame-all {
 .reveal table td div.imageblock div.title{
   text-align: center;
 }
-div#top-slide.sidebarblock div.content div.paragraph p{
-  text-align: center;
-  font-family: $bold-font-family;
-}
+
 .byline {
   font-size: 1em;
   text-align: center!important;
@@ -537,13 +502,43 @@ sup.footnote {
   padding: 0;
 }
 
+////markup commands////
+.text-red{
+    color: tomato;
+}
+.text-green{
+    color: green;
+}
+.text-small {
+    font-size: small;
+}
+.text-smaller {
+    font-size: smaller;
+}
+.underline{
+    text-decoration: underline;
+}
 .indent-1em{
     padding-left: 1em;
 }
 .indent-2em{
     padding-left: 2em;
 }
+.gray-background {
+    background-color: $eq-bg-color;
+}
 ////////////////////
 
+
+div#top-slide.sidebarblock div.content div.paragraph p{
+    text-align: center;
+    font-family: $bold-font-family;
+  }
+section.title{
+    font-family: $bold-font-family;
+}
+.paragraph.text-center p{
+    text-align: center;
+}
 
 /*# sourceMappingURL=custom.css.map */

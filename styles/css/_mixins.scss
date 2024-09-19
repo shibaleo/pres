@@ -2,7 +2,7 @@
 
 $base-font-family: var.$base-font-family;
 $bold-font-family: var.$bold-font-family;
-$equation-background-color: var.$equation-background-color;
+$eq-bg-color: var.$equation-background-color;
 
 @mixin frame($color: orangered){
     .content{
@@ -10,14 +10,32 @@ $equation-background-color: var.$equation-background-color;
         padding: 0.1em 0.2em;
         margin: 0.2em;
         /*margin-bottom: 0.5em;*/
-        .paragraph {
-            padding-left: 1em;
-        }
         .title {
             font-family: $bold-font-family;
               font-weight: bold;
               margin: 10px;
               border-bottom: 3px solid $color;
           }
+        .paragraph {
+            padding-left: 1em;
+        }
+    }
+}
+
+@mixin math-frame($color){
+    .content{
+        background-color: $eq-bg-color;
+        padding: 0.1em 0.2em;
+        margin: 0.2em;
+        /*margin-bottom: 0.5em;*/
+        .title {
+            font-family: $bold-font-family;
+              font-weight: bold;
+              margin: 10px;
+              border-bottom: 3px solid $color;
+          }
+        .paragraph {
+            padding-left: 1em;
+        }
     }
 }
