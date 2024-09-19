@@ -1,24 +1,35 @@
-pointer: {
-  key: "q", // key to enable pointer, default "q", not case-sensitive
-  color: "tomato", // color of a cursor, default "red" any valid CSS color
-  opacity: 1, // opacity of cursor, default 0.8
-  pointerSize: 20, // pointer size in px, default 12
-  alwaysVisible: true, // should pointer mode be always visible? default "false"
-  tailLength: 10, // NOT IMPLEMENTED YET!!! how long the "tail" should be? default 10
-},
-verticator: {
-  themetag: 'h1',
-  color: '#4360f4',
-  inversecolor: '',
-  skipuncounted: false,
-  clickable: true,
-  position: 'auto',
-  offset: '3vmin',
-  autogenerate: true,
-  tooltip: false,
-  scale: 1,
-  csspath: ''
-},
-plugins: [Verticator, RevealPointer],
-//view: 'scroll', // Activate the scroll view
-//scrollProgress: true, // Force the scrollbar to remain visible
+    pointer: {
+    key: "q", // key to enable pointer, default "q", not case-sensitive
+    color: "tomato", // color of a cursor, default "red" any valid CSS color
+    opacity: 1, // opacity of cursor, default 0.8
+    pointerSize: 20, // pointer size in px, default 12
+    alwaysVisible: true, // should pointer mode be always visible? default "false"
+    tailLength: 10, // NOT IMPLEMENTED YET!!! how long the "tail" should be? default 10
+    },
+    verticator: {
+    themetag: 'h1',
+    color: '#4360f4',
+    inversecolor: '',
+    skipuncounted: false,
+    clickable: true,
+    position: 'auto',
+    offset: '3vmin',
+    autogenerate: true,
+    tooltip: false,
+    scale: 1,
+    csspath: ''
+    },
+    anything: [
+	 {
+	  className: "random",
+	  defaults: {min: 0, max: 9, add: 0},
+	  initialize: (function(container, options){
+	    container.innerHTML = Math.trunc( options.min + Math.random()*(options.max-options.min + 1) + options.add );
+	    })
+	 },
+	 // ...
+	],
+    //plugins: [Verticator, RevealPointer, RevealAnything],
+    plugins: [],
+    //view: 'scroll', // Activate the scroll view
+    //scrollProgress: true, // Force the scrollbar to remain visible
