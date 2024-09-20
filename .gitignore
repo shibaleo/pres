@@ -2,6 +2,7 @@
 
 *.css.map
 *.css
+pres.html
 
 # Logs
 logs
