@@ -373,18 +373,7 @@ div.dlist>dl>dd>p {
 }
 
 .reveal .slide-number {
-  position: absolute;
-  display: block;
-  right: 0px;
-  top: 0px;
-  bottom: auto;
-  z-index: 31;
-  font-family: "Noto Sans JP", sans-serif;
-  font-size: 1em;
-  line-height: 1;
-  color: #fff;
-  background-color: var(--r-link-color);
-  padding: 0.5em;
+    font-family: $monosapce-font-family;
 }
 
 span.highlightformula mjx-container mjx-math.MJX-TEX {
