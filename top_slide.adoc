@@ -1,5 +1,4 @@
-:role: center
-:institution: 日本語であそぼ
+:institution: your institution
 :presenter: shibaleo
 :date: 2024-09-14
 
@@ -36,4 +35,3 @@
 
 {date}
 ****
-:!role:
