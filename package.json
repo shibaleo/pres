@@ -8,6 +8,7 @@
   "dependencies": {
     "@asciidoctor/reveal.js": "^5.1.0",
     "asciidoctor": "^3.0.4",
+    "d3": "^7.9.0",
     "reveal.js": "^5.1.0",
     "reveal.js-menu": "^2.1.0",
     "sass": "^1.78.0"

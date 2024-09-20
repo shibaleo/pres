@@ -4,6 +4,17 @@ include::./attributes.adoc[]
 
 include::./top_slide.adoc[]
 
+== third heading
+:dummy: {counter2:section}
+:num: 0
+
+[#dot_circle.text-center]
+****
+****
+++++
+include::guage.html[]
+++++
+
 == Level 2 heading
 //initialinze a counter "section"
 :dummy: {counter2:section}
@@ -72,6 +83,3 @@ D @>>> E @>{\phantom{\text{very long label}}}>> F
 \end{align*}
 ****
 
-== third heading
-:dummy: {counter2:section}
-:num: 0

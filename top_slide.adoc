@@ -2,29 +2,11 @@
 :presenter: shibaleo
 :date: 2024-09-14
 
+[#div_cont.text-center]
+****
+****
 ++++
-<script type="text/tikz">
- \begin{tikzpicture}[auto]
-\node (a) at (0, 1.2) {$a$}; \node (x) at (1.2, 1.2) {$x$};
-\node (b) at (0, 0) {$b$};   \node (y) at (1.2, 0) {$y$};
-\node (u) at (3, 0) {$u$};
-\node[shape=rectangle, draw] (s) at (1.5, -1.2) {$s$}; 
-
-\draw[->, draw=red] (a) to node {$\scriptstyle f$} (x);
-\draw[<-] (x) to (y);
-\draw[>->] (a) to node[swap] {$\scriptstyle i$} (b);
-\draw[|->] (b) to node[swap] {$\scriptstyle g$} (y);
-
-\draw[-, line width=5pt, draw=white] (a) to (u);
-\draw[->] (a) to (u);
-\draw[->, dashed] (y) to (u);
-
-\draw[->] (x) to[bend left=30] node {$\scriptstyle k$} (u);
-
-\draw[->] (b) to[bend right=40] (s);
-\draw[->] (s) to node[swap, pos=0.7] {$\scriptstyle h$} (u);
-\end{tikzpicture}
-</script>
+include::fig.html[]
 ++++
 
 [#top-slide]

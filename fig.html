@@ -1,0 +1,18 @@
+<script>
+		var svg_cont = d3.select("#div_cont")
+            .append("svg")
+            .attr("width",600)
+            .attr("height",480);
+		var list = [10,20,30,40,50,60,70,80,90,100];
+		var rect = svg_cont.append("g")
+            .selectAll("rect")
+            .data(list)
+            .enter()
+            .append("rect")
+            .attr("height",function(d){return  d*2;})
+            .attr("width",46)
+            .attr("x",function(d,i){return i * 48;})
+            .attr("y",function(d){return (480 - (d*2));})
+            .attr("fill","white").attr("stroke","orange")
+            .attr("stroke-width",2);
+</script>
