@@ -3,7 +3,7 @@
 *.css.map
 *.css
 pres.html
-
+reveal.js
 # Logs
 logs
 *.log
