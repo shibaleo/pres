@@ -1,19 +1,21 @@
 :institution: your institution
-:presenter: shibaleo
+:author: shibaleo
 :date: 2024-09-14
 
 [#div_cont.text-center]
 ****
 ****
+
+
 ++++
-include::fig.html[]
+include::../assets/html/thumbnail.html[]
 ++++
 
 [#top-slide]
 ****
 {institution}
 
-{presenter}
+{author}
 
 {date}
 ****

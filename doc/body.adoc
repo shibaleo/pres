@@ -1,0 +1,3 @@
+// this is the body part
+include::./frames.adoc[]
+include::./math-diagrams.adoc[]

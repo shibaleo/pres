@@ -1,0 +1,35 @@
+== Colored Frames
+//initialize a counter "section"
+:dummy: {counter2:section}
+:num: 0
+
+
+[.frame-gray, title='gray frame']
+********
+Good Job!
+********
+
+[.frame-orangered, title='red frame']
+********
+Good Job!
+********
+
+[.frame-blue, title='blue frame']
+********
+Good Job!
+********
+
+[.frame-gold, title='gold frame']
+********
+Good Job!
+********
+
+[.frame-green, title='green frame']
+********
+Good Job!
+********
+
+[.frame-purple, title='purple frame']
+********
+Good Job!
+********

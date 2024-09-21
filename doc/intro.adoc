@@ -1,0 +1,22 @@
+
+include::./top.adoc[]
+
+== INTRODUCTION
+
+[.frame-blue.NoBreak, title='Key features']
+********
+[.indent-1em]
+* allowing \(\LaTeX\) notation for math formula
+* embedding svg images using [#dot_circle.hide-text]#alt=dots# D3.js!
+* multi color scheme
+* menu bar
+********
+
+////
+[#doc-str]
+****
+****
+++++
+//include::doc-str.html[]
+++++
+////
