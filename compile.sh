@@ -1,5 +1,5 @@
 # complie stylesheet
-npx sass ./styles/css/custom.scss ./styles/css/custom.css
+npx sass ./assets/styles/scss/custom.scss ./assets/styles/css/custom.css
 # render html
 npx asciidoctor-revealjs pres.adoc
 # add plugin configuations

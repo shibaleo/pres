@@ -2,7 +2,7 @@
 :lang: ja
 :revealjsdir: ./node_modules/reveal.js
 :revealjs_theme: white
-:customcss: ./styles/css/custom.css
+:customcss: ./assets/styles/css/custom.css
 :toc:
 :stem:
 //:eqnums: all

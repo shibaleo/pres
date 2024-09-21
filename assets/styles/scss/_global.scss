@@ -441,24 +441,23 @@ mjx-container[jax=CHTML][display=true] {
 }
 
 
-
+.frame-gray {
+    @include mixin.frame(gray);
+    }
 .frame-orangered {
 @include mixin.frame(orangered);
 }
+.frame-blue {
+    @include mixin.frame(#4360f4);
+    }
+.frame-gold {
+    @include mixin.frame(gold);
+    }
 .frame-green {
 @include mixin.frame(green);
 }
-.frame-blue {
-@include mixin.frame(#4360f4);
-}
-.frame-gray {
-@include mixin.frame(gray);
-}
 .frame-purple {
 @include mixin.frame(purple);
-}
-.frame-gold {
-@include mixin.frame(gold);
 }
 
 table.grid-all > tbody > tr > .tableblock {
@@ -532,6 +531,8 @@ section.title{
 .text-center{
     text-align: center;
 }
-
+.hide-text{
+    font-size: 0;
+}
 
 /*# sourceMappingURL=custom.css.map */
