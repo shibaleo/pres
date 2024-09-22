@@ -1,3 +1,4 @@
 // this is the body part
+include::./svg.adoc[]
 include::./frames.adoc[]
-include::./math-diagrams.adoc[]
+include::./math.adoc[]
