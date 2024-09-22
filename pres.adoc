@@ -1,6 +1,7 @@
 = pass:c,q[shibaleo/pres]
 // basic settings
 include::./doc/attributes.adoc[]
+include::./doc/refs.adoc[]
 include::./doc/intro.adoc[]
 include::./doc/body.adoc[]
 include::./doc/end.adoc[]
