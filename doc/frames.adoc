@@ -1,4 +1,4 @@
-== Colored Frames
+== COLOR FRAMES
 //initialize a counter "section"
 :dummy: {counter2:section}
 :num: 0
