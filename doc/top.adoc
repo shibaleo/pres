@@ -2,10 +2,6 @@
 :author: shibaleo
 :date: 2024-09-14
 
-[#div_cont.text-center]
-****
-****
-
 
 ++++
 include::../assets/html/thumbnail.html[]
