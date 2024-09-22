@@ -1,0 +1,12 @@
+== REFERENCES
+:dummy: {counter2:section}
+:num: 0
+
+[.indent-1em.gray-background]
+********
+[cols='1a,20a', %noheader]
+|===
+| {bib-Arnold-num}|{bib-Arnold}
+| {bib-NO-num} |{bib-NO}
+|===
+********
