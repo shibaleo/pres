@@ -1,4 +1,5 @@
 // this is the body part
 include::./svg.adoc[]
+include::./mermaid.adoc[]
 include::./frames.adoc[]
 include::./math.adoc[]
