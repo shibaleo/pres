@@ -19,3 +19,4 @@
 :revealjs_height: 700
 :figure-caption!:
 :table-caption!:
+:source-highlighter: highlight.js

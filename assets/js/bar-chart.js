@@ -1,8 +1,7 @@
-<div id="thumbnail" class="text-center"></div>
-<script>
+(function () {
 	var img_w = 600
 	var img_h = 300
-var svg_cont = d3.select("#thumbnail")
+var svg_cont = d3.select("#bar-chart")
 	.append("svg")
 	.attr("width",img_w)
 	.attr("height",img_h);
@@ -19,4 +18,4 @@ var rect = svg_cont.append("g")
 	.attr("y",function(d){return (img_h - (d*2));})
 	.attr("fill","#4360f4").attr("stroke","#4360f4")
 	.attr("stroke-width",2);
-</script>
+})();

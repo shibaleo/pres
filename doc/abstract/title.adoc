@@ -1,0 +1,18 @@
+:institution: amature presenter
+:presenter: shibaleo
+:date: 2025-05-10
+
+// thumbnail bar chart
+++++
+<div id="bar-chart" class="text-center"></div>
+<script src="./assets/js/bar-chart.js"></script>
+++++
+
+[#top-slide]
+****
+{institution}
+
+{presenter}
+
+{date}
+****

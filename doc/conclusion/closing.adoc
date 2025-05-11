@@ -1,6 +1,7 @@
 == closing part
+:dummy: {counter2:section}
+:num: 0
 
 * conclusion
 * acknowledgement
 
-include::./bib.adoc[]
