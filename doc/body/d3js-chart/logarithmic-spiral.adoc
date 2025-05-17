@@ -1,0 +1,33 @@
+++++
+<style>
+.center-wrapper-6524543 {
+      display: flex;
+      justify-content: center;
+      height: 200px;
+    }
+
+    #jxgbox-6524543 {
+      width: 600px;
+      height: 200px;
+      border: 1px solid #ccc;
+    }
+  </style>
+<div class="center-wrapper-6524543">
+    <div id="jsxgbox-6524543"></div>
+  </div>
+<script>
+(function(){
+  board = JXG.JSXGraph.initBoard('jsxgbox-6524543', {
+    boundingbox: [-10, 10, 10, -10]
+    });
+ const a = board.create('slider', [[1,-1],[5,-1],[0,0.3,1]],{name:'a'});
+ const b = board.create('slider', [[1,-2],[5,-2],[-1,0.15,1]],{name:'b'});
+ const c = board.create('curve', [function(phi){return a.Value()*JXG.Math.pow(Math.E,b.Value()*phi); }, [0, 0],0, 8*Math.PI],{curveType:'polar', strokewidth:4});
+ const g = board.create('glider', [c]);
+ const t = board.create('tangent', [g], {dash:2,strokeColor:'#a612a9'});
+})();
+
+</script>
+
+++++
+

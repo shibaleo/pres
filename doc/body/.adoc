@@ -2,3 +2,4 @@
 include::./adoc-syntax/frames.adoc[]
 include::./latex-formula/math.adoc[]
 include::./d3js-chart/3dchart.adoc[]
+include::./d3js-chart/jsxgraph.adoc[]

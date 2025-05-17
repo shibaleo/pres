@@ -1,0 +1,52 @@
+++++
+<style>
+.center-wrapper {
+      display: flex;
+      justify-content: center;
+    }
+
+    #jxgbox {
+      width: 600px;
+      height: 200px;
+      border: 1px solid #ccc;
+    }
+  </style>
+<div class="center-wrapper">
+    <div id="jxgbox"></div>
+  </div>
+<script>
+(function(){
+  const board = JXG.JSXGraph.initBoard('jxgbox', {
+      boundingbox: [-2, 2, 5, -2],
+      axis: false,
+    });
+
+    const pointColor = '#444';
+
+    const labels = ['a', 'b', 'c', 'd'];
+
+const points = labels.map((label, i) =>
+  board.create('point', [i, 0], {
+    name: `\\( ${label} \\)`,
+    label: {
+      useMathJax: true,
+      offset: [-5, 20],
+      fontSize: 20
+    },
+    strokeColor: pointColor,
+    fillColor: pointColor,
+    size: 5
+  })
+);
+
+    // 線分を描画
+    board.create('segment', [[-1, 0], [4, 0]], {
+      strokeWidth: 2,
+      strokeColor: pointColor
+    });
+})();
+
+</script>
+
+++++
+
