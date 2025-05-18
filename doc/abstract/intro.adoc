@@ -9,6 +9,7 @@
 * image:./assets/img/asciidoc.png[height=20] syntax for documentation
 * \(\LaTeX\) notation for math formula
 * image:./assets/img/d3js.png[height=20] for image drawing
+* image:./assets/img/jsxgraph.png[height=20] for interactive math graphs
 ********
 
 [cols="1a,1a,1a", options="header"]
