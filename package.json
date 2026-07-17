@@ -1,16 +1,41 @@
 {
   "name": "pres",
+  "private": true,
   "version": "1.0.0",
-  "keywords": [],
-  "author": "shibaleo",
-  "license": "ISC",
-  "description": "",
+  "type": "module",
+  "scripts": {
+    "subset": "node scripts/subset-fonts.mjs",
+    "dev": "vite",
+    "build": "npm run subset && tsc -b && vite build",
+    "build:single": "npm run subset && tsc -b && vite build --mode single",
+    "preview": "vite preview"
+  },
   "dependencies": {
-    "@asciidoctor/reveal.js": "^5.1.0",
-    "asciidoctor": "^3.0.4",
+    "@revealjs/react": "^0.2.1",
+    "@tailwindcss/vite": "^4.3.3",
     "d3": "^7.9.0",
+    "jsxgraph": "^1.11.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "reveal.js": "^5.1.0",
-    "reveal.js-menu": "^2.1.0",
-    "sass": "^1.78.0"
+    "tailwindcss": "^4.3.3",
+    "topojson-client": "^3.1.0",
+    "world-atlas": "^2.0.2"
+  },
+  "devDependencies": {
+    "@mdx-js/rollup": "^3.1.0",
+    "@types/d3": "^7.4.3",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@types/topojson-client": "^3.1.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "katex": "^0.16.11",
+    "rehype-citation": "^2.3.2",
+    "rehype-katex": "^7.0.1",
+    "remark-math": "^6.0.0",
+    "subset-font": "^2.5.0",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11",
+    "vite-plugin-singlefile": "^2.3.3"
   }
 }

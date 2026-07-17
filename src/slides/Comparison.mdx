@@ -1,0 +1,37 @@
+import ConnectedScatterplot from '../components/ConnectedScatterplot'
+import asciidoc from '../img/asciidoc.png'
+import d3js from '../img/d3js.png'
+
+## 3 つの表現手段
+
+<div className="flex gap-6 justify-center items-start" style={{ fontSize: '0.7em' }}>
+  <div style={{ flex: 1 }}>
+    <div className="font-heading mb-2">
+      <img src={asciidoc} height="18" className="inline align-middle" /> syntax
+    </div>
+    <pre style={{ fontSize: '0.7em', boxShadow: 'none' }}>{`a list is described as
+
+* item1`}</pre>
+    <div style={{ backgroundColor: 'var(--color-eq)', padding: '0.2em 0.5em' }}>
+      a list is described as
+      <ul><li>item1</li></ul>
+    </div>
+  </div>
+
+  <div style={{ flex: 1 }}>
+    <div className="font-heading mb-2">$\LaTeX$ notation</div>
+    <pre style={{ fontSize: '0.7em', boxShadow: 'none' }}>{`\\int_a^b f(x)dx = S`}</pre>
+    <div style={{ backgroundColor: 'var(--color-eq)', padding: '0.2em 0.5em' }}>
+
+$$\int_a^b f(x)\,dx = S$$
+
+    </div>
+  </div>
+
+  <div style={{ flex: 1 }}>
+    <div className="font-heading mb-2">
+      <img src={d3js} height="18" className="inline align-middle" /> charts
+    </div>
+    <ConnectedScatterplot />
+  </div>
+</div>

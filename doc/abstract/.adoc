@@ -1,3 +1,0 @@
-// this page is the list of abstract section.
-include::./title.adoc[]
-include::./intro.adoc[]

@@ -1,0 +1,174 @@
+/* Tailwind v4 — Preflight(リセット) は reveal.js と衝突するため除外し、
+   theme(トークン) と utilities だけ読み込む。 */
+@layer theme, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+
+/* ---------- fonts (旧 _fonts.scss → 素の CSS。
+   scripts/subset-fonts.mjs が生成する woff2 サブセットを参照) ---------- */
+@font-face {
+  font-family: 'Computer Modern';
+  src: url('./fonts/cmu.serif-roman.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Computer Modern bold';
+  src: url('./fonts/cmu.serif-bold.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Noto Serif JP';
+  src: url('./fonts/NotoSerifJP.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Noto Sans JP';
+  src: url('./fonts/NotoSansJP.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'GenShinGothic Monospace';
+  src: url('./fonts/GenShinGothic-Monospace.woff2') format('woff2');
+}
+/* 数字だけ Computer Modern にする unicode-range ハック(旧構成を踏襲) */
+@font-face {
+  font-family: 'number';
+  src: url('./fonts/cmu.serif-roman.woff2') format('woff2');
+  font-weight: bolder;
+  unicode-range: U+0030-0039;
+}
+
+/* ---------- design tokens (旧 _variables.scss → Tailwind @theme) ----------
+   token 名は Tailwind 組込みユーティリティ(font-bold 等)と衝突しないよう配慮。 */
+@theme {
+  --font-body: 'number', 'Computer Modern', 'Noto Serif JP', serif;
+  --font-heading: 'Computer Modern bold', 'Noto Sans JP', sans-serif;
+  --font-code: 'GenShinGothic Monospace', monospace;
+
+  --color-brand: #4360f4;
+  --color-ink: #333631;
+  --color-eq: #e6e6e6;
+
+  --color-frame-gray: gray;
+  --color-frame-red: orangered;
+  --color-frame-blue: #4360f4;
+  --color-frame-gold: gold;
+  --color-frame-green: green;
+  --color-frame-purple: purple;
+}
+
+/* ---------- reveal.js テーマ上書き (旧 _global.scss の要点。
+   reveal が注入するグローバル class 向けなので utility 化せず素の CSS) ---------- */
+.reveal-viewport {
+  background: #fff;
+}
+.reveal {
+  font-family: var(--font-body);
+  color: var(--color-ink);
+  font-weight: normal;
+}
+.reveal .slides section {
+  text-align: left;
+  line-height: 1.3;
+}
+.reveal h1,
+.reveal h2,
+.reveal h3,
+.reveal h4 {
+  font-family: var(--font-heading);
+  color: #fff;
+  background-color: var(--color-brand);
+  padding: 0.15em 0.5em;
+  font-weight: 400;
+  word-wrap: break-word;
+  margin: 0 0 0.2em 0;
+}
+.reveal h1 {
+  font-size: 1.4em;
+  font-family: var(--font-body);
+  text-align: center;
+}
+.reveal h2 {
+  font-size: 1.1em;
+}
+/* 見出しの自動採番 (旧 adoc :sectnums: 相当) */
+.reveal .slides {
+  counter-reset: sec;
+}
+.reveal .slides section h2::before {
+  counter-increment: sec;
+  content: counter(sec) '. ';
+}
+.reveal h3 {
+  font-size: 0.9em;
+}
+.reveal p {
+  margin: 10px 0;
+  line-height: 1.3em;
+  text-align: left;
+}
+.reveal strong,
+.reveal b {
+  font-family: var(--font-heading);
+}
+.reveal em {
+  font-style: italic;
+}
+.reveal ul {
+  display: inline-block;
+  text-align: left;
+  list-style-type: disc;
+  margin: 0 0 0 1em;
+}
+.reveal ol {
+  display: inline-block;
+  text-align: left;
+  list-style-type: decimal;
+  margin: 0 0 0 1em;
+}
+.reveal a {
+  color: var(--color-brand);
+  text-decoration: none;
+}
+.reveal code {
+  font-family: var(--font-code);
+}
+.reveal pre {
+  font-family: var(--font-code);
+  font-size: 0.55em;
+  width: 90%;
+  margin: 20px auto;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+}
+.reveal table {
+  margin: auto;
+  border-collapse: collapse;
+}
+.reveal table th,
+.reveal table td {
+  text-align: left;
+  padding: 0.2em 0.5em;
+  border-bottom: 1px solid;
+}
+.reveal .slide-number {
+  font-family: var(--font-code);
+}
+.reveal .controls {
+  color: var(--color-brand);
+}
+.reveal .progress {
+  color: var(--color-brand);
+  height: 0.2em;
+}
+
+/* PDF出力(?print-pdf)時はサイドバーを隠す(menu は .reveal の外なので個別指定) */
+@media print {
+  .deck-menu {
+    display: none !important;
+  }
+}
+
+/* KaTeX の display 数式を左寄せ + 余白(旧 mjx-container 相当) */
+.reveal .katex-display {
+  margin: 0.3em 0;
+  text-align: left;
+}
+.reveal .katex {
+  font-size: 1em;
+}

@@ -1,9 +1,0 @@
-== jsx graph
-:dummy: {counter2:section}
-:num: 0
-
-you can draw math graphs with jsxgraph
-
-include::four-points-on-a-line.adoc[]
-
-include::logarithmic-spiral.adoc[]

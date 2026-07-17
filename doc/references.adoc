@@ -1,6 +1,0 @@
-:bib-num: {counter:bib-num:0}
-
-:bib-Arnold-num: [{counter:bib-num}]
-:bib-Arnold: pass:c,q[V. I. Arnold, S. M. Gusein-Zade, and A. N. Varchenko, __Singularities of differentiable maps, Volume1. Classification of critical points, caustics and wave fronts__, Birkh&auml;user, 2012.]
-:bib-NO-num: [{counter:bib-num}]
-:bib-NO: pass:c,q[N.Nakajima and T.Ohmoto, __The dually flat structure for singular models__, Information Geometry, **volume** 4 (2020), 31--64.]

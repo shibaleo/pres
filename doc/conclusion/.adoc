@@ -1,3 +1,0 @@
-// this page is the list of conclusion section.
-include::./closing.adoc[]
-include::./bib.adoc[]
