@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import { Deck, Slide } from '@revealjs/react'
 import Menu from './components/Menu'
 import Title from './slides/Title.mdx'
@@ -25,11 +26,15 @@ const SLIDES = [
   Closing,
 ]
 
+// 開発時(HMR)にスライド位置を保持する。本番では常に1枚目から始める。
+const SLIDE_KEY = 'deck-slide-index'
+
 /**
  * デッキ本体。スライド機構 (ナビ・番号・hash・PDF出力) は reveal.js が担当し、
  * 各スライドの中身は MDX / TSX コンポーネント。
  */
 export default function App() {
+  const deckRef = useRef<{ getIndices: () => { h: number } } | null>(null)
   return (
     <Deck
       config={{
@@ -39,6 +44,17 @@ export default function App() {
         center: false,
         slideNumber: 'c/t',
         hash: true,
+      }}
+      onReady={(deck) => {
+        deckRef.current = deck
+        if (!import.meta.env.DEV) return
+        const saved = sessionStorage.getItem(SLIDE_KEY)
+        if (saved) deck.slide(Number(saved))
+      }}
+      onSlideChange={() => {
+        if (import.meta.env.DEV && deckRef.current) {
+          sessionStorage.setItem(SLIDE_KEY, String(deckRef.current.getIndices().h))
+        }
       }}
     >
       {SLIDES.map((SlideContent, i) => (

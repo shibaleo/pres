@@ -65,5 +65,13 @@ export default function Globe({ size = 500 }: { size?: number }) {
     }
   }, [size])
 
-  return <canvas ref={canvasRef} width={size} height={size} style={{ cursor: 'grab' }} />
+  return (
+    <canvas
+      ref={canvasRef}
+      width={size}
+      height={size}
+      className="mx-auto block"
+      style={{ cursor: 'grab' }}
+    />
+  )
 }

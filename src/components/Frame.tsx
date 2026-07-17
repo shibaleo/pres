@@ -37,7 +37,7 @@ export default function Frame({
       {title && (
         <div
           className="font-heading m-2.5 font-bold"
-          style={{ borderBottom: `3px solid ${c}`, paddingBottom: '0.1em' }}
+          style={{ borderBottom: `4px solid ${c}`, paddingBottom: '0.1em' }}
         >
           {title}
         </div>

@@ -1,12 +1,8 @@
 import BarChart from '../components/BarChart'
+import { Byline } from '../components/layout'
 
-# shibaleo/pres
+# shibaleo/presentation
 
-<div style={{ textAlign: 'center' }}>
-  <BarChart width={520} height={190} />
-  <div className="font-heading" style={{ marginTop: '0.6em', lineHeight: 2 }}>
-    amature presenter<br />
-    shibaleo<br />
-    2025-05-10
-  </div>
-</div>
+<BarChart />
+
+<Byline lines={['amature presenter', 'shibaleo', '2025-05-10']} />
