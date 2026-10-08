@@ -10,8 +10,8 @@
  * 引用は rehype-citation の入力形式([@a; @b])に変換して、番号付け・整形はそちらに任せる。
  * エラーは file.fail、警告は file.message(unified の標準)。位置は構文解析器が付けた元の行。
  */
-import { readFileSync } from 'node:fs'
-import { dirname, extname, relative, resolve, sep } from 'node:path'
+import { existsSync, readFileSync, statSync } from 'node:fs'
+import { dirname, relative, resolve, sep } from 'node:path'
 import { parse as parseJs } from 'acorn'
 import { VFile as VFileCtor } from 'vfile'
 import type { Paragraph, Parent, PhrasingContent, Root, RootContent, Text } from 'mdast'
@@ -191,18 +191,19 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
           continue
         }
         const target = m[1].trim()
-        const abs = resolve(baseDir, extname(target) ? target : `${target}.mdx`)
+        // LaTeX と同じく、まず拡張子(.mdx)を付けた名前、無ければ書いたままの名前を探す
+        // (chapter.v2 → chapter.v2.mdx、plain.md → plain.md)
+        const candidates = [resolve(baseDir, `${target}.mdx`), resolve(baseDir, target)]
+        const abs = candidates.find((c) => existsSync(c) && statSync(c).isFile())
+        if (!abs) {
+          error(`\\input{${target}}: ファイルがありません(${candidates.map(rel).join(' または ')})`, child)
+          continue
+        }
         if (chain.includes(abs)) {
           error(`\\input{${target}} が循環しています(${[...chain, abs].map(rel).join(' → ')})`, child)
           continue
         }
-        let value: string
-        try {
-          value = readFileSync(abs, 'utf8')
-        } catch {
-          error(`\\input{${target}}: ファイル ${rel(abs)} がありません`, child)
-          continue
-        }
+        const value = readFileSync(abs, 'utf8')
         const at = via ?? child.position // 主ファイルでの位置(入れ子の \input でも一番外側)
         let sub: Root
         try {

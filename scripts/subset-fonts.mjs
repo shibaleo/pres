@@ -3,8 +3,8 @@
  * インタラクティブにフォントは変えないので、ソース中に出現する文字＋基本記号で十分。
  * 出力(src/fonts/*.woff2)は theme.css が参照し、singlefile ビルドで base64 インライン化される。
  */
-import { readFileSync, writeFileSync, readdirSync, statSync, mkdirSync } from 'node:fs'
-import { join, dirname, extname } from 'node:path'
+import { existsSync, readFileSync, writeFileSync, readdirSync, statSync, mkdirSync } from 'node:fs'
+import { join, dirname, extname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import subsetFont from 'subset-font'
 
@@ -12,7 +12,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const srcDir = join(root, 'src')
 
 // 使用文字を集める対象拡張子(表示テキストが含まれるもの)
-const SCAN_EXT = new Set(['.mdx', '.tsx', '.ts', '.jsx', '.js', '.bib'])
+const SCAN_EXT = new Set(['.mdx', '.md', '.tsx', '.ts', '.jsx', '.js', '.bib'])
 function collectFiles(dir, acc = []) {
   for (const name of readdirSync(dir)) {
     if (name === 'fonts') continue // 出力先はスキップ
@@ -23,8 +23,25 @@ function collectFiles(dir, acc = []) {
   return acc
 }
 
+/**
+ * 原稿から \input{…} で取り込まれるファイル(src の外にあってもよい)もたどる。
+ * 解決の規則は vite/remark-beamer と同じ: 主ファイル(src/slides.mdx)のディレクトリ基準で、
+ * まず .mdx を付けた名前、無ければ書いたままの名前。
+ */
+function collectInputs(file, acc = new Set()) {
+  if (acc.has(file)) return acc
+  acc.add(file)
+  for (const m of readFileSync(file, 'utf8').matchAll(/^[ \t]*\\input\{([^}]+)\}[ \t]*$/gm)) {
+    const target = m[1].trim()
+    const found = [resolve(srcDir, `${target}.mdx`), resolve(srcDir, target)].find((c) => existsSync(c) && statSync(c).isFile())
+    if (found) collectInputs(found, acc)
+  }
+  return acc
+}
+
+const files = new Set([...collectFiles(srcDir), ...collectInputs(join(srcDir, 'slides.mdx'))])
 let text = ''
-for (const f of collectFiles(srcDir)) text += readFileSync(f, 'utf8')
+for (const f of files) text += readFileSync(f, 'utf8')
 
 // 基本セット: 印字可能 ASCII + よく使う日本語記号/数学記号(保険)
 let base = ''

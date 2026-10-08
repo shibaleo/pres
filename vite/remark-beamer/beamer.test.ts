@@ -1,4 +1,4 @@
-import { mkdtempSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
@@ -237,8 +237,23 @@ describe('\\input', () => {
     expect(e.place?.start?.line ?? e.line).toBe(3)
   })
 
+  it('パス: 入れ子・.. ・空白・日本語・名前のドット・.md(LaTeX と同じく .mdx を付けた名前を先に探す)', async () => {
+    mkdirSync(join(dir, 'ch', 'sub'), { recursive: true })
+    mkdirSync(join(dir, 'with space'), { recursive: true })
+    mkdirSync(join(dir, '日本語'), { recursive: true })
+    writeFileSync(join(dir, 'ch', 'a.mdx'), 'A\n\n\\input{ch/sub/b}\n') // 入れ子も主ファイル基準(LaTeX と同じ)
+    writeFileSync(join(dir, 'ch', 'sub', 'b.mdx'), 'B\n')
+    writeFileSync(join(dir, 'with space', 's.mdx'), 'S\n')
+    writeFileSync(join(dir, '日本語', '章.mdx'), 'J\n')
+    writeFileSync(join(dir, 'chapter.v2.mdx'), 'V\n')
+    writeFileSync(join(dir, 'plain.md'), 'M\n')
+    const src = ['ch/a', 'ch/./sub/../sub/b', 'with space/s', '日本語/章', 'chapter.v2', 'plain.md'].map((p) => `\\input{${p}}`).join('\n\n')
+    const { tree } = await runMain(src)
+    expect(textOf(tree).replace(/\s/g, '')).toContain('ABBSJVM')
+  })
+
   it('無いファイル・循環・取り込んだファイルの MDX 構文エラー', async () => {
-    expect((await failMain('\\input{nothing}')).message).toContain('nothing.mdx がありません')
+    expect((await failMain('\\input{nothing}')).message).toContain('ファイルがありません(nothing.mdx または nothing)')
     expect((await failMain('\\input{loop}')).message).toContain('循環')
     expect((await failMain('\\input{syntax}')).message).toContain('syntax.mdx')
   })
