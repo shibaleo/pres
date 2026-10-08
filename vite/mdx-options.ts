@@ -1,15 +1,15 @@
 /**
  * スライド原稿(MDX)のコンパイル設定。vite.config.ts とテストで共有する。
  * 記法は remark-beamer(LaTeX / Beamer 風)、処理は標準の unified プラグインに任せる:
- *   remark-math(数式)/ rehype-mathjax(式の番号・\label・\eqref)/
+ *   remark-math(数式)/ MathJax(式の番号・\label・\eqref。rehype-mathjax-document.ts)/
  *   rehype-citation(引用の番号付け・文献リスト)
  */
 import type { CompileOptions } from '@mdx-js/mdx'
 import remarkMath from 'remark-math'
-import rehypeMathjax from 'rehype-mathjax'
 import rehypeCitation from 'rehype-citation'
 import { AllPackages } from 'mathjax-full/js/input/tex/AllPackages.js'
 import remarkBeamer from './remark-beamer'
+import rehypeMathjaxDocument from './rehype-mathjax-document'
 import { rehypeMathPositions, rehypeMathErrors } from './remark-beamer/rehype-math-errors'
 
 export function mdxOptions({ bibliography, strict }: { bibliography: string; strict: boolean }): CompileOptions {
@@ -25,7 +25,7 @@ export function mdxOptions({ bibliography, strict }: { bibliography: string; str
       // 式の番号・\label・\eqref は MathJax(AMS と同じ規則)。SVG なのでフォント不要・オフラインで描ける
       // noundefined は未定義の命令を赤字で描いて通してしまうので外す(誤りとして報告する)
       [
-        rehypeMathjax,
+        rehypeMathjaxDocument,
         {
           tex: { tags: 'ams', packages: AllPackages.filter((p) => p !== 'noundefined') },
           svg: { displayAlign: 'left', displayIndent: '0' },

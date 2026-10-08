@@ -1,6 +1,6 @@
 /**
  * syntax.ts が切り出したトークンを mdast ノードにする(mdast-util-from-markdown の拡張)。
- *  - latexMathEnv → remark-math と同じ `math` ノード(rehype-mathjax がそのまま描く)
+ *  - latexMathEnv → remark-math と同じ `math` ノード(MathJax がそのまま描く)
  *  - それ以外 → 生の文字列を持つ独自ノード。意味づけは transform.ts が行う
  */
 import type { Extension, CompileContext, Token } from 'mdast-util-from-markdown'

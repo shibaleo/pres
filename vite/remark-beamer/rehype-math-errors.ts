@@ -1,5 +1,5 @@
 /**
- * 数式の誤りをビルドエラーにする rehype プラグイン(rehype-mathjax の前後に 1 つずつ置く)。
+ * 数式の誤りをビルドエラーにする rehype プラグイン(数式の描画 rehype-mathjax-document の前後に 1 つずつ置く)。
  *
  * MathJax は誤りのある数式も赤字の merror として描いてしまう(data-mjx-error 属性が付く)。
  * 描画後のノードには原稿の位置が残らないので、描画前に数式の位置を文書順に控えておき、
@@ -23,7 +23,7 @@ const isMath = (el: Element) => {
   return el.tagName === 'code' && Array.isArray(cls) && (cls.includes('math-inline') || cls.includes('math-display'))
 }
 
-/** rehype-mathjax の前: 数式の位置を文書順に控える */
+/** 描画の前: 数式の位置を文書順に控える */
 export function rehypeMathPositions() {
   return (tree: Root, file: VFile) => {
     const list: MathPlace[] = []
@@ -38,7 +38,7 @@ export function rehypeMathPositions() {
   }
 }
 
-/** rehype-mathjax の後: 誤りのある数式を原稿の位置付きで報告する */
+/** 描画の後: 誤りのある数式を原稿の位置付きで報告する */
 export function rehypeMathErrors() {
   return (tree: Root, file: VFile) => {
     const list = places.get(file) ?? []

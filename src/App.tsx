@@ -37,11 +37,8 @@ export default function App() {
         // 縦スライド(原稿の --)の進め方。'linear' にすると ←→ だけで縦も含めて順に進む
         // (見た目の切り替わり方は変わらない)。'grid' は縦の位置を保って列を移る
         navigationMode: 'default',
-        // 見出しの通し番号は CSS カウンタで振る。reveal は既定で前後3枚より遠い
-        // スライドを display:none にし、カウンタがそこを数えなくなるので全スライドを残す。
-        // (定理・式・文献の番号はビルド時に振るので、この設定には依存しない)
-        viewDistance: 1000,
-        mobileViewDistance: 1000,
+        // 番号(節・定理・式・文献)はすべてビルド時に振るので、reveal の既定どおり
+        // 近くのスライドだけを描けばよい(viewDistance は既定のまま)
       }}
       plugins={[RevealNotes]}
       onReady={(deck) => {

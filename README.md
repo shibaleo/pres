@@ -26,7 +26,7 @@ reveal.js プレゼンテーション。**MDX + TSX** で執筆し、可視化�
 | ビルド | Vite 6 + `@mdx-js/rollup` |
 | スライド | reveal.js 5 (`@revealjs/react`) |
 | 記法 | `vite/remark-beamer/`（LaTeX / Beamer 風記法の remark プラグイン） |
-| 数式 | `remark-math` + `rehype-mathjax`（MathJax 3・SVG。式番号・`\label`・`\eqref` は AMS の規則） |
+| 数式 | `remark-math` + MathJax 3（SVG。式番号・`\label`・`\eqref` は AMS の規則。後ろにある式への参照も解決する） |
 | 文献 | BibTeX (`src/references.bib`) + `rehype-citation`（CSL: NLM/Vancouver 角括弧版。公式リポジトリの `src/csl/nlm-citation-sequence-brackets.csl`） |
 | その他 | Tailwind CSS v4 |
 | 図 | D3 / JSXGraph を React コンポーネント化 |
@@ -46,7 +46,7 @@ npm run build:single # 単一ファイルビルド → dist/index.html 1枚に�
 npm run preview      # ビルド結果をプレビュー
 npm run subset       # フォントを使用文字だけに再サブセット(下記)
 npm run typecheck    # 型チェック(ブラウザ側 tsconfig.json + ビルド側 tsconfig.node.json)
-npm run test         # 記法プラグインとビルド設定のテスト(Vitest)
+npm run test         # テスト(Vitest)。transform: 記法の変換とビルド設定 / render: デッキを実際に描いて番号・参照・構造を確かめる
 npm run check        # typecheck + test + build:single。コミット前・CI で実行する
 ```
 
@@ -73,6 +73,8 @@ src/
     mdx-components.tsx 原稿から import なしで使える部品の一覧
     slide-size.ts      スライドの論理サイズ(ウィンドウ全体を覆う。原稿が当てにできるのは最小 933×700)
     overflow.ts        開発時のはみ出し検出
+    slide-title.ts     スライドの題(メニューに出す文字。見出しの文字そのもの)
+    render.test.tsx    デッキを実際に描いて確かめるテスト(節番号・メニュー・参照・数式・文献・構造)
     DevDiagnostics.tsx 開発時の原稿警告の一覧
   components/          可視化・UI コンポーネント
     BarChart / ConnectedScatterplot / Globe / FourPoints / LogSpiral
@@ -84,10 +86,11 @@ src/
   data/ fonts/ img/    図表データ / subset 済み woff2 / 画像
 vite/
   mdx-options.ts       MDX のコンパイル設定(remark / rehype プラグインの構成)
+  rehype-mathjax-document.ts  数式を 1 つの MathJax 文書として描く(後ろにある式への参照も解決)
   remark-beamer/       LaTeX / Beamer 風記法の remark プラグイン
     syntax.ts          micromark の構文拡張(どこからどこまでが記法か)
     mdast.ts           構文木ノードへの変換
-    transform.ts       意味づけ(スライド分割・環境・番号・参照・引用・段階表示)
+    transform.ts       意味づけ(スライド分割・環境・節番号と定理番号・参照・引用・段階表示)
     rehype-math-errors.ts  MathJax の数式エラーを原稿の位置で報告
 fonts-src/             サブセット元のフルフォント(.ttf)。ビルド成果物には含めない
 scripts/subset-fonts.mjs  フォントサブセット化スクリプト
@@ -180,7 +183,6 @@ $f$ が凸なら …
 | `\ref{key}` / `\eqref{key}` | 番号 / `(番号)` |
 
 - 定理の番号はビルド時にデッキ全体の出現順で振ります。**式の番号と式の参照は MathJax**（AMS と同じ規則）が処理します。
-- **後ろにある式への参照（前方参照）は表示できません**。rehype-mathjax が文書順に 1 式ずつ描くためで、警告になります。
 - 可換図式は `\begin{CD}…\end{CD}`（`$$` の中）。
 
 ### 段階表示（Beamer の overlay → reveal の fragment）
@@ -245,7 +247,7 @@ $f$ が凸なら …
 | 種類 | 例 | `npm run dev` | `npm run build` |
 |---|---|---|---|
 | エラー | 環境の閉じ忘れ・`\end` の不一致、未対応の環境・命令、数式の誤り（MathJax）、不正な overlay 指定、環境の外の `\label`、MDX の構文エラー | エラー画面 | 失敗 |
-| 警告 | 参照先の無い `\ref`、未登録の文献、`\label` の重複、式の前方参照 | 画面右上に一覧 | 失敗（`DECK_ALLOW_WARNINGS=1` で許可） |
+| 警告 | 参照先の無い `\ref`、未登録の文献、`\label` の重複 | 画面右上に一覧 | 失敗（`DECK_ALLOW_WARNINGS=1` で許可） |
 | はみ出し | スライドの最小サイズ（933×700）超過 | 最小サイズの範囲の赤い破線枠とバッジ・コンソール | （対象外） |
 
 ### はみ出しの検出（開発時のみ）
@@ -301,7 +303,5 @@ URL に `?print-pdf` を付けて開き、ブラウザの印刷 → PDF に保�
 ## 既知の制約
 
 - `@revealjs/react` は 0.x（pre-1.0）。API が変わる可能性あり。
-- 式の前方参照は表示できない（上記）。
 - 数式は MathJax の SVG を埋め込むため、別行立ての式 1 つあたり十数 KB 増える。
 - JSXGraph のラベル（FourPoints）だけは KaTeX で描いている（JSXGraph が KaTeX を直接呼ぶため）。
-- 見出しの番号は CSS カウンタで振るため、reveal の `viewDistance` を広げて全スライドを常に描画している。スライドが数百枚になると重くなる可能性がある。

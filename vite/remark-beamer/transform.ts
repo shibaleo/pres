@@ -3,7 +3,7 @@
  *
  *  1. スライド分割   `---`(横)/ `--`(縦)で <Slide> / <Stack> に包む
  *  2. 環境           \begin{theorem}[名前] … \end{theorem} を <Theorem> に、\pause 以降を <Overlay> に
- *  3. 番号付け       定理型の環境にデッキ全体の通し番号。式の番号は MathJax(tags: 'ams')に任せる
+ *  3. 番号付け       スライドの題に節番号、定理型の環境にデッキ全体の通し番号。式の番号は MathJax(tags: 'ams')に任せる
  *  4. 文中の命令     \ref \eqref \label \cite \only \uncover …
  *  5. 段階表示       Beamer の overlay 指定を reveal の fragment(<Overlay>)に。ステップ数は Beamer と揃える
  *
@@ -72,7 +72,7 @@ function getAttr(node: Jsx, name: string): string | undefined {
 const isJsx = (n: AnyNode, name?: string): n is Jsx =>
   (n.type === 'mdxJsxFlowElement' || n.type === 'mdxJsxTextElement') && (name === undefined || n.name === name)
 const beamer = (n: { data?: object }) => (n.data as { beamer?: BeamerData } | undefined)?.beamer
-/** remark-math と同じ形のインライン数式(rehype-mathjax が描く) */
+/** remark-math と同じ形のインライン数式(MathJax が描く) */
 function inlineMath(value: string, position?: Position): InlineMath {
   return {
     type: 'inlineMath',
@@ -326,11 +326,23 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
       return el
     }
 
-    // (3) 番号付け(デッキ全体・文書順)。定理型の環境と \label、数式中の \label を集める
-    // order: 文書順の通し位置(\input をまたいでも比べられる。前方参照の判定用)
-    type Label = { kind: 'thm' | 'eq'; n?: number; order?: number }
-    let order = 0
-    const refOrder = new WeakMap<object, number>()
+    // (3) 番号付け(デッキ全体・文書順)。節番号、定理型の環境と \label、数式中の \label を集める
+    //
+    // 節番号: スライドの題(先頭の ## 見出し)に振る。横のスライドが節(4.)、縦のスライドの 2 枚目以降が
+    // その小節(4.1.)。LaTeX の \section / \subsection と同じく番号を見出しの文字に含める
+    // (ビルド時に決まるので、ブラウザで全スライドを描いて数える必要がない。メニューも同じ番号を出せる)
+    let sec = 0
+    built.forEach((stack) => {
+      let sub = 0
+      stack.forEach((nodes, v) => {
+        const first = nodes.find((n) => n.type !== 'mdxFlowExpression') // 先頭の {/* コメント */} は飛ばす
+        if (first?.type !== 'heading' || first.depth !== 2) return
+        const number = v === 0 ? `${++sec}.` : `${sec}.${++sub}.`
+        first.children.unshift(jsxText('span', { className: 'secnum' }, [text(`${number} `)], first.position))
+      })
+    })
+
+    type Label = { kind: 'thm' | 'eq'; n?: number }
     /** 文献 key の初出順(\cite を文書順に処理しながら記録する) */
     const citeOrder = new Map<string, number>()
     const labels = new Map<string, Label>()
@@ -340,8 +352,6 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
     }
     let thm = 0
     const numberWalk = (node: AnyNode, envs: Jsx[]) => {
-      order++
-      if (node.type === 'latexCommand') refOrder.set(node, order)
       let inner = envs
       if ((node.type === 'mdxJsxFlowElement' || node.type === 'mdxJsxTextElement') && node.name && THEOREM_TAGS.has(node.name)) {
         thm++
@@ -357,7 +367,7 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
         else error(`\\label{${key}} が定理環境・数式の外にあります`, node)
       }
       if (node.type === 'math' || node.type === 'inlineMath') {
-        for (const m of node.value.matchAll(/\\label\{([^}]+)\}/g)) addLabel(m[1].trim(), { kind: 'eq', order }, node)
+        for (const m of node.value.matchAll(/\\label\{([^}]+)\}/g)) addLabel(m[1].trim(), { kind: 'eq' }, node)
         // \begin{align} などの閉じ忘れ(構文上は数式の終わりまで取り込まれている)
         const env = node.value.match(/^\\begin\{([A-Za-z]+\*?)\}/)?.[1]
         if (env && MATH_ENVS.includes(env.replace(/\*$/, '')) && !node.value.includes(`\\end{${env}}`)) {
@@ -450,14 +460,10 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
     }
 
     /**
-     * 式の参照は数式の中の \ref / \eqref として MathJax に解決させる。
-     * rehype-mathjax は文書順に 1 式ずつ描くため、後ろにある式への参照(前方参照)は解決できない(??? になる)。
+     * 式の参照は数式の中の \ref / \eqref として MathJax に解決させる。後ろにある式への参照も、
+     * MathJax が文書全体を組むときに組み直して解決する(vite/rehype-mathjax-document.ts)
      */
-    function eqRef(name: 'ref' | 'eqref', key: string, l: Label, node: LatexCommand): InlineMath {
-      const here = refOrder.get(node) ?? 0
-      if (l.order !== undefined && l.order > here) {
-        warn(`\\${name}{${key}} は後ろにある式への参照です。数式の描画(rehype-mathjax)の制約で表示できません`, node)
-      }
+    function eqRef(name: 'ref' | 'eqref', key: string, node: LatexCommand): InlineMath {
       return inlineMath(`\\${name}{${key}}`, node.position)
     }
 
@@ -470,13 +476,13 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
         case 'ref': {
           const l = labels.get(key)
           if (!l) warn(`\\ref{${key}} の参照先がありません`, node)
-          if (l?.kind === 'eq') return [eqRef('ref', key, l, node)]
+          if (l?.kind === 'eq') return [eqRef('ref', key, node)]
           return [text(l ? String(l.n) : '??', node.position)]
         }
         case 'eqref': {
           const l = labels.get(key)
           if (!l) warn(`\\eqref{${key}} の参照先がありません`, node)
-          if (l?.kind === 'eq') return [eqRef('eqref', key, l, node)]
+          if (l?.kind === 'eq') return [eqRef('eqref', key, node)]
           return [text(l ? `(${l.n})` : '(??)', node.position)]
         }
         case 'cite': {

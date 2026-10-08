@@ -38,9 +38,22 @@ describe('ビルド設定(結合)', () => {
     expect(out).not.toContain('"3F"') // MathJax の未解決参照 ??? が無い
   })
 
-  it('後ろにある式への参照(前方参照)は rehype-mathjax の制約で解決できないので警告する', async () => {
-    const file = await build('先に \\eqref{eq:a}\n\n\\begin{equation}\\label{eq:a}\nx\n\\end{equation}')
-    expect(file.messages.map((m) => m.reason).join()).toContain('後ろにある式への参照')
+  it('後ろにある式への参照(前方参照)も MathJax が文書全体を組むときに解決する', async () => {
+    const file = await build('先に \\eqref{eq:b}\n\n\\begin{equation}\\label{eq:a}\nx\n\\end{equation}\n\n\\begin{equation}\\label{eq:b}\ny\n\\end{equation}')
+    const out = String(file)
+    expect(file.messages).toEqual([])
+    expect(out).not.toContain('"3F"') // 未解決の参照 ???(U+003F)が無い
+    // 参照(最初の別行立て数式より前)は 2 番目の式の番号 (2) を指す。
+    // MathJax の SVG は文字を字形の id(TEX-N-<文字コード>)で参照する: "2" = 32、"1" = 31
+    const ref = out.slice(out.indexOf('先に'), out.indexOf('display: "true"'))
+    expect(ref).toContain('TEX-N-32')
+    expect(ref).not.toContain('TEX-N-31')
+  })
+
+  it('節番号はビルド時にスライドの題に振る(横が 1.、その下の縦が 1.1.)', async () => {
+    const out = String(await build('# 表紙\n\n---\n\n## A\n\n---\n\n## B\n\n--\n\n## B1'))
+    const nums = [...out.matchAll(/className: "secnum",\s*children: "([^"]*)"/g)].map((m) => m[1].trim())
+    expect(nums).toEqual(['1.', '2.', '2.1.'])
   })
 
   it('\\cite は rehype-citation が番号付けし、文献リストを差し込む', async () => {

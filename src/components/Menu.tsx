@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useReveal } from '@revealjs/react'
+import { slideTitle } from '../deck/slide-title'
 
 /**
  * 左下ハンバーガー → 左サイドバー(スライド一覧)。旧 reveal.js-menu の代替。
@@ -31,7 +32,7 @@ export default function Menu() {
           return {
             h,
             v: v ?? 0,
-            title: s.querySelector('h1,h2,h3,h4')?.textContent?.trim() || '(無題)',
+            title: slideTitle(s),
           }
         }),
       )
@@ -79,7 +80,7 @@ export default function Menu() {
                     aria-current={`${it.h},${it.v}` === current}
                     onClick={() => go(it)}
                   >
-                    {it.v > 0 ? `${it.h + 1}.${it.v}` : `${it.h + 1}.`} {it.title}
+                    {it.title}
                   </button>
                 </li>
               ))}

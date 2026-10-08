@@ -84,25 +84,6 @@
   background: var(--color-brand);
 }
 
-/* 節番号(旧 adoc の :sectnums: 相当)。スライドの題(先頭の h2)に振る。
-   横のスライドが節(1.)、縦のスライド(reveal の .stack の 2 枚目以降)がその小節(1.1.)。
-   CSS カウンタは display:none の要素を数えないため、App.tsx で viewDistance を広げて全スライドを表示状態にしている */
-.reveal .slides {
-  counter-reset: sec;
-}
-.reveal .slides > section {
-  counter-reset: sub;
-}
-.reveal .slides > section:not(.stack) > h2:first-child::before,
-.reveal .slides > section.stack > section:first-child > h2:first-child::before {
-  counter-increment: sec;
-  content: counter(sec) '. ';
-}
-.reveal .slides > section.stack > section:not(:first-child) > h2:first-child::before {
-  counter-increment: sub;
-  content: counter(sec) '.' counter(sub) '. ';
-}
-
 .reveal li::marker {
   color: var(--color-brand);
 }

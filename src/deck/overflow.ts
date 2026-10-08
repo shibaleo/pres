@@ -60,11 +60,20 @@ export function watchOverflow(deck: RevealApi): () => void {
   }
 }
 
-/** スライドを最小の幅で組んだときの中身の縦横(はみ出しを含む) */
+/**
+ * スライドを最小の幅で組んだときの中身の縦横(はみ出しを含む)。
+ * reveal は今のスライドから遠いものを描かない(display:none。縦のスライドは束ごと)ので、
+ * 測る間だけ表示状態にする
+ */
 function measureAtMinimum(slide: HTMLElement): { width: number; height: number } {
-  const prev = slide.style.width
+  const stack = slide.parentElement?.closest('section')
+  const shown = stack ? [slide, stack] : [slide]
+  const prevDisplay = shown.map((el) => el.style.display)
+  const prevWidth = slide.style.width
+  for (const el of shown) el.style.display = 'block'
   slide.style.width = `${MIN_WIDTH}px`
   const size = { width: slide.scrollWidth, height: slide.scrollHeight }
-  slide.style.width = prev
+  slide.style.width = prevWidth
+  shown.forEach((el, i) => (el.style.display = prevDisplay[i]))
   return size
 }
