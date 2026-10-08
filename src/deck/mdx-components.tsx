@@ -1,9 +1,18 @@
-import { Fragment } from '@revealjs/react'
+import type { ComponentProps } from 'react'
+import { Fragment as RevealFragment } from '@revealjs/react'
 import Frame from '../components/Frame'
 import Notes from '../components/Notes'
 import { Cite, Bibliography } from '../components/Cite'
 import { Theorem, Lemma, Proposition, Corollary, Definition, Proof } from '../components/Theorem'
 import { Center, Cols, Col, Byline, Note, Code } from '../components/layout'
+
+/**
+ * 段階表示。reveal の既定は <span> だが、スライドでは段落や定理を囲む使い方が主なので
+ * <div> を既定にする(文中で使うときは as="span")。
+ */
+function Fragment(props: ComponentProps<typeof RevealFragment>) {
+  return <RevealFragment as="div" {...(props as object)} />
+}
 
 /**
  * どのスライドからも import なしで使える部品。
@@ -31,7 +40,7 @@ export const mdxComponents = {
   Byline,
   Note,
   Code,
-  // 文献(本文の [@key] は自動で <Cite> になる)
+  // 文献(本文の \cite{key} は自動で <Cite> になる)
   Cite,
   Bibliography,
 }

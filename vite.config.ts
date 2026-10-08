@@ -7,7 +7,7 @@ import tailwindcss from '@tailwindcss/vite'
 import { viteSingleFile } from 'vite-plugin-singlefile'
 import type { Plugin } from 'vite'
 import { fileURLToPath } from 'node:url'
-import { bibliography, remarkCitations } from './vite/citations'
+import { bibliography } from './vite/citations'
 
 /**
  * @font-face の src から woff2 以外(woff/ttf/eot/svg)を削り、
@@ -51,12 +51,13 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     woff2OnlyFonts(),
-    // 文献番号をデッキ全体で通しにする(詳細は vite/citations.ts)
+    // \cite{key} を <Cite> に変換し、デッキ全体で通し番号にする(詳細は vite/citations.ts)。
+    // ソース文字列を書き換えるので mdx より前に置く。
     bibliography({ bib: 'src/references.bib', slidesDir: 'src/slides' }),
     {
       enforce: 'pre',
       ...mdx({
-        remarkPlugins: [remarkMath, remarkCitations],
+        remarkPlugins: [remarkMath],
         rehypePlugins: [rehypeKatex],
       }),
     },
