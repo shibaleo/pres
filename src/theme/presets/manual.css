@@ -1,0 +1,28 @@
+/* プリセット: 業務マニュアル向け。画面で手順を追いながら読む資料を想定する。
+
+   - 本文もゴシック(Noto Sans JP)。画面では明朝より線が太く、小さい字でも読みやすい
+   - 本文と見出し・強調が同じ書体になるので、強調は太さの差で示す(本文 400 / 見出し・強調 600)
+   - 行間は和文の横組みの目安(JLReq)の中ほどまで広げ、手順や注意書きを読み飛ばしにくくする
+   - 数字は等幅(tabular-nums)。金額・数量の桁が縦に揃う
+   - 番号付きの箇条書き(手順)は番号を太く、表は 1 行おきに地を付けて行を追いやすくする
+
+   使い方(src/custom.css): @import './theme/presets/manual.css'; したうえで
+     デッキ全体に   :root { --deck-preset: manual; }
+     一部だけに     原稿で <div data-preset="manual"> … </div> と囲む */
+[data-preset~='manual'] {
+  --font-body: 'Noto Sans JP', sans-serif;
+  --body-weight: 400;
+  --heading-weight: 600;
+  --leading: 1.6;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 手順(番号付きの箇条書き)の番号 */
+[data-preset~='manual'] ol > li::marker {
+  font-weight: var(--heading-weight);
+}
+
+/* 表: 1 行おきに地を付ける(罫線は base.css の booktabs のまま) */
+[data-preset~='manual'] table tbody tr:nth-child(even) {
+  background: var(--color-surface);
+}

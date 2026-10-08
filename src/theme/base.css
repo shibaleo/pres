@@ -46,6 +46,15 @@
   font-weight: var(--body-weight);
 }
 
+/* プリセットを一部にかける範囲(<div data-preset="manual"> など。theme/presets/)。
+   プリセットはその範囲でトークンを上書きするので、上の要素で一度決まった本文の書体・太さ・行間を
+   ここで改めてトークンから決め直す(デッキ全体にかけるときは <html data-preset> で、上の規則がそのまま効く) */
+.reveal [data-preset] {
+  font-family: var(--font-body);
+  font-weight: var(--body-weight);
+  line-height: var(--leading);
+}
+
 /* 縦スライドの束(.stack)ではなく、中身を持つ 1 枚 1 枚に余白を付ける */
 .reveal .slides section:not(.stack) {
   box-sizing: border-box;
@@ -89,6 +98,12 @@
   background: var(--color-brand);
 }
 
+/* 箇条書きの字下げは和文 1 文字分(1ic = 全角 1 文字の幅)。行頭の記号・番号はその中にぶら下げる。
+   reveal の white テーマ(margin 1em、入れ子は 40px)とブラウザの既定(padding 40px)を打ち消す */
+.reveal :is(ul, ol) {
+  margin-left: 0;
+  padding-left: 1ic;
+}
 .reveal li::marker {
   color: var(--color-brand);
 }

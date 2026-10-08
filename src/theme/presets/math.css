@@ -2,7 +2,10 @@
    New Computer Modern にする。Computer Modern を現代的に組み直した TeX の標準のフォントで、
    本文には Computer Modern の細さを和らげた Book の太さを使う(LaTeX でこのフォントを読み込んだときの既定)。
    ライセンスは GUST Font License(fonts-src/NewCM-License.txt)。
-   使うには src/custom.css で @import './theme/presets/math.css'; する */
+
+   使い方(src/custom.css): @import './theme/presets/math.css'; したうえで
+     デッキ全体に   :root { --deck-preset: math; }
+     一部だけに     原稿で <div data-preset="math"> … </div> と囲む */
 @font-face {
   font-family: 'New Computer Modern';
   src: url('../../fonts/NewCM10-Book.woff2') format('woff2');
@@ -14,6 +17,6 @@
   src: url('../../fonts/NewCM10-Book.woff2') format('woff2');
   unicode-range: U+0030-0039;
 }
-:root {
+[data-preset~='math'] {
   --font-body: 'number', 'New Computer Modern', 'Noto Serif JP', serif;
 }

@@ -3,6 +3,9 @@
    ここでできること:
      - プリセットを読み込む(@import は先頭に書く)
          @import './theme/presets/math.css';   数学向け: 欧文と数字を New Computer Modern に
+         @import './theme/presets/manual.css'; 業務マニュアル向け: 本文もゴシック、強調は太さで
+       読み込んだプリセットは、:root の --deck-preset でデッキ全体に、
+       原稿の <div data-preset="名前"> で一部だけにかけられる
      - トークンを上書きする(一覧と既定値は theme/tokens.css)
          :root {
            --color-brand: #0a7d5a;
@@ -11,3 +14,9 @@
      - このデッキだけの規則を足す */
 
 @import './theme/presets/math.css';
+@import './theme/presets/manual.css';
+
+:root {
+  /* デッキ全体は数学向け。業務マニュアルの見本(slides/manual.mdx)だけ manual を一部にかける */
+  --deck-preset: math;
+}

@@ -57,7 +57,7 @@ npm run check        # typecheck + test + build:single。コミット前・CI �
 ```
 src/
   slides.mdx           スライド原稿の主ファイル(--- で横、-- で縦に区切る)
-  slides/              \input{…} で取り込む原稿(guide.mdx: 記法の一覧、typography.mdx: 書き方の見本)
+  slides/              \input{…} で取り込む原稿(guide.mdx: 記法の一覧、typography.mdx: 書き方の見本、manual.mdx: 業務マニュアルの見本)
   references.bib       BibTeX 文献データ
   csl/                 引用スタイル(CSL。公式リポジトリのものをそのまま置く)
   App.tsx              デッキ本体(<Deck> に原稿と <Menu> を合成)
@@ -68,6 +68,7 @@ src/
     base.css           汎用の規則(トークンから導いた値だけを使う)
     fonts.css          土台の書体(本文の明朝 Noto Serif JP・見出しと強調のゴシック Noto Sans JP・等幅)
     presets/math.css   数学向けのプリセット(欧文と数字を New Computer Modern に)
+    presets/manual.css 業務マニュアル向けのプリセット(本文もゴシック・太さで強調・等幅数字・手順の番号を太く)
   custom.css           クローンごとの特化(テンプレートは中身を書かない)
   deck/
     mdx-components.tsx 原稿から import なしで使える部品の一覧
@@ -275,13 +276,30 @@ JSXGraph は `useEffect` 内で `initBoard` → クリーンアップで `freeBo
 
 ```css
 /* src/custom.css */
-@import './theme/presets/math.css';  /* 数学向け: 欧文と数字を New Computer Modern に */
+@import './theme/presets/math.css';    /* 数学向け: 欧文と数字を New Computer Modern に */
+@import './theme/presets/manual.css';  /* 業務マニュアル向け: 本文もゴシック、強調は太さで */
 
 :root {
-  --color-brand: #0a7d5a;            /* トークンの一覧と既定値は src/theme/tokens.css */
+  --deck-preset: math;                 /* デッキ全体にかけるプリセット(空白区切りで複数可) */
+  --color-brand: #0a7d5a;              /* トークンの一覧と既定値は src/theme/tokens.css */
   --text-base: 26px;
 }
 ```
+
+プリセットは `[data-preset~="名前"]` の範囲にかかります。デッキ全体には `--deck-preset` で
+（起動時に `<html data-preset>` へ移します）、一部のスライドだけには原稿で囲んでかけます。
+
+```mdx
+## データ入力
+
+<div data-preset="manual">
+
+（このスライドの中身だけ業務マニュアル向けの見た目になる）
+
+</div>
+```
+
+見本は `src/slides/manual.mdx`（数学向けのデッキの末尾に、業務マニュアル向けの 3 枚）。
 
 用途に共通する改善はテンプレート（tokens / base）へ、特定の用途に寄った見た目はプリセット
 （`src/theme/presets/`）へ入れます。
