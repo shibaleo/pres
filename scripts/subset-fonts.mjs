@@ -3,10 +3,11 @@
  * インタラクティブにフォントは変えないので、ソース中に出現する文字＋基本記号で十分。
  * 出力(src/fonts/*.woff2)は theme.css が参照し、singlefile ビルドで base64 インライン化される。
  */
-import { existsSync, readFileSync, writeFileSync, readdirSync, statSync, mkdirSync } from 'node:fs'
-import { join, dirname, extname, resolve } from 'node:path'
+import { readFileSync, writeFileSync, readdirSync, statSync, mkdirSync } from 'node:fs'
+import { join, dirname, extname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import subsetFont from 'subset-font'
+import { findInclude, parseInclude, resolveInclude } from '../vite/remark-beamer/inputs.js'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const srcDir = join(root, 'src')
@@ -24,22 +25,23 @@ function collectFiles(dir, acc = []) {
 }
 
 /**
- * 原稿から \input{…} で取り込まれるファイル(src の外にあってもよい)もたどる。
- * 解決の規則は vite/remark-beamer と同じ: 主ファイル(src/slides.mdx)のディレクトリ基準で、
- * まず .mdx を付けた名前、無ければ書いたままの名前。
+ * 原稿から取り込まれるファイル(\input / \import / \subimport。src の外にあってもよい)もたどる。
+ * パスの解決は原稿の変換と同じモジュール(vite/remark-beamer/inputs.js)を使う。
  */
-function collectInputs(file, acc = new Set()) {
+function collectInputs(file, ctx, acc = new Set()) {
   if (acc.has(file)) return acc
   acc.add(file)
-  for (const m of readFileSync(file, 'utf8').matchAll(/^[ \t]*\\input\{([^}]+)\}[ \t]*$/gm)) {
-    const target = m[1].trim()
-    const found = [resolve(srcDir, `${target}.mdx`), resolve(srcDir, target)].find((c) => existsSync(c) && statSync(c).isFile())
-    if (found) collectInputs(found, acc)
+  for (const line of readFileSync(file, 'utf8').split(/\r?\n/)) {
+    const inc = parseInclude(line)
+    if (!inc || 'error' in inc) continue
+    const { candidates, next } = resolveInclude(inc, ctx)
+    const found = findInclude(candidates)
+    if (found) collectInputs(found, next, acc)
   }
   return acc
 }
 
-const files = new Set([...collectFiles(srcDir), ...collectInputs(join(srcDir, 'slides.mdx'))])
+const files = new Set([...collectFiles(srcDir), ...collectInputs(join(srcDir, 'slides.mdx'), { baseDir: srcDir })])
 let text = ''
 for (const f of files) text += readFileSync(f, 'utf8')
 

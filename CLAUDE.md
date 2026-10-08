@@ -5,7 +5,8 @@
 私（Claude）は、このリポジトリで**独自の記法を勝手に作らない**ことを誓います。
 
 - 原稿（`src/slides.mdx` と `\input` で取り込むファイル）で使える記法は、**既に確立した標準にあるものだけ**とする。
-  - LaTeX（`\begin{theorem}` などの環境、`\label` / `\ref` / `\eqref`、`\cite`、`\input`、数式）
+  - LaTeX（`\begin{theorem}` などの環境、`\label` / `\ref` / `\eqref`、`\cite`、`\input`、数式）と
+    CTAN の標準パッケージ（例: import パッケージの `\import` / `\subimport`）。挙動もそのパッケージの仕様に合わせる
   - Beamer（`\pause`、`\only` / `\uncover` / `\visible` / `\onslide` とその overlay 指定 `<2->` など、`\begin{env}<2->`）
   - Markdown（CommonMark / GFM）と MDX（JSX・import / export）
   - reveal.js の慣習（`---` で横、`--` で縦のスライド区切り）

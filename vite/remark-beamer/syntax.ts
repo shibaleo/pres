@@ -61,8 +61,11 @@ function lineConstruct(name: 'latexLine', accept: (line: string) => boolean): Co
 }
 
 const ENV_LINE_RE =
-  /^\\begin\{([A-Za-z]+\*?)\}(?:<[^>]*>)?(?:\[[^\]]*\])?\s*(?:\\label\{[^}]*\})?$|^\\end\{([A-Za-z]+\*?)\}$|^\\pause$|^\\input\{[^}]+\}$/
-/** `\begin{theorem}[…]` / `\end{theorem}` / `\pause` / `\input{…}`(数式環境は別の構文が先に拾う) */
+  /^\\begin\{([A-Za-z]+\*?)\}(?:<[^>]*>)?(?:\[[^\]]*\])?\s*(?:\\label\{[^}]*\})?$|^\\end\{([A-Za-z]+\*?)\}$|^\\pause$|^\\(?:input|import|inputfrom|subimport|subinputfrom)\*?(?:\{[^}]*\}){1,2}$/
+/**
+ * `\begin{theorem}[…]` / `\end{theorem}` / `\pause` / ファイルの取り込み(`\input{…}`、import パッケージの
+ * `\import{…}{…}` `\subimport{…}{…}` と別名)。数式環境は別の構文が先に拾う
+ */
 const latexLine = lineConstruct('latexLine', (line) => {
   const m = line.match(ENV_LINE_RE)
   if (!m) return false

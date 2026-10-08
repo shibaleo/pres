@@ -10,7 +10,7 @@
  * 引用は rehype-citation の入力形式([@a; @b])に変換して、番号付け・整形はそちらに任せる。
  * エラーは file.fail、警告は file.message(unified の標準)。位置は構文解析器が付けた元の行。
  */
-import { existsSync, readFileSync, statSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { dirname, relative, resolve, sep } from 'node:path'
 import { parse as parseJs } from 'acorn'
 import { VFile as VFileCtor } from 'vfile'
@@ -22,6 +22,7 @@ import type { Processor } from 'unified'
 import type { VFile } from 'vfile'
 import type { Point, Position } from 'unist'
 import { MATH_ENVS } from './syntax'
+import { findInclude, parseInclude, resolveInclude, type IncludeContext } from './inputs'
 import type { LatexCommand, LatexLine } from './mdast'
 
 export type BeamerOptions = {
@@ -171,36 +172,38 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
     const error = (message: string, node?: { position?: Position; data?: object }) => errors.push(diag(message, node))
     const warn = (message: string, node?: { position?: Position; data?: object }) => warnings.push(diag(message, node))
 
-    // (0) \input{file}: 取り込むファイルを構文解析して、その場に差し込む(1 つの文書として番号を通す)。
-    //     パスは LaTeX と同じく主ファイルのあるディレクトリから。拡張子が無ければ .mdx
+    // (0) ファイルの取り込み(\input、import パッケージの \import / \subimport)。取り込むファイルを
+    //     構文解析して、その場に差し込む(1 つの文書として番号を通す)。パスの規則は inputs.ts(LaTeX と同じ)
     const mainPath = file.path ? resolve(file.path) : undefined
     const baseDir = mainPath ? dirname(mainPath) : process.cwd()
     const texts = new Map<string | undefined, string>([[undefined, String(file.value)]])
     const rel = (abs: string) => relative(baseDir, abs).split(sep).join('/')
-    tree.children = expandInputs(tree.children, mainPath ? [mainPath] : [])
+    tree.children = expandInputs(tree.children, mainPath ? [mainPath] : [], { baseDir })
 
-    function expandInputs(children: RootContent[], chain: string[], via?: Position): RootContent[] {
+    function expandInputs(children: RootContent[], chain: string[], ctx: IncludeContext, via?: Position): RootContent[] {
       const out: RootContent[] = []
       for (const child of children) {
         if ('children' in child && (child.type === 'mdxJsxFlowElement' || child.type === 'blockquote' || child.type === 'listItem' || child.type === 'list')) {
-          ;(child as Parent).children = expandInputs((child as Parent).children as RootContent[], chain, via) as Parent['children']
+          ;(child as Parent).children = expandInputs((child as Parent).children as RootContent[], chain, ctx, via) as Parent['children']
         }
-        const m = child.type === 'latexLine' ? child.value.match(/^\s*\\input\{([^}]+)\}\s*$/) : null
-        if (!m) {
+        const inc = child.type === 'latexLine' ? parseInclude(child.value) : null
+        if (!inc) {
           out.push(child)
           continue
         }
-        const target = m[1].trim()
-        // LaTeX と同じく、まず拡張子(.mdx)を付けた名前、無ければ書いたままの名前を探す
-        // (chapter.v2 → chapter.v2.mdx、plain.md → plain.md)
-        const candidates = [resolve(baseDir, `${target}.mdx`), resolve(baseDir, target)]
-        const abs = candidates.find((c) => existsSync(c) && statSync(c).isFile())
+        const written = (child as LatexLine).value.trim()
+        if ('error' in inc) {
+          error(inc.error, child)
+          continue
+        }
+        const { candidates, next } = resolveInclude(inc, ctx)
+        const abs = findInclude(candidates)
         if (!abs) {
-          error(`\\input{${target}}: ファイルがありません(${candidates.map(rel).join(' または ')})`, child)
+          error(`${written}: ファイルがありません(探した場所: ${candidates.map(rel).join(' , ')})`, child)
           continue
         }
         if (chain.includes(abs)) {
-          error(`\\input{${target}} が循環しています(${[...chain, abs].map(rel).join(' → ')})`, child)
+          error(`${written} が循環しています(${[...chain, abs].map(rel).join(' → ')})`, child)
           continue
         }
         const value = readFileSync(abs, 'utf8')
@@ -216,7 +219,7 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
         }
         texts.set(rel(abs), value)
         markSource(sub, { file: rel(abs), input: at })
-        out.push(...expandInputs(sub.children, [...chain, abs], at))
+        out.push(...expandInputs(sub.children, [...chain, abs], next, at))
       }
       return out
     }

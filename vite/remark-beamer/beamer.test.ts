@@ -252,8 +252,32 @@ describe('\\input', () => {
     expect(textOf(tree).replace(/\s/g, '')).toContain('ABBSJVM')
   })
 
+  it('import パッケージ: \\import / \\subimport の中ではファイル基準と主ファイル基準が混在できる', async () => {
+    // 構成(主ファイルは dir/slides.mdx):
+    //   parts/a.mdx      \input{b}            → parts/b.mdx(取り込み元基準を優先)
+    //                    \input{common}       → common.mdx(parts に無いので主ファイル基準)
+    //                    \input{ch/sub/b}     → ch/sub/b.mdx(主ファイル基準のパスもそのまま通る)
+    //                    \subimport{deep/}{c} → parts/deep/c.mdx
+    //   parts/deep/c.mdx \input{d}            → parts/deep/d.mdx
+    //                    \input{dup}          → parts/deep/dup.mdx(主ファイル側の dup.mdx より優先)
+    mkdirSync(join(dir, 'parts', 'deep'), { recursive: true })
+    writeFileSync(join(dir, 'parts', 'a.mdx'), 'PA\n\n\\input{b}\n\n\\input{common}\n\n\\input{ch/sub/b}\n\n\\subimport{deep/}{c}\n')
+    writeFileSync(join(dir, 'parts', 'b.mdx'), 'PB\n')
+    writeFileSync(join(dir, 'common.mdx'), 'CM\n')
+    writeFileSync(join(dir, 'parts', 'deep', 'c.mdx'), 'DC\n\n\\input{d}\n\n\\input{dup}\n')
+    writeFileSync(join(dir, 'parts', 'deep', 'd.mdx'), 'DD\n')
+    writeFileSync(join(dir, 'parts', 'deep', 'dup.mdx'), 'NEAR\n')
+    writeFileSync(join(dir, 'dup.mdx'), 'FAR\n')
+    const { tree } = await runMain('\\import{parts/}{a}')
+    expect(textOf(tree).replace(/\s/g, '')).toMatch(/PAPBCMBDCDDNEAR$/)
+    // 別名と、主ファイル直下からの \subimport(基準が無ければ主ファイル基準)
+    expect(textOf((await runMain('\\inputfrom{parts/}{b}\n\n\\subimport{parts/deep/}{d}')).tree).replace(/\s/g, '')).toMatch(/PBDD$/)
+    // 引数の数の誤り
+    expect((await failMain('\\import{parts/a}')).message).toContain('引数を 2 つ取ります')
+  })
+
   it('無いファイル・循環・取り込んだファイルの MDX 構文エラー', async () => {
-    expect((await failMain('\\input{nothing}')).message).toContain('ファイルがありません(nothing.mdx または nothing)')
+    expect((await failMain('\\input{nothing}')).message).toContain('ファイルがありません(探した場所: nothing.mdx , nothing)')
     expect((await failMain('\\input{loop}')).message).toContain('循環')
     expect((await failMain('\\input{syntax}')).message).toContain('syntax.mdx')
   })

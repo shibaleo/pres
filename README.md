@@ -111,15 +111,31 @@ import Globe from '@/components/Globe'
 - 縦スライドの進め方は `App.tsx` の `navigationMode`（`'linear'` にすると ←→ だけで縦も順に進む）。
 - 自分の部品や画像は原稿の先頭で `@/components/...`、`@/img/...` から import します。
 
-### ファイルの取り込み（`\input`）
+### ファイルの取り込み（`\input` と import パッケージ）
+LaTeX の `\input` と、標準の [import パッケージ](https://ctan.org/pkg/import) の `\import` / `\subimport` が使えます（行単独で書く）。
+
+| 書き方 | パスの基準 | 取り込んだファイルの中での `\input` |
+|---|---|---|
+| `\input{file}` | 主ファイル（`src/slides.mdx`）のディレクトリ | 変わらない |
+| `\import{path/}{file}` | 絶対パス、または主ファイルのディレクトリ | **`path/` を先に探し、無ければ主ファイルのディレクトリ** |
+| `\subimport{path/}{file}` | **今いるファイルの基準ディレクトリ**からの相対（入れ子にできる） | 同上（基準が `…/path/` になる） |
+
+`\inputfrom` / `\subinputfrom` は `\import` / `\subimport` の別名、`*` 付きも同じです。
+
 ```latex
-\input{slides/guide}
+% slides.mdx
+\import{parts/}{a}          % parts/a.mdx
+
+% parts/a.mdx の中
+\input{b}                   % parts/b.mdx(自分の場所が先)
+\input{common}              % parts に無ければ主ファイル側の common.mdx
+\subimport{deep/}{c}        % parts/deep/c.mdx。その中の \input{d} は parts/deep/d.mdx
 ```
 
-- 行単独で書きます。パスは LaTeX と同じく**主ファイル（`src/slides.mdx`）のあるディレクトリから**
-  （取り込んだファイルの中の `\input` も主ファイル基準）。`..`・`src` の外・空白・日本語・絶対パスも使えます。
-- 探す順も LaTeX と同じで、まず `.mdx` を付けた名前、無ければ書いたままの名前（`chapter.v2` → `chapter.v2.mdx`、`notes.md` → `notes.md`）。
-  区切りは `/` で書きます（`\` は Windows でしか通じません）。`@/` などのエイリアスは使えません。
+- 「ファイルからの相対」と「主ファイル（ルート）からの相対」を混ぜたいときは、`\import` / `\subimport` で取り込みます。
+  `\input` で取り込んだファイルの中は、LaTeX と同じく主ファイル基準のままです。
+- 探す順は LaTeX と同じで、まず `.mdx` を付けた名前、無ければ書いたままの名前（`chapter.v2` → `chapter.v2.mdx`、`notes.md` → `notes.md`）。
+  `..`・`src` の外・空白・日本語・絶対パスも使えます。区切りは `/` で書きます（`\` は Windows でしか通じません）。`@/` などのエイリアスは使えません。
 - 取り込んだ内容はその場に差し込まれ、**1 つの文書として扱われます**。定理・式・文献の番号、`\ref`、
   スライドの区切り（`---` / `--`）は、ファイルをまたいでも通しで働きます。入れ子の `\input` も可。
 - 取り込んだファイルの `import` は主ファイルの `import` と同じ扱い（同じ文は 1 つにまとめる）。パスは `@/…` で書きます。
