@@ -1,11 +1,9 @@
 import type { ComponentProps } from 'react'
-import { Fragment as RevealFragment } from '@revealjs/react'
+import { Fragment as RevealFragment, Slide, Stack } from '@revealjs/react'
 import Frame from '../components/Frame'
 import Notes from '../components/Notes'
-import { Cite, Bibliography } from '../components/Cite'
-import { Ref, Equation } from '../components/Ref'
+import { Theorem, Lemma, Proposition, Corollary, Definition, Proof, ThmTitle } from '../components/Theorem'
 import { Overlay, OverlaySteps } from '../components/Overlay'
-import { Theorem, Lemma, Proposition, Corollary, Definition, Proof } from '../components/Theorem'
 import { Center, Cols, Col, Byline, Note, Code } from '../components/layout'
 
 /**
@@ -17,17 +15,20 @@ function Fragment(props: ComponentProps<typeof RevealFragment>) {
 }
 
 /**
- * どのスライドからも import なしで使える部品。
+ * スライド原稿(slides.mdx)から import なしで使える部品。
  * MDX は「スコープに無い大文字タグ」をこの components から引く。
  *
  * ここに置くのは文書の構造を表す汎用部品だけ。
- * 個別の図(Globe, LogSpiral など)は使うスライドで明示的に import する。
+ * 個別の図(Globe, LogSpiral など)は原稿の先頭で明示的に import する。
  */
 export const mdxComponents = {
+  // reveal の構造(原稿の --- / -- を vite/remark-beamer が Slide / Stack に変換する)
+  Slide,
+  Stack,
   // reveal の機能
   Fragment, // 段階表示: <Fragment>…</Fragment>
   Notes, //    スピーカーノート
-  // 囲み・定理環境
+  // 囲み・定理環境(\begin{theorem} などの変換先。JSX で直接書いてもよい)
   Frame,
   Theorem,
   Lemma,
@@ -35,6 +36,7 @@ export const mdxComponents = {
   Corollary,
   Definition,
   Proof,
+  ThmTitle,
   // レイアウト
   Center,
   Cols,
@@ -42,12 +44,7 @@ export const mdxComponents = {
   Byline,
   Note,
   Code,
-  // 文献(本文の \cite{key} は自動で <Cite> になる)
-  Cite,
-  Bibliography,
-  // 原稿の Beamer 風記法の変換先(vite/deck/scan.ts が生成する。手で書いてもよい)
-  Ref, //          \ref{…} / \eqref{…}
-  Equation, //     \begin{equation} / \label 付きの $$…$$
-  Overlay, //      \pause / <2-> / \only<2>{…} / \uncover<2->{…}
+  // Beamer の段階表示(\pause / <2-> / \only<2>{…} / \uncover<2->{…})の変換先
+  Overlay,
   OverlaySteps,
 }

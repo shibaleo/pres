@@ -19,7 +19,8 @@ export function watchOverflow(deck: RevealApi): () => void {
       const excess = slide.scrollHeight - limit
       const over = excess > 1
       slide.classList.toggle('deck-overflow', over)
-      const path = slide.dataset.slidePath ?? '(unknown)'
+      // data-slide-line は原稿(slides.mdx)でのスライドの開始行(vite/remark-beamer が付ける)
+      const path = `slides.mdx:${slide.dataset.slideLine ?? '?'}`
       if (over && reported.get(path) !== excess) {
         console.warn(`[deck] ${path} がスライドの高さを ${excess}px はみ出しています`)
       }

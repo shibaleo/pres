@@ -4,7 +4,10 @@ import tailwindcss from '@tailwindcss/vite'
 import { viteSingleFile } from 'vite-plugin-singlefile'
 import type { Plugin } from 'vite'
 import { fileURLToPath } from 'node:url'
-import { deck } from './vite/deck/plugin'
+import mdx from '@mdx-js/rollup'
+import { mdxOptions } from './vite/mdx-options'
+
+const BIB = 'src/references.bib'
 
 /**
  * @font-face の src から woff2 以外(woff/ttf/eot/svg)を削り、
@@ -38,8 +41,23 @@ function woff2OnlyFonts(): Plugin {
   }
 }
 
+/**
+ * .bib はモジュールグラフに入らないので、編集したら全体を読み直す(引用の番号・文献リストを更新するため)
+ */
+function reloadOnBib(): Plugin {
+  return {
+    name: 'reload-on-bib',
+    handleHotUpdate({ file, server }) {
+      if (!file.endsWith('.bib')) return
+      server.moduleGraph.invalidateAll()
+      server.ws.send({ type: 'full-reload' })
+      return []
+    },
+  }
+}
+
 // `--mode single` で全アセットを 1 枚の index.html にインライン(subset 済 woff2 込み)。
-export default defineConfig(({ mode }) => ({
+export default defineConfig(({ command, mode }) => ({
   base: './',
   resolve: {
     // スライドがフォルダの深さに依存せず `@/components/...` で import できるように
@@ -47,10 +65,12 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     woff2OnlyFonts(),
-    // スライド原稿の読み込み: `---` での分割、Beamer 風記法(\begin{theorem}, \pause, \label/\ref,
-    // \cite …)の MDX への変換、MDX のコンパイル、デッキ全体の通し番号、記法エラーの報告
-    // (詳細は vite/deck/)。React プラグインより前に置く。
-    deck({ slidesDir: 'src/slides', bib: 'src/references.bib' }),
+    reloadOnBib(),
+    {
+      enforce: 'pre',
+      // 本番ビルドでは原稿の警告も失敗扱い。DECK_ALLOW_WARNINGS=1 で許可
+      ...mdx(mdxOptions({ bibliography: BIB, strict: command === 'build' && process.env.DECK_ALLOW_WARNINGS !== '1' })),
+    },
     react({ include: /\.(mdx|js|jsx|ts|tsx)$/ }),
     tailwindcss(),
     ...(mode === 'single' ? [viteSingleFile()] : []),

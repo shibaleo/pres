@@ -12,5 +12,5 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true
   },
-  "include": ["vite", "vite.config.ts", "vitest.config.ts", "src/deck/order.ts"]
+  "include": ["vite", "vite.config.ts", "vitest.config.ts"]
 }

@@ -2,7 +2,8 @@ import type { ReactNode } from 'react'
 
 /**
  * Beamer の overlay(`\pause`, `<2->`, `\only<2>{…}` など)を reveal の fragment に変換したもの。
- * 原稿の記法は vite/deck/scan.ts がこの部品に置き換える(手で書く必要はない)。
+ * 原稿の記法は vite/remark-beamer/transform.ts がこの部品に置き換える(手で書く必要はない)。
+ * MDX の属性は文字列で渡るので、数値は文字列でも受け付ける。
  *
  * ステップの対応: Beamer の n 枚目 = reveal の fragment index n-2(1 枚目は何も出ていない状態)。
  *   from  … このステップから表示(外側の fragment)
@@ -17,8 +18,8 @@ export function Overlay({
   li = false,
   children,
 }: {
-  from: number
-  to?: number
+  from: number | string
+  to?: number | string
   as?: 'div' | 'span'
   only?: boolean
   /** 箇条書きの項目(`- <2-> …`)。CSS で行頭記号も一緒に隠す */
@@ -26,6 +27,8 @@ export function Overlay({
   children?: ReactNode
 }) {
   const cls = (...c: (string | false)[]) => c.filter(Boolean).join(' ')
+  from = Number(from)
+  to = to === undefined ? undefined : Number(to)
   let node = children
   if (to !== undefined) {
     node = (
@@ -49,10 +52,10 @@ export function Overlay({
  * reveal は使われていない index を詰めてしまうので(`<3->` だけだと 2 枚目に出る)、
  * 1 枚目以外の全ステップに 1 つずつ置いて欠番を無くす。
  */
-export function OverlaySteps({ max }: { max: number }) {
+export function OverlaySteps({ max }: { max: number | string }) {
   return (
     <>
-      {Array.from({ length: max - 1 }, (_, i) => (
+      {Array.from({ length: Number(max) - 1 }, (_, i) => (
         <span key={i} className="fragment overlay-step" data-fragment-index={i} aria-hidden />
       ))}
     </>

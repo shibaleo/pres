@@ -201,11 +201,7 @@
   font-family: var(--font-code);
 }
 
-/* KaTeX の display 数式を左寄せ + 余白(旧 mjx-container 相当) */
-.reveal .katex-display {
-  margin: 0.3em 0;
-  text-align: left;
-}
+/* KaTeX は JSXGraph のラベル(FourPoints)だけで使う。スライドの数式は MathJax */
 .reveal .katex {
   font-size: 1em;
 }
@@ -251,17 +247,18 @@
   bottom: 0;
 }
 
-/* ---------- 文献 (components/Cite.tsx) ---------- */
-.reveal .cite {
-  color: var(--color-brand);
-  cursor: help;
-}
-.reveal ol.bibliography {
-  display: block;
-  margin: 0 0 0 1.5em;
-}
-.reveal ol.bibliography li {
+/* ---------- 文献 (rehype-citation が出力する CSL の標準マークアップ) ---------- */
+.reveal .csl-entry {
+  display: flex;
+  gap: 0.5em;
   margin: 0.2em 0;
+}
+.reveal .csl-left-margin {
+  flex: none;
+  min-width: 1.5em;
+}
+.reveal a[href^='#bib-'] {
+  color: var(--color-brand);
 }
 
 /* ---------- 開発時のはみ出し表示 (deck/overflow.ts。本番ビルドでは付かない) ---------- */
@@ -296,7 +293,12 @@
   color: transparent;
 }
 
-/* ---------- 相互参照・番号付きの式 (components/Ref.tsx) ---------- */
-.reveal .equation .katex-display {
+/* ---------- 数式 (rehype-mathjax の SVG 出力) ---------- */
+.reveal mjx-container[jax='SVG'][display='true'] {
   margin: 0.3em 0;
+}
+/* \eqref のリンク色をテーマに合わせる(MathJax の既定は青) */
+.reveal mjx-container[jax='SVG'] > svg a {
+  fill: var(--color-brand);
+  stroke: var(--color-brand);
 }

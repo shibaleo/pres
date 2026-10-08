@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react'
-import { Deck, Slide, Stack, useReveal } from '@revealjs/react'
+import { Deck, useReveal } from '@revealjs/react'
 import RevealNotes from 'reveal.js/plugin/notes/notes.esm.js'
 import Menu from './components/Menu'
-import { slides, groupStacks, type SlideEntry } from './deck/slides'
+import Slides, { deckWarnings } from './slides.mdx'
 import { mdxComponents } from './deck/mdx-components'
 import { watchOverflow } from './deck/overflow'
 import DevDiagnostics from './deck/DevDiagnostics'
@@ -12,19 +12,10 @@ type RevealApi = NonNullable<ReturnType<typeof useReveal>>
 // 開発時(HMR)にスライド位置を保持する。本番では常に1枚目から始める。
 const SLIDE_KEY = 'deck-slide-index'
 
-/** 1 枚のスライド。stack は Slide に渡さない(reveal の属性ではないため) */
-function renderSlide({ path, Content, meta }: SlideEntry) {
-  const { stack: _stack, ...slideProps } = meta
-  return (
-    <Slide key={path} data-slide-path={path} {...slideProps}>
-      <Content components={mdxComponents} />
-    </Slide>
-  )
-}
-
 /**
  * デッキ本体。スライド機構 (ナビ・番号・hash・PDF出力) は reveal.js が担当し、
- * 各スライドの中身は src/slides/**\/*.mdx (パスの自然順に自動で並ぶ)。
+ * スライドの中身は src/slides.mdx(--- / -- で区切った 1 ファイル。<Slide> / <Stack> への変換は
+ * vite/remark-beamer が行う)。
  */
 export default function App() {
   const deckRef = useRef<RevealApi | null>(null)
@@ -40,9 +31,12 @@ export default function App() {
         center: false,
         slideNumber: 'c/t',
         hash: true,
+        // 縦スライド(原稿の --)の進め方。'linear' にすると ←→ だけで縦も含めて順に進む
+        // (見た目の切り替わり方は変わらない)。'grid' は縦の位置を保って列を移る
+        navigationMode: 'default',
         // 見出しの通し番号は CSS カウンタで振る。reveal は既定で前後3枚より遠い
         // スライドを display:none にし、カウンタがそこを数えなくなるので全スライドを残す。
-        // (定理・式の番号はビルド時に振るので、この設定には依存しない)
+        // (定理・式・文献の番号はビルド時に振るので、この設定には依存しない)
         viewDistance: 1000,
         mobileViewDistance: 1000,
       }}
@@ -64,15 +58,9 @@ export default function App() {
         }
       }}
     >
-      {groupStacks(slides).map((item) =>
-        Array.isArray(item) ? (
-          <Stack key={item[0].path}>{item.map(renderSlide)}</Stack>
-        ) : (
-          renderSlide(item)
-        ),
-      )}
+      <Slides components={mdxComponents} />
       <Menu />
-      {import.meta.env.DEV && <DevDiagnostics />}
+      {import.meta.env.DEV && <DevDiagnostics warnings={deckWarnings} />}
     </Deck>
   )
 }
