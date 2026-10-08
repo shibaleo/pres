@@ -1,8 +1,5 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import mdx from '@mdx-js/rollup'
-import remarkMath from 'remark-math'
-import rehypeKatex from 'rehype-katex'
 import tailwindcss from '@tailwindcss/vite'
 import { viteSingleFile } from 'vite-plugin-singlefile'
 import type { Plugin } from 'vite'
@@ -41,7 +38,6 @@ function woff2OnlyFonts(): Plugin {
   }
 }
 
-// MDX must run before the React plugin so JSX in .mdx is handled.
 // `--mode single` で全アセットを 1 枚の index.html にインライン(subset 済 woff2 込み)。
 export default defineConfig(({ mode }) => ({
   base: './',
@@ -52,18 +48,9 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     woff2OnlyFonts(),
     // スライド原稿の読み込み: `---` での分割、Beamer 風記法(\begin{theorem}, \pause, \label/\ref,
-    // \cite …)の MDX への変換、デッキ全体の通し番号(詳細は vite/deck/)。mdx より前に置く。
+    // \cite …)の MDX への変換、MDX のコンパイル、デッキ全体の通し番号、記法エラーの報告
+    // (詳細は vite/deck/)。React プラグインより前に置く。
     deck({ slidesDir: 'src/slides', bib: 'src/references.bib' }),
-    {
-      enforce: 'pre',
-      ...mdx({
-        remarkPlugins: [remarkMath],
-        // 入力は deck プラグインが変換した仮想ファイル(実在しない・行位置もずれる)なので、
-        // ソースマップは出さない(出すと dev で "points to missing source files" 警告になる)
-        SourceMapGenerator: undefined,
-        rehypePlugins: [rehypeKatex],
-      }),
-    },
     react({ include: /\.(mdx|js|jsx|ts|tsx)$/ }),
     tailwindcss(),
     ...(mode === 'single' ? [viteSingleFile()] : []),

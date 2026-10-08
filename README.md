@@ -11,7 +11,7 @@ reveal.js プレゼンテーション。**MDX + TSX** で執筆し、可視化�
 | 領域 | 採用 |
 |---|---|
 | 執筆 | MDX (`.mdx`) + TSX |
-| ビルド | Vite 6 + `@mdx-js/rollup` |
+| ビルド | Vite 6 + `@mdx-js/mdx`（原稿の変換・コンパイルは `vite/deck/` の自作プラグイン） |
 | スライド | reveal.js 5 (`@revealjs/react`) |
 | スタイル | Tailwind CSS v4 |
 | 数式 | KaTeX (`remark-math` + `rehype-katex`)、LaTeX 風の定理環境・相互参照 |
@@ -32,6 +32,7 @@ npm run build        # 通常ビルド → dist/ (静的ファイル群、ホス
 npm run build:single # 単一ファイルビルド → dist/index.html 1枚に全インライン
 npm run preview      # ビルド結果をプレビュー
 npm run subset       # フォントを使用文字だけに再サブセット(下記)
+npm run check        # 型チェック + テスト + 単一ファイルビルド(下記)
 ```
 
 `build` / `build:single` は先頭で自動的に `subset` を実行します。
@@ -51,6 +52,7 @@ src/
     order.ts           並び順の定義(表示と番号付けで共有)
     mdx-components.tsx import なしで使える部品の一覧
     overflow.ts        開発時のはみ出し検出
+    DevDiagnostics.tsx 開発時の原稿警告の一覧
   components/          可視化・UI コンポーネント
     BarChart / ConnectedScatterplot / Globe / FourPoints / LogSpiral
     Frame              色付きフレーム(旧 .frame-* の代替)
@@ -66,9 +68,11 @@ src/
 fonts-src/             サブセット元のフルフォント(.ttf)。ビルド成果物には含めない
 scripts/subset-fonts.mjs  フォントサブセット化スクリプト
 vite/deck/             原稿の読み込み(ビルド側)
-  scan.ts              `---` での分割と、Beamer 風記法 → MDX の変換(純粋関数)
+  scan.ts              `---` での分割と、Beamer 風記法 → MDX の変換・記法エラーの検出(純粋関数)
+  scan.test.ts         scan.ts の単体テスト(Vitest)
   plugin.ts            Vite プラグイン。デッキ全体の通し番号(定理・式・文献)
   bibliography.ts      BibTeX を CSL(Vancouver)で整形
+tsconfig.node.json     ビルド側(vite/, 設定ファイル)の型チェック設定
 ```
 
 ## 執筆方法
@@ -129,11 +133,14 @@ $f$ が凸なら $f(\mathbb{E}X) \le \mathbb{E}f(X)$
 | `\ref{key}` | `2`（定理の番号） |
 | `\eqref{key}` | `(1)`（式の番号） |
 | `\begin{equation}…\end{equation}` | 番号付きの別行立て数式 |
+| `\begin{align}` / `\begin{gather}` | 行ごとに番号。`\nonumber` / `\notag` / `\tag{…}` の行は自動番号なし |
 | `$$…\label{key}$$` | `\label` があれば番号付き |
-| `\begin{equation*}` / `\begin{align*}` | 番号なし |
+| `\begin{equation*}` / `\begin{align*}` / `\begin{gather*}` | 番号なし |
 
 番号は**ビルド時にデッキ全体の出現順**で振るので、スライドを並べ替えても参照が追従します（定理と式は別の通し番号）。
-参照先が無い `\ref` は LaTeX と同じく `??` になり、ビルド時に警告します。番号付きの `align` は未対応です（番号なしで表示）。
+KaTeX の自動番号は使わず、行ごとに `\tag{n}` を差し込んでいます（`\ref` で参照できるようにするため）。
+align の行は、いちばん外側の `\\` だけで区切ります（`cases` や `\substack` の中の `\\` は区切りと見なさない）。
+参照先が無い `\ref` は LaTeX と同じく `??` になり、警告になります（下記）。
 
 ### 段階表示（Beamer の overlay → reveal の fragment）
 | 書き方 | 意味 |
@@ -179,10 +186,27 @@ MDX では `{…}` が JS 式、`<…` が JSX になるため、Beamer 風の�
 インライン `$...$`、ディスプレイ `$$...$$`（KaTeX）。可換図式は `\begin{CD}...\end{CD}`。
 ※ KaTeX は `\style` の任意 CSS 変形（斜め矢印の回転など）には非対応。
 
+### 記法エラーと警告
+不完全な原稿から成果物は作りません（補って動かすことはしない）。すべて**元の原稿のファイル名・行番号**で報告します。
+
+| 種類 | 例 | `npm run dev` | `npm run build` |
+|---|---|---|---|
+| エラー | 環境の閉じ忘れ・`\end` の不一致、数式の誤り（KaTeX で検査）、不正な overlay 指定、環境の外の `\label`、MDX の構文エラー | エラー画面（該当行の抜粋付き） | 失敗 |
+| 警告 | 参照先の無い `\ref`、未登録の文献、`\label` の重複 | 画面右上に一覧 | 失敗（`DECK_ALLOW_WARNINGS=1` で許可） |
+| はみ出し | スライドの高さ（700px）超過 | 赤い破線枠とバッジ・コンソール | （対象外） |
+
+スライド原稿を編集すると、番号をデッキ全体で振り直すためページ全体を再読み込みします（表示中のスライド位置は保持）。
+
+### 確認用コマンド
+```bash
+npm run typecheck   # 型チェック(ブラウザ側 tsconfig.json + ビルド側 tsconfig.node.json)
+npm run test        # 原稿変換(vite/deck/scan.ts)の単体テスト(Vitest)
+npm run check       # 上の 2 つ + 単一ファイルビルド。コミット前・CI で実行する
+```
+
 ### はみ出しの検出（開発時のみ）
 `npm run dev` 中、スライドの高さ（700px）を超えたスライドには赤い破線枠と「はみ出し」バッジが付き、
 コンソールにファイルパスと超過量が出ます。本番ビルドには含まれません。
-スライド原稿を編集すると、番号をデッキ全体で振り直すためページ全体を再読み込みします（表示中のスライド位置は保持）。
 
 ### 図（インタラクティブ可視化）
 `src/components/` に React コンポーネントとして追加。D3 は「React が DOM を持ち D3 は計算」、

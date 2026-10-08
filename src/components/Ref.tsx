@@ -13,9 +13,18 @@ export function Ref({ k, eq = false }: { k: string; eq?: boolean }) {
   return <span className="ref">{eq ? `(${text})` : text}</span>
 }
 
-/** 番号付きの別行立て数式(\begin{equation} / \label 付きの $$…$$) */
-export function Equation({ refId, tex }: { refId: string; tex: string }) {
-  const n = items[refId]
-  const html = katex.renderToString(`${tex}\\tag{${n ?? '?'}}`, { displayMode: true, throwOnError: false })
+type Row = { tex: string; sep: string; refId?: string }
+
+/**
+ * 別行立ての数式(\begin{equation|align|gather} と \label 付きの $$…$$)。
+ * 番号は KaTeX の自動番号を使わず、行ごとに \tag{n} を差し込む
+ * (デッキ全体の通し番号にし、\ref で参照できるようにするため)。
+ */
+export function Equation({ env, rows }: { env: string; rows: Row[] }) {
+  const body = rows
+    .map((r) => r.tex + (r.refId ? `\\tag{${items[r.refId] ?? '?'}}` : '') + r.sep)
+    .join('')
+  const tex = env === 'equation' ? body : `\\begin{${env}*}${body}\\end{${env}*}`
+  const html = katex.renderToString(tex, { displayMode: true, throwOnError: false })
   return <div className="equation" dangerouslySetInnerHTML={{ __html: html }} />
 }

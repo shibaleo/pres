@@ -1,0 +1,16 @@
+{
+  // ビルド側(Vite プラグイン・設定・テスト)の型チェック。ブラウザ側は tsconfig.json
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "types": ["node"],
+    "skipLibCheck": true,
+    "noEmit": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
+  },
+  "include": ["vite", "vite.config.ts", "vitest.config.ts", "src/deck/order.ts"]
+}

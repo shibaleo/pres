@@ -59,6 +59,51 @@ f(\mathbb{E}X) \le \mathbb{E}f(X)
 
 export const slide = { stack: 'guide' }
 
+## 複数行の式（align）
+
+<Cols style={{ fontSize: '0.56em' }}>
+<Col>
+
+**書き方**
+
+<Code>{`\\begin{align}
+(a+b)^2 &= a^2 + 2ab + b^2 \\label{eq:sq} \\\\
+        &= (a-b)^2 + 4ab \\nonumber \\\\
+f(x) &= \\begin{cases} 1 & x > 0 \\\\ 0 & x \\le 0 \\end{cases}
+        \\label{eq:f}
+\\end{align}
+
+式 \\eqref{eq:sq}、\\eqref{eq:f} と
+前のスライドの \\eqref{eq:jensen}`}</Code>
+
+</Col>
+<Col>
+
+**表示**
+
+\begin{align}
+(a+b)^2 &= a^2 + 2ab + b^2 \label{eq:sq} \\
+        &= (a-b)^2 + 4ab \nonumber \\
+f(x) &= \begin{cases} 1 & x > 0 \\ 0 & x \le 0 \end{cases}
+        \label{eq:f}
+\end{align}
+
+式 \eqref{eq:sq}、\eqref{eq:f} と
+前のスライドの \eqref{eq:jensen}
+
+</Col>
+</Cols>
+
+<Notes>
+
+行ごとに番号が付き、\nonumber / \notag / \tag の行は自動番号なし。cases の中の \\ は行の区切りと見なさない。番号は equation と共通の通し番号。
+
+</Notes>
+
+---
+
+export const slide = { stack: 'guide' }
+
 ## 段階表示（Beamer の overlay）
 
 <Cols style={{ fontSize: '0.56em' }}>

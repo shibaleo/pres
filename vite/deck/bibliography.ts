@@ -7,19 +7,19 @@ export type BibEntries = Record<string, { html: string; text: string }>
 
 /**
  * 引用された key を、BibTeX から CSL(Vancouver)で整形する。
- * 未登録の key は warn して除外する(後続の番号がずれないように)。
+ * 未登録の key は onUnknown に知らせて除外する(後続の番号がずれないように)。
  */
 export function formatBibliography(
   bibPath: string,
   citedInOrder: string[],
-  warn: (msg: string) => void,
+  onUnknown: (key: string) => void,
 ): { order: string[]; entries: BibEntries } {
   const library = new Cite(readFileSync(bibPath, 'utf8'))
   const known = new Map<string, object>(library.data.map((e) => [e.id, e]))
 
   const order = citedInOrder.filter((key) => {
     if (known.has(key)) return true
-    warn(`文献 "${key}" が ${bibPath} に見つかりません`)
+    onUnknown(key)
     return false
   })
 

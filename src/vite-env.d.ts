@@ -27,6 +27,12 @@ declare module 'virtual:bibliography' {
   export const entries: Record<string, { html: string; text: string }>
 }
 
+/** 原稿の警告(開発時に画面へ出す。build では失敗扱い) */
+declare module 'virtual:deck-diagnostics' {
+  const warnings: { file: string; line?: number; message: string }[]
+  export default warnings
+}
+
 declare module 'reveal.js/plugin/notes/notes.esm.js' {
   const RevealNotes: () => unknown
   export default RevealNotes

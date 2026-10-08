@@ -5,6 +5,7 @@ import Menu from './components/Menu'
 import { slides, groupStacks, type SlideEntry } from './deck/slides'
 import { mdxComponents } from './deck/mdx-components'
 import { watchOverflow } from './deck/overflow'
+import DevDiagnostics from './deck/DevDiagnostics'
 
 type RevealApi = NonNullable<ReturnType<typeof useReveal>>
 
@@ -71,6 +72,7 @@ export default function App() {
         ),
       )}
       <Menu />
+      {import.meta.env.DEV && <DevDiagnostics />}
     </Deck>
   )
 }

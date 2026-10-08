@@ -163,9 +163,42 @@
 
 /* PDF出力(?print-pdf)時はサイドバーを隠す(menu は .reveal の外なので個別指定) */
 @media print {
-  .deck-menu {
+  .deck-menu,
+  .deck-diagnostics {
     display: none !important;
   }
+}
+
+/* 開発時の原稿警告の一覧 (deck/DevDiagnostics.tsx) */
+.deck-diagnostics {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  z-index: 60;
+  max-width: 480px;
+  font: 13px/1.5 'Noto Sans JP', sans-serif;
+  background: #fff8e6;
+  border: 1px solid #e0a800;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+}
+.deck-diagnostics button {
+  display: block;
+  width: 100%;
+  padding: 6px 10px;
+  text-align: left;
+  font: inherit;
+  font-weight: bold;
+  color: #8a5a00;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.deck-diagnostics ul {
+  margin: 0;
+  padding: 0 10px 8px 26px;
+}
+.deck-diagnostics code {
+  font-family: var(--font-code);
 }
 
 /* KaTeX の display 数式を左寄せ + 余白(旧 mjx-container 相当) */
