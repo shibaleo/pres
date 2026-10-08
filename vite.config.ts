@@ -7,7 +7,7 @@ import tailwindcss from '@tailwindcss/vite'
 import { viteSingleFile } from 'vite-plugin-singlefile'
 import type { Plugin } from 'vite'
 import { fileURLToPath } from 'node:url'
-import { bibliography } from './vite/citations'
+import { deck } from './vite/deck/plugin'
 
 /**
  * @font-face の src から woff2 以外(woff/ttf/eot/svg)を削り、
@@ -51,13 +51,16 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     woff2OnlyFonts(),
-    // \cite{key} を <Cite> に変換し、デッキ全体で通し番号にする(詳細は vite/citations.ts)。
-    // ソース文字列を書き換えるので mdx より前に置く。
-    bibliography({ bib: 'src/references.bib', slidesDir: 'src/slides' }),
+    // スライド原稿の読み込み: `---` での分割、Beamer 風記法(\begin{theorem}, \pause, \label/\ref,
+    // \cite …)の MDX への変換、デッキ全体の通し番号(詳細は vite/deck/)。mdx より前に置く。
+    deck({ slidesDir: 'src/slides', bib: 'src/references.bib' }),
     {
       enforce: 'pre',
       ...mdx({
         remarkPlugins: [remarkMath],
+        // 入力は deck プラグインが変換した仮想ファイル(実在しない・行位置もずれる)なので、
+        // ソースマップは出さない(出すと dev で "points to missing source files" 警告になる)
+        SourceMapGenerator: undefined,
         rehypePlugins: [rehypeKatex],
       }),
     },

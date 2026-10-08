@@ -39,8 +39,9 @@ export default function App() {
         center: false,
         slideNumber: 'c/t',
         hash: true,
-        // 見出し・定理の通し番号は CSS カウンタで振る。reveal は既定で前後3枚より遠い
+        // 見出しの通し番号は CSS カウンタで振る。reveal は既定で前後3枚より遠い
         // スライドを display:none にし、カウンタがそこを数えなくなるので全スライドを残す。
+        // (定理・式の番号はビルド時に振るので、この設定には依存しない)
         viewDistance: 1000,
         mobileViewDistance: 1000,
       }}

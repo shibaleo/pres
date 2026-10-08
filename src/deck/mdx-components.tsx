@@ -3,6 +3,8 @@ import { Fragment as RevealFragment } from '@revealjs/react'
 import Frame from '../components/Frame'
 import Notes from '../components/Notes'
 import { Cite, Bibliography } from '../components/Cite'
+import { Ref, Equation } from '../components/Ref'
+import { Overlay, OverlaySteps } from '../components/Overlay'
 import { Theorem, Lemma, Proposition, Corollary, Definition, Proof } from '../components/Theorem'
 import { Center, Cols, Col, Byline, Note, Code } from '../components/layout'
 
@@ -43,4 +45,9 @@ export const mdxComponents = {
   // 文献(本文の \cite{key} は自動で <Cite> になる)
   Cite,
   Bibliography,
+  // 原稿の Beamer 風記法の変換先(vite/deck/scan.ts が生成する。手で書いてもよい)
+  Ref, //          \ref{…} / \eqref{…}
+  Equation, //     \begin{equation} / \label 付きの $$…$$
+  Overlay, //      \pause / <2-> / \only<2>{…} / \uncover<2->{…}
+  OverlaySteps,
 }

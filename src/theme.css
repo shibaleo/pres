@@ -93,7 +93,7 @@
    CSS カウンタは display:none の要素を数えないため、App.tsx で viewDistance を広げて
    全スライドを表示状態にしている(でないと遠いスライドの番号がずれる)。 */
 .reveal .slides {
-  counter-reset: sec thm;
+  counter-reset: sec;
 }
 .reveal .slides section h2::before {
   counter-increment: sec;
@@ -178,7 +178,7 @@
 }
 
 /* ---------- 定理環境 (components/Theorem.tsx) ----------
-   Theorem / Lemma / Proposition / Corollary / Definition で 1 本の通し番号 */
+   番号はビルド時に振る(vite/deck/plugin.ts)。ここは見た目だけ */
 .reveal .thm {
   margin: 0.3em 0;
   padding: 0.2em 0.6em 0.3em;
@@ -193,25 +193,29 @@
   font-family: var(--font-heading);
   font-weight: bold;
 }
-.reveal .thm-num::after {
-  counter-increment: thm;
-  content: counter(thm);
-}
 .reveal .thm-body > :first-child {
   margin-top: 0.2em;
 }
 .reveal .thm-body > :last-child {
   margin-bottom: 0;
 }
+/* 証明: 「Proof.」と本文の 1 段落目を同じ行に続け、∎ は右下に置く(Beamer と同じ) */
 .reveal .thm-proof {
+  position: relative;
   margin: 0.3em 0;
+  padding-right: 1.2em;
 }
 .reveal .thm-proof .thm-head {
   font-style: italic;
   font-weight: normal;
 }
+.reveal .thm-proof > p:first-of-type {
+  display: inline;
+}
 .reveal .thm-proof .qed {
-  float: right;
+  position: absolute;
+  right: 0;
+  bottom: 0;
 }
 
 /* ---------- 文献 (components/Cite.tsx) ---------- */
@@ -241,4 +245,25 @@
   font-size: 0.5em;
   color: #fff;
   background: red;
+}
+
+/* ---------- 段階表示 (components/Overlay.tsx。Beamer の \pause / <2-> / \only など) ---------- */
+/* ステップ数を揃えるための見えない fragment */
+.reveal .overlay-step {
+  display: none !important;
+}
+/* \only: 非表示の間は場所も取らない(\uncover は場所を残す = reveal の既定) */
+.reveal .fragment.only:not(.visible),
+.reveal .fragment.only.fade-out.visible {
+  display: none;
+}
+/* 箇条書き `- <2-> …`: 項目が出るまで行頭記号も隠す */
+.reveal li:has(> .ov-li:not(.visible))::marker,
+.reveal li:has(> p > .ov-li:not(.visible))::marker {
+  color: transparent;
+}
+
+/* ---------- 相互参照・番号付きの式 (components/Ref.tsx) ---------- */
+.reveal .equation .katex-display {
+  margin: 0.3em 0;
 }

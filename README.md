@@ -14,7 +14,7 @@ reveal.js プレゼンテーション。**MDX + TSX** で執筆し、可視化�
 | ビルド | Vite 6 + `@mdx-js/rollup` |
 | スライド | reveal.js 5 (`@revealjs/react`) |
 | スタイル | Tailwind CSS v4 |
-| 数式 | KaTeX (`remark-math` + `rehype-katex`) |
+| 数式 | KaTeX (`remark-math` + `rehype-katex`)、LaTeX 風の定理環境・相互参照 |
 | 文献 | BibTeX (`src/references.bib`) + citation-js（CSL: Vancouver、デッキ全体で通し番号） |
 | 図 | D3 / JSXGraph を React コンポーネント化 |
 | 配布 | `vite-plugin-singlefile` で単一 HTML 化、フォントは subset woff2 |
@@ -44,17 +44,19 @@ src/
   main.tsx             エントリ。reveal/KaTeX/テーマCSS を読み込む
   theme.css            Tailwind v4 エントリ + デザイントークン + @font-face + reveal 上書き
   references.bib       BibTeX 文献データ
-  slides/              各スライド(MDX)。パスの自然順がそのまま表示順
+  slides/              スライド原稿(MDX)。パスの自然順がそのまま表示順
     10-abstract/  20-body/  30-conclusion/
-  deck/                デッキの仕組み
-    slides.ts          slides/**/*.mdx の自動登録・縦スライドのまとめ
-    order.ts           並び順の定義(表示と文献番号で共有)
+  deck/                デッキの仕組み(ブラウザ側)
+    slides.ts          スライド一覧の受け取り・縦スライドのまとめ
+    order.ts           並び順の定義(表示と番号付けで共有)
     mdx-components.tsx import なしで使える部品の一覧
     overflow.ts        開発時のはみ出し検出
   components/          可視化・UI コンポーネント
     BarChart / ConnectedScatterplot / Globe / FourPoints / LogSpiral
     Frame              色付きフレーム(旧 .frame-* の代替)
-    Theorem            定理・定義・証明(通し番号)
+    Theorem            定理・定義・証明
+    Ref                \ref / \eqref と番号付きの式
+    Overlay            Beamer の段階表示(\pause, <2-> …)の変換先
     Cite               文献引用と文献リスト
     Notes              スピーカーノート
     Menu               左下ハンバーガー → スライド一覧サイドバー
@@ -63,42 +65,89 @@ src/
   img/                 アイコン画像
 fonts-src/             サブセット元のフルフォント(.ttf)。ビルド成果物には含めない
 scripts/subset-fonts.mjs  フォントサブセット化スクリプト
-vite/citations.ts      文献の通し番号付け(remark プラグイン + 仮想モジュール)
+vite/deck/             原稿の読み込み(ビルド側)
+  scan.ts              `---` での分割と、Beamer 風記法 → MDX の変換(純粋関数)
+  plugin.ts            Vite プラグイン。デッキ全体の通し番号(定理・式・文献)
+  bibliography.ts      BibTeX を CSL(Vancouver)で整形
 ```
 
 ## 執筆方法
+
+記法は 3 層です。**本文は Markdown、構造と数学は Beamer / LaTeX、図や自由なレイアウトは MDX(JSX)**。
+Beamer 風の記法はすべて JSX の部品に変換されるので、同じことを JSX でも書けます。
 
 ### スライドを追加する
 `src/slides/` 以下に `.mdx` を置くだけで自動登録されます。並び順はパスの自然順なので、
 `20-body/15-new.mdx` のように番号で位置を決めます（`App.tsx` の編集は不要）。
 
-スライドごとの設定は MDX 内で export します（省略可）。`stack` 以外は reveal の `<Slide>` にそのまま渡ります。
+**1 ファイルに複数枚**書くときは `---` だけの行で区切ります（区切りが無ければ 1 枚）。
+`import` はファイル内の全スライドで共有されます。
+
+```mdx
+import Globe from '@/components/Globe'
+
+## 1 枚目
+…
+---
+## 2 枚目
+<Globe size={300} />
+```
+
+- Markdown の区切り線 `---` は使えなくなるので、横線が要るときは `***` を使います。
+- 見出しは `#` / `##` で書きます（`タイトル` の次行に `---` を書く setext 見出しは区切りと解釈されます）。
+
+スライドごとの設定は MDX 内で export します（省略可）。複数枚のファイルでは、書いた区画のスライドだけに効きます。
+`stack` 以外は reveal の `<Slide>` にそのまま渡ります。
 
 ```mdx
 export const slide = { stack: 'jsxgraph', backgroundColor: '#fafafa' }
 ```
 
-- **縦スライド**: 連続するファイルに同じ `stack` を書くと、縦方向にまとまります（↓キーで移動）。
+- **縦スライド**: 連続するスライドに同じ `stack` を書くと、縦方向にまとまります（↓キーで移動）。
 - 自分の部品や画像は `@/components/...`、`@/img/...` で import できます（フォルダの深さに依存しない）。
 
-### import なしで使える部品
-`src/deck/mdx-components.tsx` に登録した部品は、どのスライドでも import せずに書けます。
+### 定理環境（LaTeX と同じ記法）
+```latex
+\begin{theorem}[Jensen]\label{thm:jensen}
+$f$ が凸なら $f(\mathbb{E}X) \le \mathbb{E}f(X)$
+\end{theorem}
 
-| 部品 | 用途 |
+\begin{proof}
+…
+\end{proof}
+```
+
+- 環境: `theorem` `lemma` `proposition` `corollary` `definition`（1 本の通し番号）、`proof`（番号なし・末尾に ∎）
+- `[…]` は括弧書きの名前（`proof` では見出し語の置き換え）。名前の中に数式は書けません。
+- `\begin` / `\end` は行単独で書きます。
+- JSX でも書けます: `<Theorem title="Jensen" id="thm:jensen">…</Theorem>`。見出し語を変えるときは `heading="定理"`。
+
+### 相互参照と番号付きの式
+| 書き方 | 表示 |
 |---|---|
-| `<Fragment>` | 段階表示（次へ進むと現れる）。既定はブロック要素で、文中では `as="span"` |
-| `<Notes>` | スピーカーノート。`S` キーの発表者ビューにだけ出る |
-| `<Theorem>` `<Lemma>` `<Proposition>` `<Corollary>` `<Definition>` | 定理環境。1 本の通し番号。`title="..."` で名前、`label="定理"` で見出し語を変更 |
-| `<Proof>` | 証明（番号なし、末尾に ∎） |
-| `<Frame color="blue" title="...">` | 色付きフレーム |
-| `<Cols>` `<Col>` `<Center>` `<Byline>` `<Note>` `<Code>` | レイアウト |
-| `<Bibliography />` | 文献リスト |
+| 環境や式の中に `\label{key}` | （参照先として登録） |
+| `\ref{key}` | `2`（定理の番号） |
+| `\eqref{key}` | `(1)`（式の番号） |
+| `\begin{equation}…\end{equation}` | 番号付きの別行立て数式 |
+| `$$…\label{key}$$` | `\label` があれば番号付き |
+| `\begin{equation*}` / `\begin{align*}` | 番号なし |
 
-個別の図（`Globe` など）は使うスライドで明示的に import します。
+番号は**ビルド時にデッキ全体の出現順**で振るので、スライドを並べ替えても参照が追従します（定理と式は別の通し番号）。
+参照先が無い `\ref` は LaTeX と同じく `??` になり、ビルド時に警告します。番号付きの `align` は未対応です（番号なしで表示）。
 
-### 数式
-インライン `$...$`、ディスプレイ `$$...$$`（KaTeX）。可換図式は `\begin{CD}...\end{CD}`。
-※ KaTeX は `\style` の任意 CSS 変形（斜め矢印の回転など）には非対応。
+### 段階表示（Beamer の overlay → reveal の fragment）
+| 書き方 | 意味 |
+|---|---|
+| `\pause`（行単独） | 以降を次のステップで表示。環境や `<Col>` などのブロックの中ではそのブロックの終わりまで |
+| `- <2-> 項目` | 箇条書きの項目に overlay を指定（行頭記号も一緒に隠れる） |
+| `- <+-> 項目` | 次のステップから（項目を 1 つずつ出す） |
+| `\uncover<2->{…}` / `\visible` / `\onslide` | 指定ステップで表示。非表示の間も場所は残る |
+| `\only<2>{…}` | 指定ステップだけ表示。非表示の間は場所も消える |
+| `\begin{theorem}<2->` | 環境ごと段階表示 |
+| `<Fragment>…</Fragment>` | reveal の fragment をそのまま使う（Beamer 記法のステップの後に出る） |
+
+指定は Beamer と同じく `<2->`（2 枚目から）、`<2>`（2 枚目だけ）、`<2-3>`（範囲）、`<-3>`（3 枚目まで）、`<+->`。
+ステップ数も Beamer と揃えています（何も出ないステップが間にあってもそのまま 1 ステップになる）。
 
 ### 文献の引用
 `src/references.bib` にエントリを追加し、本文で LaTeX と同じく `\cite{key}` と書くと番号になります。
@@ -112,12 +161,28 @@ export const slide = { stack: 'jsxgraph', backgroundColor: '#fafafa' }
 番号は**デッキ全体での初出順**で、`<Bibliography />` を置いた箇所に引用された文献だけが番号順に並びます。
 番号にマウスを乗せると文献が表示されます。未登録の key はビルド時に警告し、本文では `[?]` になります（番号は消費しない）。
 
-MDX では `{…}` が JS 式になるため、`\cite` は MDX が解釈する前にソース上で `<Cite>` へ置き換えています。
-コードブロック・インラインコード・テンプレート文字列（`` `…` ``）の中は置き換えないので、記法の説明はそこに書けます。
+### その他の部品（import なしで使える）
+| 部品 | 用途 |
+|---|---|
+| `<Notes>` | スピーカーノート。`S` キーの発表者ビューにだけ出る |
+| `<Frame color="blue" title="...">` | 色付きフレーム（gray / red / blue / gold / green / purple） |
+| `<Cols>` `<Col>` `<Center>` `<Byline>` `<Note>` `<Code>` | レイアウト |
+
+一覧は `src/deck/mdx-components.tsx`。個別の図（`Globe` など）は使うスライドで明示的に import します。
+
+### 記法が置き換えられない場所
+MDX では `{…}` が JS 式、`<…` が JSX になるため、Beamer 風の記法は MDX が解釈する前にソース上で置き換えています。
+**コードブロック・インラインコード・テンプレート文字列（`` `…` ``）・数式の中は置き換えない**ので、
+記法そのものを説明したいときはコードの中に書けます。
+
+### 数式
+インライン `$...$`、ディスプレイ `$$...$$`（KaTeX）。可換図式は `\begin{CD}...\end{CD}`。
+※ KaTeX は `\style` の任意 CSS 変形（斜め矢印の回転など）には非対応。
 
 ### はみ出しの検出（開発時のみ）
 `npm run dev` 中、スライドの高さ（700px）を超えたスライドには赤い破線枠と「はみ出し」バッジが付き、
 コンソールにファイルパスと超過量が出ます。本番ビルドには含まれません。
+スライド原稿を編集すると、番号をデッキ全体で振り直すためページ全体を再読み込みします（表示中のスライド位置は保持）。
 
 ### 図（インタラクティブ可視化）
 `src/components/` に React コンポーネントとして追加。D3 は「React が DOM を持ち D3 は計算」、
@@ -141,4 +206,4 @@ URL に `?print-pdf` を付けて開き、ブラウザの印刷 → PDF に保�
 
 - `@revealjs/react` は 0.x（pre-1.0）。API が変わる可能性あり。
 - スライド内に収まらない量を書くと reveal は溢れを切る（開発時は上記の警告で気づける。分割で対応）。
-- 見出し・定理の番号は CSS カウンタで振るため、reveal の `viewDistance` を広げて全スライドを常に描画している。スライドが数百枚になると重くなる可能性がある。
+- 見出しの番号は CSS カウンタで振るため、reveal の `viewDistance` を広げて全スライドを常に描画している。スライドが数百枚になると重くなる可能性がある（定理・式・文献の番号はビルド時に振るので影響しない）。
