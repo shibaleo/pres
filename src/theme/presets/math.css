@@ -1,16 +1,19 @@
-/* プリセット: 数学の資料向け。欧文と数字を数式(MathJax)と同じ系統の Computer Modern にする。
+/* プリセット: 数学の資料向け。欧文と数字を、数式(MathJax の TeX フォント)と同じ系統の
+   New Computer Modern にする。Computer Modern を現代的に組み直した TeX の標準のフォントで、
+   本文には Computer Modern の細さを和らげた Book の太さを使う(LaTeX でこのフォントを読み込んだときの既定)。
+   ライセンスは GUST Font License(fonts-src/NewCM-License.txt)。
    使うには src/custom.css で @import './theme/presets/math.css'; する */
 @font-face {
-  font-family: 'Computer Modern';
-  src: url('../../fonts/cmu.serif-roman.woff2') format('woff2');
+  font-family: 'New Computer Modern';
+  src: url('../../fonts/NewCM10-Book.woff2') format('woff2');
 }
-/* 数字だけ Computer Modern にする(unicode-range で数字にだけ当たる別名)。見出しの数字にも効かせたいときは
+/* 数字だけ New Computer Modern にする(unicode-range で数字にだけ当たる別名)。見出しの数字にも効かせたいときは
    --font-heading の先頭にも 'number' を足す */
 @font-face {
   font-family: 'number';
-  src: url('../../fonts/cmu.serif-roman.woff2') format('woff2');
+  src: url('../../fonts/NewCM10-Book.woff2') format('woff2');
   unicode-range: U+0030-0039;
 }
 :root {
-  --font-body: 'number', 'Computer Modern', 'Noto Sans JP', sans-serif;
+  --font-body: 'number', 'New Computer Modern', 'Noto Serif JP', serif;
 }

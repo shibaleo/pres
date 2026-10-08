@@ -54,7 +54,8 @@ const glyphs = [...new Set([...base, ...extra, ...text])]
   .join('')
 
 const FONTS = [
-  ['cmu.serif-roman.ttf', 'cmu.serif-roman.woff2'],
+  ['NewCM10-Book.otf', 'NewCM10-Book.woff2'],
+  ['NotoSerifJP-VariableFont_wght.ttf', 'NotoSerifJP.woff2'],
   ['NotoSansJP-VariableFont_wght.ttf', 'NotoSansJP.woff2'],
   ['GenShinGothic-Monospace-Regular.ttf', 'GenShinGothic-Monospace.woff2'],
 ]

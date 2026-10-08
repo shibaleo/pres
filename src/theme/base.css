@@ -41,6 +41,11 @@
 
 /* ========== 2. スライドの組版 ========== */
 
+/* 本文の太さ(reveal の white テーマは normal を直に書いているので、ここで上書きする) */
+.reveal {
+  font-weight: var(--body-weight);
+}
+
 /* 縦スライドの束(.stack)ではなく、中身を持つ 1 枚 1 枚に余白を付ける */
 .reveal .slides section:not(.stack) {
   box-sizing: border-box;
@@ -109,6 +114,12 @@
   font-size: calc(1em / var(--type-ratio));
   line-height: inherit;
   vertical-align: baseline;
+}
+/* reveal の white テーマは .reveal small * { vertical-align: top } で中身をすべて上端揃えにする。
+   そのままだと文中の数式(mjx-container)がベースラインから浮くので、要素ごとの既定の揃え方に戻す
+   (数式の SVG は MathJax が自分で vertical-align を付けている。<sup> などはブラウザの既定のまま) */
+.reveal small * {
+  vertical-align: revert;
 }
 /* ページ番号: 右上に置き、帯と同じ色の地にする(帯のあるスライドでは帯に溶け込み、無いスライドでは小さな札になる) */
 .reveal .slide-number {

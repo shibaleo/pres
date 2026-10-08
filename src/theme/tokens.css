@@ -4,9 +4,12 @@
    token 名は Tailwind 組込みユーティリティ(font-bold 等)と衝突しない名前にする。 */
 @theme static {
   /* 書体の役割 */
-  /* 本文: ゴシック(画面では明朝より線が太く読みやすい)。数学などの用途別の書体は presets/ で差し替える */
-  --font-body: 'Noto Sans JP', sans-serif;
-  /* 見出しと強調: 本文と同じゴシックの中太で際立たせる。
+  /* 本文: 明朝(Noto Serif JP)。このリポジトリの当初からの指定。数学などの用途別の書体は presets/ で差し替える */
+  --font-body: 'Noto Serif JP', serif;
+  /* 本文の太さ。明朝は 400 だと画面では細く見えやすい。Noto Serif JP は可変フォントなので 200〜900 の任意の値を出せる
+     (New Computer Modern など太さの軸の無い書体は変わらない) */
+  --body-weight: 400;
+  /* 見出しと強調: ゴシック(Noto Sans JP)は見出しと強調にだけ使い、明朝の本文から際立たせる(和文組版の慣習)。
      太字(700)は重すぎるので中間の 500。Noto Sans JP は可変フォントなので 100〜900 の任意の太さを出せる */
   --font-heading: 'Noto Sans JP', sans-serif;
   --heading-weight: 500;

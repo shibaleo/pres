@@ -66,8 +66,8 @@ src/
     index.css          入口(tokens → base → custom の順に読み込む)
     tokens.css         トークンの既定値(色・書体・文字の段階・間隔)
     base.css           汎用の規則(トークンから導いた値だけを使う)
-    fonts.css          土台の書体(Noto Sans JP・等幅)
-    presets/math.css   数学向けのプリセット(欧文と数字を Computer Modern に)
+    fonts.css          土台の書体(本文の明朝 Noto Serif JP・見出しと強調のゴシック Noto Sans JP・等幅)
+    presets/math.css   数学向けのプリセット(欧文と数字を New Computer Modern に)
   custom.css           クローンごとの特化(テンプレートは中身を書かない)
   deck/
     mdx-components.tsx 原稿から import なしで使える部品の一覧
@@ -92,7 +92,7 @@ vite/
     mdast.ts           構文木ノードへの変換
     transform.ts       意味づけ(スライド分割・環境・節番号と定理番号・参照・引用・段階表示)
     rehype-math-errors.ts  MathJax の数式エラーを原稿の位置で報告
-fonts-src/             サブセット元のフルフォント(.ttf)。ビルド成果物には含めない
+fonts-src/             サブセット元のフルフォント(.ttf / .otf)とライセンス。ビルド成果物には含めない
 scripts/subset-fonts.mjs  フォントサブセット化スクリプト
 ```
 
@@ -275,7 +275,7 @@ JSXGraph は `useEffect` 内で `initBoard` → クリーンアップで `freeBo
 
 ```css
 /* src/custom.css */
-@import './theme/presets/math.css';  /* 数学向け: 欧文と数字を Computer Modern に */
+@import './theme/presets/math.css';  /* 数学向け: 欧文と数字を New Computer Modern に */
 
 :root {
   --color-brand: #0a7d5a;            /* トークンの一覧と既定値は src/theme/tokens.css */
@@ -290,7 +290,7 @@ JSXGraph は `useEffect` 内で `initBoard` → クリーンアップで `freeBo
 
 日本語フォントは元は約 28MB。実際に使う文字だけに絞ることで合計約 600KB(woff2) にしています。
 `scripts/subset-fonts.mjs` が `src/**/*.{mdx,tsx,ts,bib}` を走査して使用文字を集め、
-`fonts-src/*.ttf` → `src/fonts/*.woff2` を生成します。
+`fonts-src/*.{ttf,otf}` → `src/fonts/*.woff2` を生成します。
 
 **テキスト（特に日本語）を増やしたら `npm run subset` を実行**して `src/fonts/*.woff2` を更新・コミットしてください。
 （`build` では自動実行されます）

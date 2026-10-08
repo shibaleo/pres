@@ -49,9 +49,16 @@ function reloadOnDeckSources(): Plugin {
   return {
     name: 'reload-on-deck-sources',
     handleHotUpdate({ file, server, modules }) {
-      const included = /\.mdx?$/.test(file) && modules.length === 0
+      // \input で取り込むファイル = JS から import されていない .mdx / .md。
+      // modules が空とは限らない: Tailwind が class 名を探すために .mdx を CSS の依存として登録するので、
+      // ブラウザが CSS を読んだ後は、このファイル自身が「CSS から読まれるモジュール」として入ってくる。
+      // それを取り込み元と見なさないと、CSS だけ入れ替わってデッキが古いままになる
+      const importedByJs = modules.some((m) => m.file === file && [...m.importers].some((i) => !/\.css($|\?)/.test(i.id ?? '')))
+      const included = /\.mdx?$/.test(file) && !importedByJs
       if (!file.endsWith('.bib') && !included) return
-      server.moduleGraph.invalidateAll()
+      // Vite 6 では変換結果を環境(client など)ごとに持つ。互換用の server.moduleGraph.invalidateAll() では
+      // それが消えず、読み直しても古い原稿のままになるので、環境ごとに消す
+      for (const env of Object.values(server.environments)) env.moduleGraph.invalidateAll()
       server.ws.send({ type: 'full-reload' })
       return []
     },

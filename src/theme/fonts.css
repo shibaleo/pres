@@ -2,6 +2,11 @@
    Noto は可変フォント(wght 軸。サブセットでも軸は残る)なので、太さの範囲を宣言して
    ブラウザの疑似太字ではなくフォント自身の太さを使わせる */
 @font-face {
+  font-family: 'Noto Serif JP';
+  src: url('../fonts/NotoSerifJP.woff2') format('woff2');
+  font-weight: 200 900;
+}
+@font-face {
   font-family: 'Noto Sans JP';
   src: url('../fonts/NotoSansJP.woff2') format('woff2');
   font-weight: 100 900;
