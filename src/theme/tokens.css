@@ -1,0 +1,50 @@
+/* トークン: デッキの見た目を決める値の一覧(既定値)。
+   クローンで変えるときはこのファイルではなく src/custom.css の :root で上書きする。
+   static: ユーティリティから使われていない変数も出力する(base.css が var() で直接参照するため)。
+   token 名は Tailwind 組込みユーティリティ(font-bold 等)と衝突しない名前にする。 */
+@theme static {
+  /* 書体の役割 */
+  /* 本文: ゴシック(画面では明朝より線が太く読みやすい)。数学などの用途別の書体は presets/ で差し替える */
+  --font-body: 'Noto Sans JP', sans-serif;
+  /* 見出しと強調: 本文と同じゴシックの中太で際立たせる。
+     太字(700)は重すぎるので中間の 500。Noto Sans JP は可変フォントなので 100〜900 の任意の太さを出せる */
+  --font-heading: 'Noto Sans JP', sans-serif;
+  --heading-weight: 500;
+  --font-code: 'GenShinGothic Monospace', monospace;
+  --font-ui: 'Noto Sans JP', sans-serif; /* スライドの外の UI */
+
+  /* 色の役割 */
+  --color-brand: #4360f4; /*   アクセント: スライドの題の帯・見出し・リンク・印 */
+  --color-ink: #333631; /*     本文 */
+  --color-muted: #6b6f68; /*   従の情報(氏名・日付など) */
+  --color-canvas: #fff; /*     地 */
+  --color-surface: #ebebeb; /* パネルの面 */
+  /* パネルの見出しの下線の色(<Frame color>)。明るさと鮮やかさを揃えた OKLCH
+     (色の違いが重要度の違いに見えないように) */
+  --color-frame-gray: oklch(0.55 0 0);
+  --color-frame-red: oklch(0.6 0.19 30);
+  --color-frame-blue: var(--color-brand);
+  --color-frame-gold: oklch(0.75 0.15 85);
+  --color-frame-green: oklch(0.58 0.14 150);
+  --color-frame-purple: oklch(0.52 0.17 310);
+  /* 選択中を示す面(メニュー) = アクセント色を地の色にこの割合で混ぜた色 */
+  --tint: 90%;
+
+  /* 文字: 本文の大きさ(スライドの論理座標の px)と段階の比。
+     本文はスライドの高さ(700)の 4%。Beamer の既定(11pt / 96mm)と同じ割合で、
+     一般的なスライドソフトの既定(4〜5%)の範囲。表示の大きさはウィンドウに比例する */
+  --text-base: 28px;
+  --type-ratio: 1.25;
+  /* 行間: 和文は字の高さの半分弱を空ける(日本語組版の要件 JLReq の目安 50〜100% の下限寄り。
+     数式の多い内容で 1 枚に入る量とのつり合いを取る) */
+  --leading: 1.4;
+  --leading-tight: 1.2;
+
+  /* 間隔と形 */
+  --space: 0.5em; /*   スライドの中の間隔の単位 */
+  --slide-pad: 40px; /* スライドの内側の余白(論理座標の px。reveal が全体を縮小する) */
+  --radius: 0; /*      パネルの角(四角) */
+  --rule: 3px; /*      アクセントの線の太さ */
+  --ui-space: 8px; /*  スライドの外の UI の間隔の単位(画面の px) */
+  --ui-idle: 0.3; /*   操作していないときの UI(矢印・メニューのボタン)の不透明度 */
+}

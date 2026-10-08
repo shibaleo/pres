@@ -8,7 +8,8 @@
   - LaTeX（`\begin{theorem}` などの環境、`\label` / `\ref` / `\eqref`、`\cite`、`\input`、数式）と
     CTAN の標準パッケージ（例: import パッケージの `\import` / `\subimport`）。挙動もそのパッケージの仕様に合わせる
   - Beamer（`\pause`、`\only` / `\uncover` / `\visible` / `\onslide` とその overlay 指定 `<2->` など、`\begin{env}<2->`）
-  - Markdown（CommonMark / GFM）と MDX（JSX・import / export）
+  - Markdown は CommonMark（どの Markdown 処理系にも共通する最小の範囲）だけ。GFM などの方言は使わない。
+    それを超えるもの（表など）は MDX（JSX・import / export）で書く
   - reveal.js の慣習（`---` で横、`--` で縦のスライド区切り）
 - 標準を元にした「似た書き方」や「便利な省略形」も独自記法に含める。
   （過去の失敗例: Beamer の `\item<2->` を元に作った箇条書きの `- <2-> 項目`。削除済み）
@@ -23,5 +24,9 @@
   MathJax、rehype-citation など）。自作するのは、確立したものが存在しない部分だけにし、その理由を残す。
 - 新しい記法の処理を作るときは unified の標準の作り方（micromark の構文拡張 + 構文木の変換）に従う。
   原稿の文字列を事前に置き換える方式は使わない。
+- このリポジトリはテンプレートで、土台は用途（数学・業務マニュアルなど）に特化しない。
+  見た目の変更は `src/theme/tokens.css`（トークン）と `src/theme/base.css`（汎用の規則）に入れ、
+  特定の用途に寄った見た目は `src/theme/presets/` に置く。`src/custom.css` は各クローンのもので、
+  テンプレート側からは中身を書かない。
 - 不完全な原稿から成果物を作らない。誤りは補わずに、原稿の位置付きでエラーとして報告する
   （報告のために解析を続けるのはよいが、補って動かすことはしない）。

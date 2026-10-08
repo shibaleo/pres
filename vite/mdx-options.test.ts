@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'vitest'
+import { mkdtempSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { compile } from '@mdx-js/mdx'
 import { VFile } from 'vfile'
 import { mdxOptions } from './mdx-options'
@@ -49,6 +52,24 @@ describe('ビルド設定(結合)', () => {
     expect(out).toContain('href: "#bib-arnold2012",\n')
     const links = [...out.matchAll(/href: "#bib-(\w+)",\s*children: "(\d)"/g)].map((m) => `${m[1]}=${m[2]}`)
     expect(links).toEqual(['arnold2012=1', 'arnold2012=1', 'nakajima2020=2'])
+  })
+
+  it('\\input で取り込んだ JSX も主ファイルに直接書いたときと同じに扱う', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mdx-input-'))
+    const table = '<table>\n<tbody>\n<tr><td>a</td></tr>\n<tr><td>b</td></tr>\n</tbody>\n</table>\n'
+    writeFileSync(join(dir, 'part.mdx'), table)
+    const compileAt = async (value: string) => {
+      const out = String(
+        await compile(new VFile({ path: join(dir, 'main.mdx'), value }), mdxOptions({ bibliography: 'src/references.bib', strict: false })),
+      )
+      return out.slice(out.indexOf('function _createMdxContent'))
+    }
+    const included = await compileAt('\\input{part}')
+    // 行ごとの JSX を <p> で包まない。明示的に書いた JSX(<table> など)は components の差し替えを受けない(MDX の規則)
+    expect(included).not.toContain('_components.p')
+    expect(included).toMatch(/_jsxs?\("table"/)
+    // 違いは取り込んだスライドに付く出典(data-slide-file)だけ
+    expect(included.replace(/\s*"data-slide-file": "part\.mdx",/, '')).toBe(await compileAt(table))
   })
 
   it('本番(strict)では警告で失敗する', async () => {

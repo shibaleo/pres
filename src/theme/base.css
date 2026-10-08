@@ -1,104 +1,21 @@
-/* デッキの見た目はすべてこのファイルに置く。部品(components/)は意味の class を出すだけ。
+/* デッキの汎用の規則。部品(components/)は意味の class を出すだけで、見た目はここで決める。
+   用途(数学・業務マニュアルなど)に特化した見た目はここに入れず、presets/ と src/custom.css で足す。
 
-   見た目を変えるときは「2. トークン」だけを変える。3 以降の規則はトークンから導いた値だけを使い、
-   個別の数値(0.7em など)を書かない。概念は次の 4 つ:
+   規則はトークン(tokens.css)から導いた値だけを使い、個別の数値(0.7em など)を書かない。概念は次の 4 つ:
      - 役割の色と書体 … 本文 / 見出し / アクセント / 補足 / 地 / 面
      - 文字の段階     … 本文を 1 とし、比 --type-ratio の累乗で大小を決める
      - 間隔の単位     … スライドの中は --space、外の UI は --ui-space の倍数だけを使う
-     - パネル         … 囲み(Frame / Note / 定理 / コード)の共通の形。部品ごとに変わるのはアクセント色だけ
+     - パネル         … 囲み(Frame / Note / 定理環境 / コード)の共通の形。面はすべて同じ灰色で、
+                        部品ごとに変わるのは見出しの下線のアクセント色だけ(色は線にだけ使う)
 
    構成:
-     1. Tailwind / フォント
-     2. トークン(ユーザーが調整する値はここだけ)
-     3. reveal テーマ変数(reveal の white テーマが読む --r-*。reveal の標準の作り方)
-     4. スライドの組版
-     5. パネル
-     6. その他の部品
-     7. デッキの外側の UI と開発時の表示 */
+     1. reveal テーマ変数(reveal の white テーマが読む --r-*。reveal の標準の作り方)
+     2. スライドの組版
+     3. パネル
+     4. その他の部品
+     5. デッキの外側の UI と開発時の表示 */
 
-/* ========== 1. Tailwind / フォント ========== */
-
-/* Preflight(リセット) は reveal.js と衝突するため除外し、theme と utilities だけ読み込む */
-@layer theme, components, utilities;
-@import 'tailwindcss/theme.css' layer(theme);
-@import 'tailwindcss/utilities.css' layer(utilities);
-
-/* scripts/subset-fonts.mjs が生成する woff2 サブセット。
-   Noto は可変フォント(wght 軸。サブセットでも軸は残る)なので、太さの範囲を宣言して
-   ブラウザの疑似太字ではなくフォント自身の太さを使わせる */
-@font-face {
-  font-family: 'Computer Modern';
-  src: url('./fonts/cmu.serif-roman.woff2') format('woff2');
-}
-@font-face {
-  font-family: 'Noto Serif JP';
-  src: url('./fonts/NotoSerifJP.woff2') format('woff2');
-  font-weight: 200 900;
-}
-@font-face {
-  font-family: 'Noto Sans JP';
-  src: url('./fonts/NotoSansJP.woff2') format('woff2');
-  font-weight: 100 900;
-}
-@font-face {
-  font-family: 'GenShinGothic Monospace';
-  src: url('./fonts/GenShinGothic-Monospace.woff2') format('woff2');
-}
-/* 数字だけ Computer Modern にする(unicode-range で数字にだけ当たる別名) */
-@font-face {
-  font-family: 'number';
-  src: url('./fonts/cmu.serif-roman.woff2') format('woff2');
-  unicode-range: U+0030-0039;
-}
-
-/* ========== 2. トークン ==========
-   static: ユーティリティから使われていない変数も出力する(この CSS が var() で直接参照するため)。
-   token 名は Tailwind 組込みユーティリティ(font-bold 等)と衝突しない名前にする。 */
-@theme static {
-  /* 書体の役割 */
-  --font-body: 'number', 'Computer Modern', 'Noto Serif JP', serif;
-  /* 見出しと強調: 本文(明朝・セリフ)に対してゴシックの中太で際立たせる。
-     太字(700)は重すぎるので中間の 500。Noto Sans JP は可変フォントなので 100〜900 の任意の太さを出せる */
-  --font-heading: 'Noto Sans JP', sans-serif;
-  --heading-weight: 500;
-  --font-code: 'GenShinGothic Monospace', monospace;
-  --font-ui: 'Noto Sans JP', sans-serif; /* スライドの外の UI */
-
-  /* 色の役割 */
-  --color-brand: #4360f4; /*   アクセント: スライドの題の帯・見出し・リンク・印 */
-  --color-ink: #333631; /*     本文 */
-  --color-muted: #6b6f68; /*   従の情報(氏名・日付など) */
-  --color-canvas: #fff; /*     地 */
-  --color-surface: #eeeeee; /* アクセントの無いパネルの面 */
-  /* パネルのアクセント色(<Frame color>)。明るさと鮮やかさを揃えた OKLCH
-     (色の違いが重要度の違いに見えないように) */
-  --color-frame-gray: oklch(0.55 0 0);
-  --color-frame-red: oklch(0.6 0.19 30);
-  --color-frame-blue: var(--color-brand);
-  --color-frame-gold: oklch(0.75 0.15 85);
-  --color-frame-green: oklch(0.58 0.14 150);
-  --color-frame-purple: oklch(0.52 0.17 310);
-  /* アクセント色の面 = アクセント色を地の色にこの割合で混ぜた色 */
-  --tint: 90%;
-
-  /* 文字: 本文の大きさ(スライドの論理座標の px)と段階の比。
-     本文はスライドの高さ(700)の 4%。Beamer の既定(11pt / 96mm)と同じ割合で、
-     一般的なスライドソフトの既定(4〜5%)の範囲。表示の大きさはウィンドウに比例する */
-  --text-base: 28px;
-  --type-ratio: 1.25;
-  /* 行間: 和文は字の高さの半分ほど空ける(日本語組版の要件 JLReq の目安 50〜100%) */
-  --leading: 1.5;
-  --leading-tight: 1.2;
-
-  /* 間隔と形 */
-  --space: 0.5em; /*   スライドの中の間隔の単位 */
-  --slide-pad: 40px; /* スライドの内側の余白(論理座標の px。reveal が全体を縮小する) */
-  --radius: 6px;
-  --rule: 4px; /*      アクセントの線の太さ */
-  --ui-space: 8px; /*  スライドの外の UI の間隔の単位(画面の px) */
-}
-
-/* ========== 3. reveal テーマ変数 ========== */
+/* ========== 1. reveal テーマ変数 ========== */
 :root {
   --r-background-color: var(--color-canvas);
   --r-main-font: var(--font-body);
@@ -113,16 +30,16 @@
   --r-heading-text-transform: none;
   --r-heading-margin: 0 0 var(--space);
   --r-heading1-size: calc(1em * var(--type-ratio) * var(--type-ratio));
-  /* h2 以下は本文と同じ大きさ。スライドの題は帯で、小見出しは書体と色で区別する */
+  /* h2 はスライドの題(帯)、h3 は区切りのラベル(小さな帯)、h4 は書体と色だけの小見出し */
   --r-heading2-size: 1em;
-  --r-heading3-size: 1em;
+  --r-heading3-size: calc(1em / var(--type-ratio) / var(--type-ratio));
   --r-heading4-size: 1em;
   --r-code-font: var(--font-code);
   --r-link-color: var(--color-brand);
   --r-link-color-hover: color-mix(in srgb, var(--color-ink) 30%, var(--color-brand));
 }
 
-/* ========== 4. スライドの組版 ========== */
+/* ========== 2. スライドの組版 ========== */
 
 /* 縦スライドの束(.stack)ではなく、中身を持つ 1 枚 1 枚に余白を付ける */
 .reveal .slides section:not(.stack) {
@@ -160,6 +77,12 @@
 .reveal h1 {
   text-align: center;
 }
+/* 区切りのラベル(h3。「参考文献」「証明のアイデア」など): スライドの題の帯を小さくしたもの */
+.reveal h3 {
+  padding: 0 var(--space);
+  color: var(--color-canvas);
+  background: var(--color-brand);
+}
 
 /* 節番号(旧 adoc の :sectnums: 相当)。CSS カウンタは display:none の要素を数えないため、
    App.tsx で viewDistance を広げて全スライドを表示状態にしている */
@@ -174,49 +97,56 @@
 .reveal li::marker {
   color: var(--color-brand);
 }
+/* ページ番号: 右上に置き、帯と同じ色の地にする(帯のあるスライドでは帯に溶け込み、無いスライドでは小さな札になる) */
 .reveal .slide-number {
-  font-family: var(--font-code);
+  inset: 0 0 auto auto;
+  padding: calc(var(--ui-space) / 2) var(--ui-space);
+  font-family: var(--font-ui);
+  color: var(--color-canvas);
+  background: var(--color-brand);
 }
 .reveal :is(.controls, .progress) {
   color: var(--color-brand);
+}
+/* 矢印は内容の邪魔をしないよう普段は薄くし、マウスを乗せたときだけはっきり出す */
+.reveal .controls {
+  opacity: var(--ui-idle);
+  transition: opacity 0.2s;
+}
+.reveal .controls:hover {
+  opacity: 1;
 }
 .reveal .progress {
   height: var(--rule);
 }
 
-/* ========== 5. パネル ==========
-   囲み全般の共通の形。各部品は --accent(アクセント色)だけを決め、面はそれを --tint で薄めて作る。
-   アクセントの無いパネル(Note・コード・<Frame math>)の面は --color-surface。 */
+/* ========== 3. パネル ==========
+   囲み全般の共通の形。面はすべて --color-surface で、色は見出しの下線(アクセント)にだけ使う。
+   見出しのある囲み(Frame・定理環境)は 見出し + 一段下げた本文 の 2 段で、Beamer の block と同じ構成。
+   各部品は --accent だけを決める。 */
 .reveal :is(.frame, .note, .thm, pre) {
   margin: var(--space) 0;
-  padding: var(--space) calc(2 * var(--space));
+  padding: calc(var(--space) / 2) var(--space);
   border-radius: var(--radius);
   background: var(--color-surface);
 }
-.reveal :is(.frame, .thm) {
-  background: color-mix(in srgb, var(--color-canvas) var(--tint), var(--accent));
+.reveal :is(.frame-title, .thm > .thm-head) {
+  margin-bottom: calc(var(--space) / 2);
+  border-bottom: var(--rule) solid var(--accent);
 }
-.reveal :is(.frame, .note, .thm) > :first-child {
+.reveal :is(.frame-body, .thm-body) {
+  padding-left: calc(2 * var(--space));
+}
+.reveal :is(.frame-body, .thm-body, .note) > :first-child {
   margin-top: 0;
 }
-.reveal :is(.frame, .note, .thm) > :last-child {
+.reveal :is(.frame-body, .thm-body, .note) > :last-child {
   margin-bottom: 0;
 }
 
-/* Frame(components/Frame.tsx): 題の下線がアクセント。--accent は部品が color から渡す */
-.reveal .frame-title {
-  margin-bottom: var(--space);
-  border-bottom: var(--rule) solid var(--accent);
-}
-.reveal .frame.frame-math {
-  background: var(--color-surface);
-}
-
-/* 定理環境(components/Theorem.tsx): 左の線がアクセント。番号は変換時に振る(vite/remark-beamer) */
+/* アクセント: Frame は color の指定から部品が渡す。定理は brand、定義は green */
 .reveal .thm {
   --accent: var(--color-brand);
-  border-left: var(--rule) solid var(--accent);
-  border-radius: 0 var(--radius) var(--radius) 0;
 }
 .reveal .thm-def {
   --accent: var(--color-frame-green);
@@ -251,7 +181,7 @@
   padding: 0;
 }
 
-/* ========== 6. その他の部品 ========== */
+/* ========== 4. その他の部品 ========== */
 
 /* 横並び(layout.tsx の Cols / Col) */
 .reveal .cols {
@@ -272,6 +202,17 @@
 }
 .reveal .byline > :first-child {
   color: var(--color-ink);
+}
+
+/* 表: LaTeX の booktabs と同じく、上下の太線と見出しの下の細線だけ(行ごとの罫線は引かない) */
+.reveal table {
+  border-block: var(--rule) solid var(--color-ink);
+}
+.reveal table :is(th, td) {
+  border-bottom: none;
+}
+.reveal table thead th {
+  border-bottom: thin solid var(--color-ink);
 }
 
 /* 文献(rehype-citation が出力する CSL の標準マークアップ) */
@@ -308,7 +249,7 @@
   display: none;
 }
 
-/* ========== 7. デッキの外側の UI と開発時の表示 ========== */
+/* ========== 5. デッキの外側の UI と開発時の表示 ========== */
 
 /* reveal は .reveal を親の高さいっぱいに広げるので、親に高さが無いと潰れて白画面になる */
 html,
@@ -339,6 +280,11 @@ body {
   z-index: 50;
   padding: var(--ui-space);
   color: var(--color-brand) !important;
+  opacity: var(--ui-idle);
+  transition: opacity 0.2s;
+}
+.deck-menu-toggle:hover {
+  opacity: 1;
 }
 .deck-menu-backdrop {
   position: fixed;

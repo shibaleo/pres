@@ -1,0 +1,17 @@
+/* デッキの見た目の入口(main.tsx が読み込む)。読み込む順に後のものが前のものを上書きする:
+     tokens.css   トークンの既定値(色・書体・文字の段階・間隔。見た目の調整はトークンで行う)
+     base.css     汎用の規則(トークンから導いた値だけを使う)
+     src/custom.css  クローンごとの特化(プリセットの読み込み・トークンの上書き・独自の規則)
+
+   上流(このテンプレート)が持つのは tokens / base / fonts / presets。custom.css は各クローンのもので、
+   上流は中身を書かない(上流の更新を取り込むときに衝突しないように)。 */
+
+/* Preflight(リセット) は reveal.js と衝突するため除外し、theme と utilities だけ読み込む */
+@layer theme, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+
+@import './fonts.css';
+@import './tokens.css';
+@import './base.css';
+@import '../custom.css';

@@ -8,12 +8,15 @@ reveal.js プレゼンテーション。**MDX + TSX** で執筆し、可視化�
 
 ## 方針
 
-- **記法は確立した標準にあるものだけ**（LaTeX / Beamer、Markdown(GFM)・MDX、reveal.js の慣習）。
+- **記法は確立した標準にあるものだけ**（LaTeX / Beamer、Markdown(CommonMark)・MDX、reveal.js の慣習）。
+  Markdown はどの処理系にも共通する CommonMark に限り、GFM などの方言は使わない。表などは MDX（JSX）で書く。
   独自の記法は作らない（[CLAUDE.md](CLAUDE.md) の取り決め）。
 - **処理は標準のライブラリと仕組みに任せる**。記法の追加は remark-math や remark-directive と同じ
   unified の標準の作り方（micromark の構文拡張 + 構文木の変換）で行い、数式の番号は MathJax、
   引用は rehype-citation、MDX のコンパイルは `@mdx-js/rollup` が担う。
 - **不完全な原稿から成果物を作らない**。エラーは補わずに原稿の位置付きで報告する。
+- **土台は用途に特化しない**。このリポジトリはテンプレートで、数学の資料にも業務マニュアルにも使える汎用の
+  見た目と機能だけを持つ。用途への特化は各クローンの `src/custom.css`（とプリセット）で行う。
 
 ## 技術スタック
 
@@ -25,7 +28,7 @@ reveal.js プレゼンテーション。**MDX + TSX** で執筆し、可視化�
 | 記法 | `vite/remark-beamer/`（LaTeX / Beamer 風記法の remark プラグイン） |
 | 数式 | `remark-math` + `rehype-mathjax`（MathJax 3・SVG。式番号・`\label`・`\eqref` は AMS の規則） |
 | 文献 | BibTeX (`src/references.bib`) + `rehype-citation`（CSL: NLM/Vancouver 角括弧版。公式リポジトリの `src/csl/nlm-citation-sequence-brackets.csl`） |
-| その他 | `remark-gfm`（表など）、Tailwind CSS v4 |
+| その他 | Tailwind CSS v4 |
 | 図 | D3 / JSXGraph を React コンポーネント化 |
 | 配布 | `vite-plugin-singlefile` で単一 HTML 化、フォントは subset woff2 |
 
@@ -59,7 +62,13 @@ src/
   csl/                 引用スタイル(CSL。公式リポジトリのものをそのまま置く)
   App.tsx              デッキ本体(<Deck> に原稿と <Menu> を合成)
   main.tsx             エントリ。reveal/KaTeX/テーマCSS を読み込む
-  theme.css            見た目のすべて。調整はトークン(色・書体・文字の段階・間隔)だけで行う
+  theme/               見た目(テンプレート側)。詳しくは「見た目のカスタマイズ」
+    index.css          入口(tokens → base → custom の順に読み込む)
+    tokens.css         トークンの既定値(色・書体・文字の段階・間隔)
+    base.css           汎用の規則(トークンから導いた値だけを使う)
+    fonts.css          土台の書体(Noto Sans JP・等幅)
+    presets/math.css   数学向けのプリセット(欧文と数字を Computer Modern に)
+  custom.css           クローンごとの特化(テンプレートは中身を書かない)
   deck/
     mdx-components.tsx 原稿から import なしで使える部品の一覧
     slide-size.ts      スライドの論理サイズ(ウィンドウ全体を覆う。原稿が当てにできるのは最小 933×700)
@@ -221,6 +230,32 @@ $f$ が凸なら …
 ### 図（インタラクティブ可視化）
 `src/components/` に React コンポーネントとして追加。D3 は「React が DOM を持ち D3 は計算」、
 JSXGraph は `useEffect` 内で `initBoard` → クリーンアップで `freeBoard`、が基本形。
+
+## 見た目のカスタマイズ
+
+見た目は 3 層で、後のものが前のものを上書きします。
+
+| 層 | ファイル | 持ち主 |
+|---|---|---|
+| トークン | `src/theme/tokens.css` | テンプレート |
+| 汎用の規則 | `src/theme/base.css`（書体は `fonts.css`） | テンプレート |
+| 特化 | `src/custom.css`（プリセットの読み込み・トークンの上書き・独自の規則） | 各クローン |
+
+クローンで変えるのは `src/custom.css` だけにします。テンプレート側のファイルを書き換えないでおけば、
+テンプレートの更新を取り込むときに衝突しません。
+
+```css
+/* src/custom.css */
+@import './theme/presets/math.css';  /* 数学向け: 欧文と数字を Computer Modern に */
+
+:root {
+  --color-brand: #0a7d5a;            /* トークンの一覧と既定値は src/theme/tokens.css */
+  --text-base: 26px;
+}
+```
+
+用途に共通する改善はテンプレート（tokens / base）へ、特定の用途に寄った見た目はプリセット
+（`src/theme/presets/`）へ入れます。
 
 ## フォントのサブセット
 

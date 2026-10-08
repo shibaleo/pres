@@ -1,7 +1,7 @@
 /**
  * フォントサブセット化: fonts-src/*.ttf を、実際に使う文字だけの woff2 へ絞る。
  * インタラクティブにフォントは変えないので、ソース中に出現する文字＋基本記号で十分。
- * 出力(src/fonts/*.woff2)は theme.css が参照し、singlefile ビルドで base64 インライン化される。
+ * 出力(src/fonts/*.woff2)は src/theme/ の CSS が参照し、singlefile ビルドで base64 インライン化される。
  */
 import { readFileSync, writeFileSync, readdirSync, statSync, mkdirSync } from 'node:fs'
 import { join, dirname, extname } from 'node:path'
@@ -55,7 +55,6 @@ const glyphs = [...new Set([...base, ...extra, ...text])]
 
 const FONTS = [
   ['cmu.serif-roman.ttf', 'cmu.serif-roman.woff2'],
-  ['NotoSerifJP-VariableFont_wght.ttf', 'NotoSerifJP.woff2'],
   ['NotoSansJP-VariableFont_wght.ttf', 'NotoSansJP.woff2'],
   ['GenShinGothic-Monospace-Regular.ttf', 'GenShinGothic-Monospace.woff2'],
 ]

@@ -1,0 +1,16 @@
+/* プリセット: 数学の資料向け。欧文と数字を数式(MathJax)と同じ系統の Computer Modern にする。
+   使うには src/custom.css で @import './theme/presets/math.css'; する */
+@font-face {
+  font-family: 'Computer Modern';
+  src: url('../../fonts/cmu.serif-roman.woff2') format('woff2');
+}
+/* 数字だけ Computer Modern にする(unicode-range で数字にだけ当たる別名)。見出しの数字にも効かせたいときは
+   --font-heading の先頭にも 'number' を足す */
+@font-face {
+  font-family: 'number';
+  src: url('../../fonts/cmu.serif-roman.woff2') format('woff2');
+  unicode-range: U+0030-0039;
+}
+:root {
+  --font-body: 'number', 'Computer Modern', 'Noto Sans JP', sans-serif;
+}

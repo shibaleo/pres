@@ -7,16 +7,21 @@
 
 <div style={{ fontSize: '0.52em' }}>
 
-| 書き方 | 用途 |
-|---|---|
-| `---` / `--`（行単独） | 横のスライド／縦のスライド（上の続き）に区切る |
-| `\begin{theorem}` … / `<Theorem>` | 定理環境（lemma / proposition / corollary / definition / proof） |
-| `\label` `\ref` `\eqref` `\begin{equation}` | 相互参照と番号付きの式 |
-| `\pause` `\only<2>{…}` `\uncover<2->{…}` / `<Fragment>` | 段階表示（Beamer 記法と reveal の両方） |
-| `\input{file}` `\import{dir/}{file}` `\subimport{dir/}{file}` | 別のファイルを取り込む（番号・参照は通しのまま） |
-| `\cite{key}` / `<Bibliography />` | 文献の引用と、文献リスト |
-| `<Notes>` | 発表者ビュー（`S` キー）だけに出るメモ |
-| `<Frame>` `<Cols>` `<Col>` `<Center>` `<Byline>` `<Note>` `<Code>` | 色付きの枠／段組み／中央寄せ／発表者欄／囲み／コード |
+<table>
+<thead>
+<tr><th>書き方</th><th>用途</th></tr>
+</thead>
+<tbody>
+<tr><td>`---` / `--`（行単独）</td><td>横のスライド／縦のスライド（上の続き）に区切る</td></tr>
+<tr><td>`\begin{theorem}` … / `<Theorem>`</td><td>定理環境（lemma / proposition / corollary / definition / proof）</td></tr>
+<tr><td>`\label` `\ref` `\eqref` `\begin{equation}`</td><td>相互参照と番号付きの式</td></tr>
+<tr><td>`\pause` `\only<2>{…}` `\uncover<2->{…}` / `<Fragment>`</td><td>段階表示（Beamer 記法と reveal の両方）</td></tr>
+<tr><td>`\input{file}` `\import{dir/}{file}` `\subimport{dir/}{file}`</td><td>別のファイルを取り込む（番号・参照は通しのまま）</td></tr>
+<tr><td>`\cite{key}` / `<Bibliography />`</td><td>文献の引用と、文献リスト</td></tr>
+<tr><td>`<Notes>`</td><td>発表者ビュー（`S` キー）だけに出るメモ</td></tr>
+<tr><td>`<Frame>` `<Cols>` `<Col>` `<Center>` `<Byline>` `<Note>` `<Code>`</td><td>色付きの枠／段組み／中央寄せ／発表者欄／囲み／コード</td></tr>
+</tbody>
+</table>
 
 JSX 部品の一覧は `src/deck/mdx-components.tsx`。個別の図（Globe など）は原稿の先頭で import する。
 

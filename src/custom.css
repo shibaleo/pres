@@ -1,0 +1,11 @@
+/* このクローンの見た目の特化。上流(テンプレート)はこのファイルの中身を書かない。
+
+   ここでできること:
+     - プリセットを読み込む(@import は先頭に書く)
+         @import './theme/presets/math.css';   数学向け: 欧文と数字を Computer Modern に
+     - トークンを上書きする(一覧と既定値は theme/tokens.css)
+         :root {
+           --color-brand: #0a7d5a;
+           --text-base: 26px;
+         }
+     - このデッキだけの規則を足す */

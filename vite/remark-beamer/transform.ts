@@ -155,6 +155,14 @@ function parseCommand(raw: string) {
 export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
   const processor = this
   const bibKeys = options.bibliography ? readBibKeys(options.bibliography) : null
+  // @mdx-js/mdx は解析の直後に remark-mark-and-unravel を通す(JSX だけの段落を外し、明示的に書いた JSX に印を付ける)。
+  // \input で取り込むファイルはその後(このプラグインの中)で解析するので、主ファイルと同じ変換をここで通す
+  // (通さないと <tr> などの行が <p> に包まれる)。@mdx-js/mdx はこのプラグインを公開していないので、
+  // 処理系に登録済みのものを使う。登録されていない(MDX を通さない)ときは主ファイルにもかかっていないので通さない
+  const unravelAttacher = processor.attachers.find(([plugin]) => plugin.name === 'remarkMarkAndUnravel')
+  const unravel = unravelAttacher
+    ? (unravelAttacher[0].call(processor, ...unravelAttacher.slice(1)) as unknown as (tree: Root) => void)
+    : () => {}
 
   return function (tree: Root, file: VFile) {
     // 診断。\input で取り込んだファイルのノードは「ファイル:行」をメッセージに含め、
@@ -211,6 +219,7 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
         let sub: Root
         try {
           sub = processor.parse(new VFileCtor({ path: abs, value })) as Root
+          unravel(sub)
         } catch (e) {
           const err = e as { reason?: string; message: string; line?: number }
           const where = { position: child.position, data: child.data }

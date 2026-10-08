@@ -1,0 +1,12 @@
+/* 土台の書体(scripts/subset-fonts.mjs が生成する woff2 サブセット)。
+   Noto は可変フォント(wght 軸。サブセットでも軸は残る)なので、太さの範囲を宣言して
+   ブラウザの疑似太字ではなくフォント自身の太さを使わせる */
+@font-face {
+  font-family: 'Noto Sans JP';
+  src: url('../fonts/NotoSansJP.woff2') format('woff2');
+  font-weight: 100 900;
+}
+@font-face {
+  font-family: 'GenShinGothic Monospace';
+  src: url('../fonts/GenShinGothic-Monospace.woff2') format('woff2');
+}

@@ -2,7 +2,7 @@ import type { ReactNode, CSSProperties } from 'react'
 
 /**
  * スライド用のレイアウト部品。MDX から <div style> や <br> を追い出し、意味のあるタグだけで書けるようにする。
- * 見た目は theme.css(.cols / .byline / .note / .code)。style は原稿側の一時的な調整(文字の大きさなど)用。
+ * 見た目は theme/base.css(.cols / .byline / .note / .code)。style は原稿側の一時的な調整(文字の大きさなど)用。
  */
 
 /** 中央寄せ */
@@ -17,7 +17,7 @@ export function Cols({
   style,
 }: {
   children: ReactNode
-  /** 列の間隔。省略時は theme.css の既定 */
+  /** 列の間隔。省略時は theme/base.css の既定 */
   gap?: number | string
   style?: CSSProperties
 }) {

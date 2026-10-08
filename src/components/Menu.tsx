@@ -52,7 +52,7 @@ export default function Menu() {
     setOpen(false)
   }
 
-  // 見た目は theme.css の .deck-menu-*
+  // 見た目は theme/base.css の .deck-menu-*
   return createPortal(
     <div className="deck-menu">
       <button className="deck-menu-toggle" aria-label="メニュー" onClick={() => setOpen((o) => !o)}>

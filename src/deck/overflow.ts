@@ -12,7 +12,7 @@ type RevealApi = NonNullable<ReturnType<typeof useReveal>>
  * そこで検査のときだけスライドを最小の幅で組み直して縦横を測り、すぐ戻す(描画の前に戻るので画面には出ない)。
  *
  * reveal ははみ出し部分を黙って切るので、気づけるように
- *   - 最小サイズの範囲に赤い破線の枠と超過量のバッジ(theme.css の .deck-overflow)
+ *   - 最小サイズの範囲に赤い破線の枠と超過量のバッジ(theme/base.css の .deck-overflow)
  *   - コンソールに警告(ファイルパスと超過 px)
  * を出す。本文の変更(HMR)やフォント読み込みで大きさが変わるので、DOM 変化のたびに測り直す。
  */
