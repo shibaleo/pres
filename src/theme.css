@@ -89,9 +89,11 @@
 .reveal h2 {
   font-size: 1.1em;
 }
-/* 見出しの自動採番 (旧 adoc :sectnums: 相当) */
+/* 見出しの自動採番 (旧 adoc :sectnums: 相当)。
+   CSS カウンタは display:none の要素を数えないため、App.tsx で viewDistance を広げて
+   全スライドを表示状態にしている(でないと遠いスライドの番号がずれる)。 */
 .reveal .slides {
-  counter-reset: sec;
+  counter-reset: sec thm;
 }
 .reveal .slides section h2::before {
   counter-increment: sec;
@@ -173,4 +175,70 @@
 }
 .reveal .katex {
   font-size: 1em;
+}
+
+/* ---------- 定理環境 (components/Theorem.tsx) ----------
+   Theorem / Lemma / Proposition / Corollary / Definition で 1 本の通し番号 */
+.reveal .thm {
+  margin: 0.3em 0;
+  padding: 0.2em 0.6em 0.3em;
+  border-left: 6px solid var(--color-brand);
+  background: var(--color-eq);
+}
+.reveal .thm-def {
+  border-left-color: var(--color-frame-green);
+  background: color-mix(in srgb, white 88%, var(--color-frame-green));
+}
+.reveal .thm-head {
+  font-family: var(--font-heading);
+  font-weight: bold;
+}
+.reveal .thm-num::after {
+  counter-increment: thm;
+  content: counter(thm);
+}
+.reveal .thm-body > :first-child {
+  margin-top: 0.2em;
+}
+.reveal .thm-body > :last-child {
+  margin-bottom: 0;
+}
+.reveal .thm-proof {
+  margin: 0.3em 0;
+}
+.reveal .thm-proof .thm-head {
+  font-style: italic;
+  font-weight: normal;
+}
+.reveal .thm-proof .qed {
+  float: right;
+}
+
+/* ---------- 文献 (components/Cite.tsx) ---------- */
+.reveal .cite {
+  color: var(--color-brand);
+  cursor: help;
+}
+.reveal ol.bibliography {
+  display: block;
+  margin: 0 0 0 1.5em;
+}
+.reveal ol.bibliography li {
+  margin: 0.2em 0;
+}
+
+/* ---------- 開発時のはみ出し表示 (deck/overflow.ts。本番ビルドでは付かない) ---------- */
+.reveal .slides section.deck-overflow {
+  outline: 4px dashed red;
+  outline-offset: -4px;
+}
+.reveal .slides section.deck-overflow::after {
+  content: 'はみ出し';
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 0.1em 0.5em;
+  font-size: 0.5em;
+  color: #fff;
+  background: red;
 }

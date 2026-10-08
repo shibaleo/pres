@@ -23,6 +23,9 @@
     "world-atlas": "^2.0.2"
   },
   "devDependencies": {
+    "@citation-js/core": "^0.7.21",
+    "@citation-js/plugin-bibtex": "^0.7.21",
+    "@citation-js/plugin-csl": "^0.7.22",
     "@mdx-js/rollup": "^3.1.0",
     "@types/d3": "^7.4.3",
     "@types/react": "^18.3.12",
@@ -30,7 +33,6 @@
     "@types/topojson-client": "^3.1.5",
     "@vitejs/plugin-react": "^4.3.4",
     "katex": "^0.19.0",
-    "rehype-citation": "^2.3.2",
     "rehype-katex": "^7.0.1",
     "remark-math": "^6.0.0",
     "subset-font": "^2.5.0",

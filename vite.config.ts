@@ -3,10 +3,11 @@ import react from '@vitejs/plugin-react'
 import mdx from '@mdx-js/rollup'
 import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
-import rehypeCitation from 'rehype-citation'
 import tailwindcss from '@tailwindcss/vite'
 import { viteSingleFile } from 'vite-plugin-singlefile'
 import type { Plugin } from 'vite'
+import { fileURLToPath } from 'node:url'
+import { bibliography, remarkCitations } from './vite/citations'
 
 /**
  * @font-face の src から woff2 以外(woff/ttf/eot/svg)を削り、
@@ -44,17 +45,19 @@ function woff2OnlyFonts(): Plugin {
 // `--mode single` で全アセットを 1 枚の index.html にインライン(subset 済 woff2 込み)。
 export default defineConfig(({ mode }) => ({
   base: './',
+  resolve: {
+    // スライドがフォルダの深さに依存せず `@/components/...` で import できるように
+    alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
+  },
   plugins: [
     woff2OnlyFonts(),
+    // 文献番号をデッキ全体で通しにする(詳細は vite/citations.ts)
+    bibliography({ bib: 'src/references.bib', slidesDir: 'src/slides' }),
     {
       enforce: 'pre',
       ...mdx({
-        remarkPlugins: [remarkMath],
-        rehypePlugins: [
-          rehypeKatex,
-          // BibTeX 駆動の引用/文献リスト。番号型(Vancouver)で旧構成の [1] を踏襲。
-          [rehypeCitation, { bibliography: 'src/references.bib', csl: 'vancouver', linkCitations: true }],
-        ],
+        remarkPlugins: [remarkMath, remarkCitations],
+        rehypePlugins: [rehypeKatex],
       }),
     },
     react({ include: /\.(mdx|js|jsx|ts|tsx)$/ }),

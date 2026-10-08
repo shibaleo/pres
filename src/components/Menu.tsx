@@ -9,24 +9,35 @@ import { useReveal } from '@revealjs/react'
  *  - reveal は .slides に transform をかけるため、position:fixed をそこに置くと崩れる。
  *    → createPortal で document.body に出し、ビューポート基準の固定配置にする。
  *  - 見出しは reveal API(getSlides)から自動取得するのでスライドを増減しても追従。
+ *  - 縦スライド(Stack)は (h, v) で移動し、一覧では字下げして表示する。
  *  - FontAwesome 非依存(アイコンは inline SVG) → CDN ゼロ/オフライン維持。
  */
+type Item = { h: number; v: number; title: string }
+
 export default function Menu() {
   const deck = useReveal()
   const [open, setOpen] = useState(false)
-  const [items, setItems] = useState<string[]>([])
-  const [current, setCurrent] = useState(0)
+  const [items, setItems] = useState<Item[]>([])
+  const [current, setCurrent] = useState('0,0')
 
   useEffect(() => {
     if (!deck) return
+    const key = (i: { h: number; v?: number }) => `${i.h},${i.v ?? 0}`
     const build = () => {
       const slides = deck.getSlides() as HTMLElement[]
       setItems(
-        slides.map((s) => s.querySelector('h1,h2,h3,h4')?.textContent?.trim() || '(無題)'),
+        slides.map((s) => {
+          const { h, v } = deck.getIndices(s)
+          return {
+            h,
+            v: v ?? 0,
+            title: s.querySelector('h1,h2,h3,h4')?.textContent?.trim() || '(無題)',
+          }
+        }),
       )
-      setCurrent(deck.getIndices().h)
+      setCurrent(key(deck.getIndices()))
     }
-    const onChange = () => setCurrent(deck.getIndices().h)
+    const onChange = () => setCurrent(key(deck.getIndices()))
     build()
     deck.on('slidechanged', onChange)
     deck.on('ready', build)
@@ -36,8 +47,8 @@ export default function Menu() {
     }
   }, [deck])
 
-  const go = (i: number) => {
-    deck?.slide(i)
+  const go = (it: Item) => {
+    deck?.slide(it.h, it.v)
     setOpen(false)
   }
 
@@ -99,28 +110,31 @@ export default function Menu() {
               スライド一覧
             </div>
             <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-              {items.map((t, i) => (
-                <li key={i}>
-                  <button
-                    onClick={() => go(i)}
-                    style={{
-                      display: 'block',
-                      width: '100%',
-                      textAlign: 'left',
-                      border: 'none',
-                      borderBottom: '1px solid #eee',
-                      padding: '10px 16px',
-                      cursor: 'pointer',
-                      fontSize: 14,
-                      background: i === current ? 'color-mix(in srgb, white 90%, var(--color-brand))' : 'transparent',
-                      color: i === current ? 'var(--color-brand)' : 'var(--color-ink)',
-                      fontWeight: i === current ? 'bold' : 'normal',
-                    }}
-                  >
-                    {i + 1}. {t}
-                  </button>
-                </li>
-              ))}
+              {items.map((it) => {
+                const active = `${it.h},${it.v}` === current
+                return (
+                  <li key={`${it.h},${it.v}`}>
+                    <button
+                      onClick={() => go(it)}
+                      style={{
+                        display: 'block',
+                        width: '100%',
+                        textAlign: 'left',
+                        border: 'none',
+                        borderBottom: '1px solid #eee',
+                        padding: it.v > 0 ? '8px 16px 8px 36px' : '10px 16px',
+                        cursor: 'pointer',
+                        fontSize: it.v > 0 ? 13 : 14,
+                        background: active ? 'color-mix(in srgb, white 90%, var(--color-brand))' : 'transparent',
+                        color: active ? 'var(--color-brand)' : 'var(--color-ink)',
+                        fontWeight: active ? 'bold' : 'normal',
+                      }}
+                    >
+                      {it.v > 0 ? `${it.h + 1}.${it.v}` : `${it.h + 1}.`} {it.title}
+                    </button>
+                  </li>
+                )
+              })}
             </ul>
           </nav>
         </>

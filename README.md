@@ -15,7 +15,7 @@ reveal.js プレゼンテーション。**MDX + TSX** で執筆し、可視化�
 | スライド | reveal.js 5 (`@revealjs/react`) |
 | スタイル | Tailwind CSS v4 |
 | 数式 | KaTeX (`remark-math` + `rehype-katex`) |
-| 文献 | BibTeX (`src/references.bib`) + `rehype-citation`（CSL: Vancouver） |
+| 文献 | BibTeX (`src/references.bib`) + citation-js（CSL: Vancouver、デッキ全体で通し番号） |
 | 図 | D3 / JSXGraph を React コンポーネント化 |
 | 配布 | `vite-plugin-singlefile` で単一 HTML 化、フォントは subset woff2 |
 
@@ -44,31 +44,70 @@ src/
   main.tsx             エントリ。reveal/KaTeX/テーマCSS を読み込む
   theme.css            Tailwind v4 エントリ + デザイントークン + @font-face + reveal 上書き
   references.bib       BibTeX 文献データ
+  slides/              各スライド(MDX)。パスの自然順がそのまま表示順
+    10-abstract/  20-body/  30-conclusion/
+  deck/                デッキの仕組み
+    slides.ts          slides/**/*.mdx の自動登録・縦スライドのまとめ
+    order.ts           並び順の定義(表示と文献番号で共有)
+    mdx-components.tsx import なしで使える部品の一覧
+    overflow.ts        開発時のはみ出し検出
   components/          可視化・UI コンポーネント
     BarChart / ConnectedScatterplot / Globe / FourPoints / LogSpiral
     Frame              色付きフレーム(旧 .frame-* の代替)
+    Theorem            定理・定義・証明(通し番号)
+    Cite               文献引用と文献リスト
+    Notes              スピーカーノート
     Menu               左下ハンバーガー → スライド一覧サイドバー
-  slides/              各スライド(MDX)。App.tsx の SLIDES 配列が並び順
   data/                バンドルした図表データ(旧 CDN fetch の置換)
   fonts/               subset 済み woff2(scripts/subset-fonts.mjs が生成)
   img/                 アイコン画像
 fonts-src/             サブセット元のフルフォント(.ttf)。ビルド成果物には含めない
 scripts/subset-fonts.mjs  フォントサブセット化スクリプト
+vite/citations.ts      文献の通し番号付け(remark プラグイン + 仮想モジュール)
 ```
 
 ## 執筆方法
 
 ### スライドを追加する
-1. `src/slides/Foo.mdx` を作成（Markdown 本文に JSX コンポーネントを直接書ける）
-2. `src/App.tsx` の `SLIDES` 配列に import して追加（配列順 = スライド順）
+`src/slides/` 以下に `.mdx` を置くだけで自動登録されます。並び順はパスの自然順なので、
+`20-body/15-new.mdx` のように番号で位置を決めます（`App.tsx` の編集は不要）。
+
+スライドごとの設定は MDX 内で export します（省略可）。`stack` 以外は reveal の `<Slide>` にそのまま渡ります。
+
+```mdx
+export const slide = { stack: 'jsxgraph', backgroundColor: '#fafafa' }
+```
+
+- **縦スライド**: 連続するファイルに同じ `stack` を書くと、縦方向にまとまります（↓キーで移動）。
+- 自分の部品や画像は `@/components/...`、`@/img/...` で import できます（フォルダの深さに依存しない）。
+
+### import なしで使える部品
+`src/deck/mdx-components.tsx` に登録した部品は、どのスライドでも import せずに書けます。
+
+| 部品 | 用途 |
+|---|---|
+| `<Fragment>` | 段階表示（次へ進むと現れる） |
+| `<Notes>` | スピーカーノート。`S` キーの発表者ビューにだけ出る |
+| `<Theorem>` `<Lemma>` `<Proposition>` `<Corollary>` `<Definition>` | 定理環境。1 本の通し番号。`title="..."` で名前、`label="定理"` で見出し語を変更 |
+| `<Proof>` | 証明（番号なし、末尾に ∎） |
+| `<Frame color="blue" title="...">` | 色付きフレーム |
+| `<Cols>` `<Col>` `<Center>` `<Byline>` `<Note>` `<Code>` | レイアウト |
+| `<Bibliography />` | 文献リスト |
+
+個別の図（`Globe` など）は使うスライドで明示的に import します。
 
 ### 数式
 インライン `$...$`、ディスプレイ `$$...$$`（KaTeX）。可換図式は `\begin{CD}...\end{CD}`。
 ※ KaTeX は `\style` の任意 CSS 変形（斜め矢印の回転など）には非対応。
 
 ### 文献の引用
-`src/references.bib` にエントリを追加し、本文で `[@key]` と書くと番号 `[1]` になり、
-`[^ref]` を置いた箇所に文献リストが生成されます（相互リンク付き）。
+`src/references.bib` にエントリを追加し、本文で `[@key]`（複数なら `[@a; @b]`）と書くと番号 `[1]` になります。
+番号は**デッキ全体での初出順**で、`<Bibliography />` を置いた箇所に引用された文献だけが番号順に並びます。
+番号にマウスを乗せると文献が表示されます。未登録の key はビルド時に警告し、本文では `[?]` になります。
+
+### はみ出しの検出（開発時のみ）
+`npm run dev` 中、スライドの高さ（700px）を超えたスライドには赤い破線枠と「はみ出し」バッジが付き、
+コンソールにファイルパスと超過量が出ます。本番ビルドには含まれません。
 
 ### 図（インタラクティブ可視化）
 `src/components/` に React コンポーネントとして追加。D3 は「React が DOM を持ち D3 は計算」、
@@ -91,5 +130,5 @@ URL に `?print-pdf` を付けて開き、ブラウザの印刷 → PDF に保�
 ## 既知の制約
 
 - `@revealjs/react` は 0.x（pre-1.0）。API が変わる可能性あり。
-- 文献番号は MDX ファイル単位で採番されるため、別スライドの引用は独立採番になる。
-- スライド内に収まらない量を書くと reveal は溢れを切る（1スライドの容量に上限あり。分割で対応）。
+- スライド内に収まらない量を書くと reveal は溢れを切る（開発時は上記の警告で気づける。分割で対応）。
+- 見出し・定理の番号は CSS カウンタで振るため、reveal の `viewDistance` を広げて全スライドを常に描画している。スライドが数百枚になると重くなる可能性がある。
