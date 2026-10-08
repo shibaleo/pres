@@ -52,23 +52,10 @@ export default function Menu() {
     setOpen(false)
   }
 
+  // 見た目は theme.css の .deck-menu-*
   return createPortal(
     <div className="deck-menu">
-      <button
-        aria-label="メニュー"
-        onClick={() => setOpen((o) => !o)}
-        style={{
-          position: 'fixed',
-          left: 14,
-          bottom: 12,
-          zIndex: 50,
-          background: 'transparent',
-          border: 'none',
-          cursor: 'pointer',
-          color: 'var(--color-brand)',
-          padding: 4,
-        }}
-      >
+      <button className="deck-menu-toggle" aria-label="メニュー" onClick={() => setOpen((o) => !o)}>
         <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">
           <path
             d="M3 6h18M3 12h18M3 18h18"
@@ -81,60 +68,21 @@ export default function Menu() {
 
       {open && (
         <>
-          <div
-            onClick={() => setOpen(false)}
-            style={{ position: 'fixed', inset: 0, zIndex: 40, background: 'rgba(0,0,0,0.25)' }}
-          />
-          <nav
-            style={{
-              position: 'fixed',
-              left: 0,
-              top: 0,
-              bottom: 0,
-              width: 300,
-              zIndex: 45,
-              background: '#fff',
-              boxShadow: '2px 0 14px rgba(0,0,0,0.25)',
-              overflowY: 'auto',
-              fontFamily: "'Noto Sans JP', sans-serif",
-            }}
-          >
-            <div
-              style={{
-                padding: '14px 16px',
-                fontWeight: 'bold',
-                color: '#fff',
-                background: 'var(--color-brand)',
-              }}
-            >
-              スライド一覧
-            </div>
-            <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-              {items.map((it) => {
-                const active = `${it.h},${it.v}` === current
-                return (
-                  <li key={`${it.h},${it.v}`}>
-                    <button
-                      onClick={() => go(it)}
-                      style={{
-                        display: 'block',
-                        width: '100%',
-                        textAlign: 'left',
-                        border: 'none',
-                        borderBottom: '1px solid #eee',
-                        padding: it.v > 0 ? '8px 16px 8px 36px' : '10px 16px',
-                        cursor: 'pointer',
-                        fontSize: it.v > 0 ? 13 : 14,
-                        background: active ? 'color-mix(in srgb, white 90%, var(--color-brand))' : 'transparent',
-                        color: active ? 'var(--color-brand)' : 'var(--color-ink)',
-                        fontWeight: active ? 'bold' : 'normal',
-                      }}
-                    >
-                      {it.v > 0 ? `${it.h + 1}.${it.v}` : `${it.h + 1}.`} {it.title}
-                    </button>
-                  </li>
-                )
-              })}
+          <div className="deck-menu-backdrop" onClick={() => setOpen(false)} />
+          <nav className="deck-menu-panel">
+            <header>スライド一覧</header>
+            <ul>
+              {items.map((it) => (
+                <li key={`${it.h},${it.v}`}>
+                  <button
+                    className={it.v > 0 ? 'sub' : undefined}
+                    aria-current={`${it.h},${it.v}` === current}
+                    onClick={() => go(it)}
+                  >
+                    {it.v > 0 ? `${it.h + 1}.${it.v}` : `${it.h + 1}.`} {it.title}
+                  </button>
+                </li>
+              ))}
             </ul>
           </nav>
         </>

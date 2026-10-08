@@ -7,7 +7,6 @@ import App from './App'
 import 'reveal.js/dist/reveal.css'
 import 'reveal.js/dist/theme/white.css'
 import 'katex/dist/katex.min.css'
-import './index.css'
 import './theme.css'
 
 createRoot(document.getElementById('root')!).render(

@@ -1,97 +1,168 @@
-/* Tailwind v4 — Preflight(リセット) は reveal.js と衝突するため除外し、
-   theme(トークン) と utilities だけ読み込む。 */
+/* デッキの見た目はすべてこのファイルに置く。部品(components/)は意味の class を出すだけ。
+
+   見た目を変えるときは「2. トークン」だけを変える。3 以降の規則はトークンから導いた値だけを使い、
+   個別の数値(0.7em など)を書かない。概念は次の 4 つ:
+     - 役割の色と書体 … 本文 / 見出し / アクセント / 補足 / 地 / 面
+     - 文字の段階     … 本文を 1 とし、比 --type-ratio の累乗で大小を決める
+     - 間隔の単位     … スライドの中は --space、外の UI は --ui-space の倍数だけを使う
+     - パネル         … 囲み(Frame / Note / 定理 / コード)の共通の形。部品ごとに変わるのはアクセント色だけ
+
+   構成:
+     1. Tailwind / フォント
+     2. トークン(ユーザーが調整する値はここだけ)
+     3. reveal テーマ変数(reveal の white テーマが読む --r-*。reveal の標準の作り方)
+     4. スライドの組版
+     5. パネル
+     6. その他の部品
+     7. デッキの外側の UI と開発時の表示 */
+
+/* ========== 1. Tailwind / フォント ========== */
+
+/* Preflight(リセット) は reveal.js と衝突するため除外し、theme と utilities だけ読み込む */
 @layer theme, components, utilities;
 @import 'tailwindcss/theme.css' layer(theme);
 @import 'tailwindcss/utilities.css' layer(utilities);
 
-/* ---------- fonts (旧 _fonts.scss → 素の CSS。
-   scripts/subset-fonts.mjs が生成する woff2 サブセットを参照) ---------- */
+/* scripts/subset-fonts.mjs が生成する woff2 サブセット。
+   Noto は可変フォント(wght 軸。サブセットでも軸は残る)なので、太さの範囲を宣言して
+   ブラウザの疑似太字ではなくフォント自身の太さを使わせる */
 @font-face {
   font-family: 'Computer Modern';
   src: url('./fonts/cmu.serif-roman.woff2') format('woff2');
 }
 @font-face {
-  font-family: 'Computer Modern bold';
-  src: url('./fonts/cmu.serif-bold.woff2') format('woff2');
-}
-@font-face {
   font-family: 'Noto Serif JP';
   src: url('./fonts/NotoSerifJP.woff2') format('woff2');
+  font-weight: 200 900;
 }
 @font-face {
   font-family: 'Noto Sans JP';
   src: url('./fonts/NotoSansJP.woff2') format('woff2');
+  font-weight: 100 900;
 }
 @font-face {
   font-family: 'GenShinGothic Monospace';
   src: url('./fonts/GenShinGothic-Monospace.woff2') format('woff2');
 }
-/* 数字だけ Computer Modern にする unicode-range ハック(旧構成を踏襲) */
+/* 数字だけ Computer Modern にする(unicode-range で数字にだけ当たる別名) */
 @font-face {
   font-family: 'number';
   src: url('./fonts/cmu.serif-roman.woff2') format('woff2');
-  font-weight: bolder;
   unicode-range: U+0030-0039;
 }
 
-/* ---------- design tokens (旧 _variables.scss → Tailwind @theme) ----------
-   token 名は Tailwind 組込みユーティリティ(font-bold 等)と衝突しないよう配慮。
-   static: ユーティリティから使われていない変数も必ず出力する
-   (Frame などが var(--color-frame-*) を直接参照するため)。 */
+/* ========== 2. トークン ==========
+   static: ユーティリティから使われていない変数も出力する(この CSS が var() で直接参照するため)。
+   token 名は Tailwind 組込みユーティリティ(font-bold 等)と衝突しない名前にする。 */
 @theme static {
+  /* 書体の役割 */
   --font-body: 'number', 'Computer Modern', 'Noto Serif JP', serif;
-  --font-heading: 'Computer Modern bold', 'Noto Sans JP', sans-serif;
+  /* 見出しと強調: 本文(明朝・セリフ)に対してゴシックの中太で際立たせる。
+     太字(700)は重すぎるので中間の 500。Noto Sans JP は可変フォントなので 100〜900 の任意の太さを出せる */
+  --font-heading: 'Noto Sans JP', sans-serif;
+  --heading-weight: 500;
   --font-code: 'GenShinGothic Monospace', monospace;
+  --font-ui: 'Noto Sans JP', sans-serif; /* スライドの外の UI */
 
-  --color-brand: #4360f4;
-  --color-ink: #333631;
-  --color-eq: #e6e6e6;
-
-  --color-frame-gray: gray;
-  --color-frame-red: orangered;
+  /* 色の役割 */
+  --color-brand: #4360f4; /*   アクセント: スライドの題の帯・見出し・リンク・印 */
+  --color-ink: #333631; /*     本文 */
+  --color-muted: #6b6f68; /*   従の情報(氏名・日付など) */
+  --color-canvas: #fff; /*     地 */
+  --color-surface: #eeeeee; /* アクセントの無いパネルの面 */
+  /* パネルのアクセント色(<Frame color>)。明るさと鮮やかさを揃えた OKLCH
+     (色の違いが重要度の違いに見えないように) */
+  --color-frame-gray: oklch(0.55 0 0);
+  --color-frame-red: oklch(0.6 0.19 30);
   --color-frame-blue: var(--color-brand);
-  --color-frame-gold: gold;
-  --color-frame-green: green;
-  --color-frame-purple: purple;
+  --color-frame-gold: oklch(0.75 0.15 85);
+  --color-frame-green: oklch(0.58 0.14 150);
+  --color-frame-purple: oklch(0.52 0.17 310);
+  /* アクセント色の面 = アクセント色を地の色にこの割合で混ぜた色 */
+  --tint: 90%;
+
+  /* 文字: 本文の大きさ(スライドの論理座標の px)と段階の比。
+     本文はスライドの高さ(700)の 4%。Beamer の既定(11pt / 96mm)と同じ割合で、
+     一般的なスライドソフトの既定(4〜5%)の範囲。表示の大きさはウィンドウに比例する */
+  --text-base: 28px;
+  --type-ratio: 1.25;
+  /* 行間: 和文は字の高さの半分ほど空ける(日本語組版の要件 JLReq の目安 50〜100%) */
+  --leading: 1.5;
+  --leading-tight: 1.2;
+
+  /* 間隔と形 */
+  --space: 0.5em; /*   スライドの中の間隔の単位 */
+  --slide-pad: 40px; /* スライドの内側の余白(論理座標の px。reveal が全体を縮小する) */
+  --radius: 6px;
+  --rule: 4px; /*      アクセントの線の太さ */
+  --ui-space: 8px; /*  スライドの外の UI の間隔の単位(画面の px) */
 }
 
-/* ---------- reveal.js テーマ上書き (旧 _global.scss の要点。
-   reveal が注入するグローバル class 向けなので utility 化せず素の CSS) ---------- */
-.reveal-viewport {
-  background: #fff;
+/* ========== 3. reveal テーマ変数 ========== */
+:root {
+  --r-background-color: var(--color-canvas);
+  --r-main-font: var(--font-body);
+  --r-main-font-size: var(--text-base);
+  --r-main-color: var(--color-ink);
+  --r-block-margin: var(--space);
+  --r-heading-font: var(--font-heading);
+  --r-heading-color: var(--color-brand);
+  --r-heading-font-weight: var(--heading-weight);
+  --r-heading-line-height: var(--leading-tight);
+  /* white テーマの既定は uppercase。全大文字は語の形が失われて読みにくいので原稿どおりに出す */
+  --r-heading-text-transform: none;
+  --r-heading-margin: 0 0 var(--space);
+  --r-heading1-size: calc(1em * var(--type-ratio) * var(--type-ratio));
+  /* h2 以下は本文と同じ大きさ。スライドの題は帯で、小見出しは書体と色で区別する */
+  --r-heading2-size: 1em;
+  --r-heading3-size: 1em;
+  --r-heading4-size: 1em;
+  --r-code-font: var(--font-code);
+  --r-link-color: var(--color-brand);
+  --r-link-color-hover: color-mix(in srgb, var(--color-ink) 30%, var(--color-brand));
 }
-.reveal {
-  font-family: var(--font-body);
-  color: var(--color-ink);
-  font-weight: normal;
-}
-.reveal .slides section {
+
+/* ========== 4. スライドの組版 ========== */
+
+/* 縦スライドの束(.stack)ではなく、中身を持つ 1 枚 1 枚に余白を付ける */
+.reveal .slides section:not(.stack) {
+  box-sizing: border-box;
+  padding: var(--slide-pad);
   text-align: left;
-  line-height: 1.3;
+  line-height: var(--leading);
 }
-.reveal h1,
-.reveal h2,
-.reveal h3,
-.reveal h4 {
+.reveal :is(p, li) {
+  line-height: inherit;
+  /* 和文を文節で改行し(lang="ja" のとき有効)、段落末に 1 語だけ残る行を避ける */
+  word-break: auto-phrase;
+  text-wrap: pretty;
+}
+.reveal :is(h1, h2, h3, h4) {
+  word-break: auto-phrase;
+  text-wrap: balance;
+  font-feature-settings: 'palt';
+}
+
+/* 見出しと強調の文字。部品の見出し(Frame の題・定理の見出し・表紙の主の行)も同じ扱い */
+.reveal :is(h1, h2, h3, h4, strong, b, .frame-title, .thm-head, .byline > :first-child) {
   font-family: var(--font-heading);
-  color: #fff;
-  background-color: var(--color-brand);
-  padding: 0.15em 0.5em;
-  font-weight: 400;
-  word-wrap: break-word;
-  margin: 0 0 0.2em 0;
+  font-weight: var(--heading-weight);
 }
+
+/* スライドの題(先頭の h2): スライドの幅いっぱいの帯。余白を負の margin で打ち消して端まで伸ばす */
+.reveal .slides section > h2:first-child {
+  margin: calc(-1 * var(--slide-pad)) calc(-1 * var(--slide-pad)) var(--space);
+  padding: calc(var(--space) / 2) var(--slide-pad);
+  color: var(--color-canvas);
+  background: var(--color-brand);
+}
+/* 発表の題(h1): 表紙の主役なので帯にせず、大きさとアクセント色だけで示す */
 .reveal h1 {
-  font-size: 1.4em;
-  font-family: var(--font-body);
   text-align: center;
 }
-.reveal h2 {
-  font-size: 1.1em;
-}
-/* 見出しの自動採番 (旧 adoc :sectnums: 相当)。
-   CSS カウンタは display:none の要素を数えないため、App.tsx で viewDistance を広げて
-   全スライドを表示状態にしている(でないと遠いスライドの番号がずれる)。 */
+
+/* 節番号(旧 adoc の :sectnums: 相当)。CSS カウンタは display:none の要素を数えないため、
+   App.tsx で viewDistance を広げて全スライドを表示状態にしている */
 .reveal .slides {
   counter-reset: sec;
 }
@@ -99,144 +170,67 @@
   counter-increment: sec;
   content: counter(sec) '. ';
 }
-.reveal h3 {
-  font-size: 0.9em;
-}
-.reveal p {
-  margin: 10px 0;
-  line-height: 1.3em;
-  text-align: left;
-}
-.reveal strong,
-.reveal b {
-  font-family: var(--font-heading);
-}
-.reveal em {
-  font-style: italic;
-}
-.reveal ul {
-  display: inline-block;
-  text-align: left;
-  list-style-type: disc;
-  margin: 0 0 0 1em;
-}
-.reveal ol {
-  display: inline-block;
-  text-align: left;
-  list-style-type: decimal;
-  margin: 0 0 0 1em;
-}
-.reveal a {
+
+.reveal li::marker {
   color: var(--color-brand);
-  text-decoration: none;
-}
-.reveal code {
-  font-family: var(--font-code);
-}
-.reveal pre {
-  font-family: var(--font-code);
-  font-size: 0.55em;
-  width: 90%;
-  margin: 20px auto;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
-}
-.reveal table {
-  margin: auto;
-  border-collapse: collapse;
-}
-.reveal table th,
-.reveal table td {
-  text-align: left;
-  padding: 0.2em 0.5em;
-  border-bottom: 1px solid;
 }
 .reveal .slide-number {
   font-family: var(--font-code);
 }
-.reveal .controls {
+.reveal :is(.controls, .progress) {
   color: var(--color-brand);
 }
 .reveal .progress {
-  color: var(--color-brand);
-  height: 0.2em;
+  height: var(--rule);
 }
 
-/* PDF出力(?print-pdf)時はサイドバーを隠す(menu は .reveal の外なので個別指定) */
-@media print {
-  .deck-menu,
-  .deck-diagnostics {
-    display: none !important;
-  }
+/* ========== 5. パネル ==========
+   囲み全般の共通の形。各部品は --accent(アクセント色)だけを決め、面はそれを --tint で薄めて作る。
+   アクセントの無いパネル(Note・コード・<Frame math>)の面は --color-surface。 */
+.reveal :is(.frame, .note, .thm, pre) {
+  margin: var(--space) 0;
+  padding: var(--space) calc(2 * var(--space));
+  border-radius: var(--radius);
+  background: var(--color-surface);
 }
-
-/* 開発時の原稿警告の一覧 (deck/DevDiagnostics.tsx) */
-.deck-diagnostics {
-  position: fixed;
-  top: 10px;
-  right: 10px;
-  z-index: 60;
-  max-width: 480px;
-  font: 13px/1.5 'Noto Sans JP', sans-serif;
-  background: #fff8e6;
-  border: 1px solid #e0a800;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+.reveal :is(.frame, .thm) {
+  background: color-mix(in srgb, var(--color-canvas) var(--tint), var(--accent));
 }
-.deck-diagnostics button {
-  display: block;
-  width: 100%;
-  padding: 6px 10px;
-  text-align: left;
-  font: inherit;
-  font-weight: bold;
-  color: #8a5a00;
-  background: none;
-  border: none;
-  cursor: pointer;
+.reveal :is(.frame, .note, .thm) > :first-child {
+  margin-top: 0;
 }
-.deck-diagnostics ul {
-  margin: 0;
-  padding: 0 10px 8px 26px;
-}
-.deck-diagnostics code {
-  font-family: var(--font-code);
-}
-
-/* KaTeX は JSXGraph のラベル(FourPoints)だけで使う。スライドの数式は MathJax */
-.reveal .katex {
-  font-size: 1em;
-}
-
-/* ---------- 定理環境 (components/Theorem.tsx) ----------
-   番号はビルド時に振る(vite/deck/plugin.ts)。ここは見た目だけ */
-.reveal .thm {
-  margin: 0.3em 0;
-  padding: 0.2em 0.6em 0.3em;
-  border-left: 6px solid var(--color-brand);
-  background: var(--color-eq);
-}
-.reveal .thm-def {
-  border-left-color: var(--color-frame-green);
-  background: color-mix(in srgb, white 88%, var(--color-frame-green));
-}
-.reveal .thm-head {
-  font-family: var(--font-heading);
-  font-weight: bold;
-}
-.reveal .thm-body > :first-child {
-  margin-top: 0.2em;
-}
-.reveal .thm-body > :last-child {
+.reveal :is(.frame, .note, .thm) > :last-child {
   margin-bottom: 0;
 }
-/* 証明: 「Proof.」と本文の 1 段落目を同じ行に続け、∎ は右下に置く(Beamer と同じ) */
+
+/* Frame(components/Frame.tsx): 題の下線がアクセント。--accent は部品が color から渡す */
+.reveal .frame-title {
+  margin-bottom: var(--space);
+  border-bottom: var(--rule) solid var(--accent);
+}
+.reveal .frame.frame-math {
+  background: var(--color-surface);
+}
+
+/* 定理環境(components/Theorem.tsx): 左の線がアクセント。番号は変換時に振る(vite/remark-beamer) */
+.reveal .thm {
+  --accent: var(--color-brand);
+  border-left: var(--rule) solid var(--accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+.reveal .thm-def {
+  --accent: var(--color-frame-green);
+}
+/* 証明はパネルにしない。「Proof.」と本文の 1 段落目を同じ行に続け、∎ は右下に置く(Beamer と同じ) */
 .reveal .thm-proof {
   position: relative;
-  margin: 0.3em 0;
-  padding-right: 1.2em;
+  margin: var(--space) 0;
+  padding-right: calc(2 * var(--space));
 }
 .reveal .thm-proof .thm-head {
+  font-family: inherit;
+  font-weight: inherit;
   font-style: italic;
-  font-weight: normal;
 }
 .reveal .thm-proof > p:first-of-type {
   display: inline;
@@ -247,37 +241,63 @@
   bottom: 0;
 }
 
-/* ---------- 文献 (rehype-citation が出力する CSL の標準マークアップ) ---------- */
+/* コード(Markdown のコードブロックと layout.tsx の Code): 本文より 1 段小さく */
+.reveal pre {
+  width: auto;
+  font-size: calc(1em / var(--type-ratio));
+  box-shadow: none;
+}
+.reveal pre code {
+  padding: 0;
+}
+
+/* ========== 6. その他の部品 ========== */
+
+/* 横並び(layout.tsx の Cols / Col) */
+.reveal .cols {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: calc(2 * var(--space));
+}
+.reveal .col {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 表紙の署名(layout.tsx の Byline): 1 行目を主、以降(氏名・日付など)を従にする */
+.reveal .byline {
+  text-align: center;
+  color: var(--color-muted);
+}
+.reveal .byline > :first-child {
+  color: var(--color-ink);
+}
+
+/* 文献(rehype-citation が出力する CSL の標準マークアップ) */
 .reveal .csl-entry {
   display: flex;
-  gap: 0.5em;
-  margin: 0.2em 0;
+  gap: var(--space);
 }
 .reveal .csl-left-margin {
   flex: none;
-  min-width: 1.5em;
-}
-.reveal a[href^='#bib-'] {
-  color: var(--color-brand);
+  min-width: 4ch; /* 「[10]」の幅 */
 }
 
-/* ---------- 開発時のはみ出し表示 (deck/overflow.ts。本番ビルドでは付かない) ---------- */
-.reveal .slides section.deck-overflow {
-  outline: 4px dashed red;
-  outline-offset: -4px;
+/* 数式(rehype-mathjax の SVG 出力)。\eqref のリンク色をアクセントに合わせる(MathJax の既定は青) */
+.reveal mjx-container[jax='SVG'][display='true'] {
+  margin: var(--space) 0;
 }
-.reveal .slides section.deck-overflow::after {
-  content: 'はみ出し';
-  position: absolute;
-  top: 0;
-  right: 0;
-  padding: 0.1em 0.5em;
-  font-size: 0.5em;
-  color: #fff;
-  background: red;
+.reveal mjx-container[jax='SVG'] > svg a {
+  fill: var(--color-brand);
+  stroke: var(--color-brand);
+}
+/* KaTeX は JSXGraph のラベル(FourPoints)だけで使う */
+.reveal .katex {
+  font-size: 1em;
 }
 
-/* ---------- 段階表示 (components/Overlay.tsx。Beamer の \pause / <2-> / \only など) ---------- */
+/* 段階表示(components/Overlay.tsx。Beamer の \pause / <2-> / \only など) */
 /* ステップ数を揃えるための見えない fragment */
 .reveal .overlay-step {
   display: none !important;
@@ -287,12 +307,149 @@
 .reveal .fragment.only.fade-out.visible {
   display: none;
 }
-/* ---------- 数式 (rehype-mathjax の SVG 出力) ---------- */
-.reveal mjx-container[jax='SVG'][display='true'] {
-  margin: 0.3em 0;
+
+/* ========== 7. デッキの外側の UI と開発時の表示 ========== */
+
+/* reveal は .reveal を親の高さいっぱいに広げるので、親に高さが無いと潰れて白画面になる */
+html,
+body {
+  margin: 0;
+  height: 100%;
 }
-/* \eqref のリンク色をテーマに合わせる(MathJax の既定は青) */
-.reveal mjx-container[jax='SVG'] > svg a {
-  fill: var(--color-brand);
-  stroke: var(--color-brand);
+#root {
+  height: 100vh;
+}
+
+/* スライド一覧(components/Menu.tsx)。.reveal の外(body 直下)に置く */
+.deck-menu {
+  font: 14px/1.5 var(--font-ui);
+  color: var(--color-ink);
+}
+.deck-menu button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.deck-menu-toggle {
+  position: fixed;
+  left: var(--ui-space);
+  bottom: var(--ui-space);
+  z-index: 50;
+  padding: var(--ui-space);
+  color: var(--color-brand) !important;
+}
+.deck-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgb(0 0 0 / 0.25);
+}
+.deck-menu-panel {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 45;
+  width: 300px;
+  overflow-y: auto;
+  background: var(--color-canvas);
+  box-shadow: 0 0 calc(2 * var(--ui-space)) rgb(0 0 0 / 0.2);
+}
+.deck-menu-panel > header {
+  padding: calc(2 * var(--ui-space));
+  font-weight: bold;
+  color: var(--color-canvas);
+  background: var(--color-brand);
+}
+.deck-menu-panel ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.deck-menu-panel li button {
+  display: block;
+  width: 100%;
+  padding: var(--ui-space) calc(2 * var(--ui-space));
+  text-align: left;
+  border-bottom: 1px solid var(--color-surface);
+}
+/* 縦スライドは字下げし、従の色にする */
+.deck-menu-panel li button.sub {
+  padding-left: calc(4 * var(--ui-space));
+  color: var(--color-muted);
+}
+.deck-menu-panel li button[aria-current='true'] {
+  font-weight: bold;
+  color: var(--color-brand);
+  background: color-mix(in srgb, var(--color-canvas) var(--tint), var(--color-brand));
+}
+
+/* 原稿の警告の一覧(deck/DevDiagnostics.tsx。開発時だけ)。警告なので配色はテーマに依らない */
+.deck-diagnostics {
+  position: fixed;
+  top: var(--ui-space);
+  right: var(--ui-space);
+  z-index: 60;
+  max-width: 480px;
+  font: 13px/1.5 var(--font-ui);
+  background: #fff8e6;
+  border: 1px solid #e0a800;
+  box-shadow: 0 0 var(--ui-space) rgb(0 0 0 / 0.15);
+}
+.deck-diagnostics button {
+  display: block;
+  width: 100%;
+  padding: var(--ui-space);
+  text-align: left;
+  font: inherit;
+  font-weight: bold;
+  color: #8a5a00;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.deck-diagnostics ul {
+  margin: 0;
+  padding: 0 var(--ui-space) var(--ui-space) calc(3 * var(--ui-space));
+}
+.deck-diagnostics code {
+  font-family: var(--font-code);
+}
+
+/* スライドの最小サイズからのはみ出し(deck/overflow.ts。開発時だけ付く)。
+   最小サイズの範囲(--deck-min-width × --deck-min-height)を破線の枠で示し、その右上に超過量を出す。
+   枠もバッジも最小サイズの内側に置き、はみ出しの測定(scrollWidth / scrollHeight)を増やさない
+   (増やすと、原稿を直しても警告が消えない) */
+.reveal .slides section.deck-overflow::before,
+.reveal .slides section.deck-overflow::after {
+  position: absolute;
+  top: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+.reveal .slides section.deck-overflow::before {
+  content: '';
+  left: 0;
+  box-sizing: border-box;
+  width: var(--deck-min-width);
+  height: var(--deck-min-height);
+  border: calc(var(--rule) / 2) dashed red;
+}
+.reveal .slides section.deck-overflow::after {
+  content: attr(data-deck-overflow);
+  left: var(--deck-min-width);
+  translate: -100% 0;
+  padding: 0 var(--space);
+  font: calc(1em / var(--type-ratio) / var(--type-ratio)) / var(--leading) var(--font-ui);
+  white-space: nowrap;
+  color: #fff;
+  background: red;
+}
+
+/* PDF 出力(?print-pdf)ではデッキの外側の UI を出さない */
+@media print {
+  .deck-menu,
+  .deck-diagnostics {
+    display: none !important;
+  }
 }

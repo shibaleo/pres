@@ -6,6 +6,7 @@ import Slides, { deckWarnings } from './slides.mdx'
 import { mdxComponents } from './deck/mdx-components'
 import { watchOverflow } from './deck/overflow'
 import DevDiagnostics from './deck/DevDiagnostics'
+import { useSlideSize } from './deck/slide-size'
 
 type RevealApi = NonNullable<ReturnType<typeof useReveal>>
 
@@ -20,14 +21,16 @@ const SLIDE_KEY = 'deck-slide-index'
 export default function App() {
   const deckRef = useRef<RevealApi | null>(null)
   const stopOverflow = useRef<(() => void) | null>(null)
+  const { width, height } = useSlideSize()
   useEffect(() => () => stopOverflow.current?.(), [])
 
   return (
     <Deck
       config={{
-        width: 960,
-        height: 700,
-        margin: 0.04,
+        // 論理サイズはウィンドウの縦横比に合わせる(deck/slide-size.ts)。余白はスライド内の padding で取る
+        width,
+        height,
+        margin: 0,
         center: false,
         slideNumber: 'c/t',
         hash: true,
