@@ -287,12 +287,6 @@
 .reveal .fragment.only.fade-out.visible {
   display: none;
 }
-/* 箇条書き `- <2-> …`: 項目が出るまで行頭記号も隠す */
-.reveal li:has(> .ov-li:not(.visible))::marker,
-.reveal li:has(> p > .ov-li:not(.visible))::marker {
-  color: transparent;
-}
-
 /* ---------- 数式 (rehype-mathjax の SVG 出力) ---------- */
 .reveal mjx-container[jax='SVG'][display='true'] {
   margin: 0.3em 0;

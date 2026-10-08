@@ -15,15 +15,12 @@ export function Overlay({
   to,
   as: Tag = 'div',
   only = false,
-  li = false,
   children,
 }: {
   from: number | string
   to?: number | string
   as?: 'div' | 'span'
   only?: boolean
-  /** 箇条書きの項目(`- <2-> …`)。CSS で行頭記号も一緒に隠す */
-  li?: boolean
   children?: ReactNode
 }) {
   const cls = (...c: (string | false)[]) => c.filter(Boolean).join(' ')
@@ -39,7 +36,7 @@ export function Overlay({
   }
   if (from >= 2) {
     node = (
-      <Tag className={cls('fragment', only && 'only', li && 'ov-li')} data-fragment-index={from - 2}>
+      <Tag className={cls('fragment', only && 'only')} data-fragment-index={from - 2}>
         {node}
       </Tag>
     )

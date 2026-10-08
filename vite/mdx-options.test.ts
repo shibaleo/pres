@@ -41,9 +41,14 @@ describe('ビルド設定(結合)', () => {
   })
 
   it('\\cite は rehype-citation が番号付けし、文献リストを差し込む', async () => {
-    const out = String(await build('\\cite{arnold2012} と \\cite{nakajima2020}\n\n<Bibliography />'))
+    const out = String(await build('\\cite{arnold2012} と \\cite{nakajima2020,arnold2012}\n\n<Bibliography />'))
     expect(out).toContain('csl-entry')
     expect(out).toContain('Arnold VI')
+    // 角括弧版の CSL: [1] / [1,2]。複数文献の引用でも各番号のリンク先が正しい
+    expect(out).toContain('"["')
+    expect(out).toContain('href: "#bib-arnold2012",\n')
+    const links = [...out.matchAll(/href: "#bib-(\w+)",\s*children: "(\d)"/g)].map((m) => `${m[1]}=${m[2]}`)
+    expect(links).toEqual(['arnold2012=1', 'arnold2012=1', 'nakajima2020=2'])
   })
 
   it('本番(strict)では警告で失敗する', async () => {

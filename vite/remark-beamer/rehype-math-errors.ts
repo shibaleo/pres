@@ -4,12 +4,14 @@
  * MathJax は誤りのある数式も赤字の merror として描いてしまう(data-mjx-error 属性が付く)。
  * 描画後のノードには原稿の位置が残らないので、描画前に数式の位置を文書順に控えておき、
  * 描画後の数式(mjx-container)と順番で対応づけて、原稿の行で報告する。
+ * \input で取り込んだファイルの数式は「ファイル:行」(data-beamer-source)をメッセージに含める。
  */
 import type { Element, Root, RootContent } from 'hast'
 import type { Position } from 'unist'
 import type { VFile } from 'vfile'
 
-const positions = new WeakMap<VFile, (Position | undefined)[]>()
+type MathPlace = { position?: Position; source?: string }
+const places = new WeakMap<VFile, MathPlace[]>()
 
 function walk(node: Root | RootContent, fn: (el: Element, parent?: Element) => boolean | void, parent?: Element) {
   if (node.type === 'element' && fn(node, parent) === false) return
@@ -24,21 +26,22 @@ const isMath = (el: Element) => {
 /** rehype-mathjax の前: 数式の位置を文書順に控える */
 export function rehypeMathPositions() {
   return (tree: Root, file: VFile) => {
-    const list: (Position | undefined)[] = []
+    const list: MathPlace[] = []
     walk(tree, (el, parent) => {
       if (!isMath(el)) return
+      const source = el.properties?.dataBeamerSource
       // 別行立て数式の <code> は remark-math が生成したもので位置を持たないので、親の <pre> の位置を使う
-      list.push(el.position ?? parent?.position)
+      list.push({ position: el.position ?? parent?.position, source: typeof source === 'string' ? source : undefined })
       return false
     })
-    positions.set(file, list)
+    places.set(file, list)
   }
 }
 
 /** rehype-mathjax の後: 誤りのある数式を原稿の位置付きで報告する */
 export function rehypeMathErrors() {
   return (tree: Root, file: VFile) => {
-    const list = positions.get(file) ?? []
+    const list = places.get(file) ?? []
     let i = 0
     walk(tree, (el) => {
       if (el.tagName !== 'mjx-container') return
@@ -48,7 +51,7 @@ export function rehypeMathErrors() {
         const err = inner.properties?.dataMjxError
         if (typeof err === 'string') message = err
       })
-      if (message) file.fail(`数式の誤り: ${message}`, { place })
+      if (message) file.fail(`${place?.source ? `${place.source}: ` : ''}数式の誤り: ${message}`, { place: place?.position })
       return false
     })
   }

@@ -42,13 +42,15 @@ function woff2OnlyFonts(): Plugin {
 }
 
 /**
- * .bib はモジュールグラフに入らないので、編集したら全体を読み直す(引用の番号・文献リストを更新するため)
+ * .bib と \input で取り込んだ .mdx はモジュールグラフに入らない(slides.mdx の変換中に読む)ので、
+ * 編集したら全体を読み直す(番号・文献リストを更新するため)
  */
-function reloadOnBib(): Plugin {
+function reloadOnDeckSources(): Plugin {
   return {
-    name: 'reload-on-bib',
-    handleHotUpdate({ file, server }) {
-      if (!file.endsWith('.bib')) return
+    name: 'reload-on-deck-sources',
+    handleHotUpdate({ file, server, modules }) {
+      const included = /\.mdx?$/.test(file) && modules.length === 0
+      if (!file.endsWith('.bib') && !included) return
       server.moduleGraph.invalidateAll()
       server.ws.send({ type: 'full-reload' })
       return []
@@ -65,7 +67,7 @@ export default defineConfig(({ command, mode }) => ({
   },
   plugins: [
     woff2OnlyFonts(),
-    reloadOnBib(),
+    reloadOnDeckSources(),
     {
       enforce: 'pre',
       // 本番ビルドでは原稿の警告も失敗扱い。DECK_ALLOW_WARNINGS=1 で許可

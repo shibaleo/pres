@@ -13,32 +13,21 @@ export interface LatexLine extends Literal {
 export interface LatexCommand extends Literal {
   type: 'latexCommand'
 }
-export interface LatexOverlaySpec extends Literal {
-  type: 'latexOverlaySpec'
-}
-/** 行頭の overlay 指定付きの 1 行(`<2-> 項目`)。value は行全体 */
-export interface LatexOverlayLine extends Literal {
-  type: 'latexOverlayLine'
-}
 
 declare module 'mdast' {
   interface RootContentMap {
     latexLine: LatexLine
-    latexOverlayLine: LatexOverlayLine
     latexCommand: LatexCommand
-    latexOverlaySpec: LatexOverlaySpec
   }
   interface BlockContentMap {
     latexLine: LatexLine
-    latexOverlayLine: LatexOverlayLine
   }
   interface PhrasingContentMap {
     latexCommand: LatexCommand
-    latexOverlaySpec: LatexOverlaySpec
   }
 }
 
-function literal(type: 'latexLine' | 'latexCommand' | 'latexOverlaySpec' | 'latexOverlayLine') {
+function literal(type: 'latexLine' | 'latexCommand') {
   return function (this: CompileContext, token: Token) {
     this.enter({ type, value: this.sliceSerialize(token) } as LatexLine, token)
   }
@@ -67,8 +56,6 @@ export function beamerFromMarkdown(): Extension {
       },
       latexLine: literal('latexLine'),
       latexCommand: literal('latexCommand'),
-      latexOverlaySpec: literal('latexOverlaySpec'),
-      latexOverlayLine: literal('latexOverlayLine'),
     },
     exit: {
       latexMathEnv(this: CompileContext, token: Token) {
@@ -81,8 +68,6 @@ export function beamerFromMarkdown(): Extension {
       },
       latexLine: close,
       latexCommand: close,
-      latexOverlaySpec: close,
-      latexOverlayLine: close,
     },
   }
 }

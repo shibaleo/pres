@@ -1,17 +1,16 @@
 /**
  * Beamer / LaTeX 風記法の micromark 構文拡張(remark-math や remark-directive と同じ仕組み)。
  *
- * MDX では `{…}` が JS 式、`<…` が JSX になるため、`\cite{key}` や `<2->` は
- * 構文解析の段階で先に認識しておく必要がある。ここでは「どこからどこまでがその記法か」
- * だけを決め、意味づけ(番号付け・変換)は transform.ts が構文木の上で行う。
+ * MDX では `{…}` が JS 式になるため、`\cite{key}` などは構文解析の段階で先に認識しておく必要がある。
+ * ここでは「どこからどこまでがその記法か」だけを決め、意味づけ(番号付け・変換)は
+ * transform.ts が構文木の上で行う。記法は LaTeX / Beamer にあるものだけ。
  *
  * 構文:
  *   flow  `\begin{equation|align|gather|multline}` … `\end{…}`  → 別行立て数式(MathJax に渡す)
- *   flow  `\begin{name}<spec>[opt]\label{…}` / `\end{name}` / `\pause`(行単独)
+ *   flow  `\begin{name}<spec>[opt]\label{…}` / `\end{name}` / `\pause` / `\input{file}`(行単独)
  *   text  `\name<spec>[opt]{body}`(\cite \ref \eqref \label \only \uncover … 未知の命令もエラー報告のため拾う)
- *   text  `<2->` などの overlay 指定(箇条書きの先頭)
  */
-import { asciiAlpha, markdownLineEnding, markdownSpace } from 'micromark-util-character'
+import { asciiAlpha, markdownLineEnding } from 'micromark-util-character'
 import type { Code, Construct, Effects, Extension, State, TokenizeContext } from 'micromark-util-types'
 
 declare module 'micromark-util-types' {
@@ -20,8 +19,6 @@ declare module 'micromark-util-types' {
     latexMathEnvValue: 'latexMathEnvValue'
     latexLine: 'latexLine'
     latexCommand: 'latexCommand'
-    latexOverlaySpec: 'latexOverlaySpec'
-    latexOverlayLine: 'latexOverlayLine'
   }
 }
 
@@ -63,8 +60,9 @@ function lineConstruct(name: 'latexLine', accept: (line: string) => boolean): Co
   }
 }
 
-const ENV_LINE_RE = /^\\begin\{([A-Za-z]+\*?)\}(?:<[^>]*>)?(?:\[[^\]]*\])?\s*(?:\\label\{[^}]*\})?$|^\\end\{([A-Za-z]+\*?)\}$|^\\pause$/
-/** `\begin{theorem}[…]` / `\end{theorem}` / `\pause`(数式環境は別の構文が先に拾う) */
+const ENV_LINE_RE =
+  /^\\begin\{([A-Za-z]+\*?)\}(?:<[^>]*>)?(?:\[[^\]]*\])?\s*(?:\\label\{[^}]*\})?$|^\\end\{([A-Za-z]+\*?)\}$|^\\pause$|^\\input\{[^}]+\}$/
+/** `\begin{theorem}[…]` / `\end{theorem}` / `\pause` / `\input{…}`(数式環境は別の構文が先に拾う) */
 const latexLine = lineConstruct('latexLine', (line) => {
   const m = line.match(ENV_LINE_RE)
   if (!m) return false
@@ -235,92 +233,10 @@ const latexCommand: Construct = {
   },
 }
 
-/** 箇条書きの先頭の overlay 指定 `<2->` `<+->` など(後ろに空白が必要) */
-const latexOverlaySpec: Construct = {
-  name: 'latexOverlaySpec',
-  tokenize(effects: Effects, ok: State, nok: State) {
-    let size = 0
-    return start
-    function start(code: Code): State | undefined {
-      if (code !== LT) return nok(code)
-      effects.enter('latexOverlaySpec')
-      effects.consume(code)
-      return inside
-    }
-    function inside(code: Code): State | undefined {
-      if (code !== null && ((code >= 48 && code <= 57) || code === 43 || code === 45)) {
-        size++
-        effects.consume(code)
-        return inside
-      }
-      if (code === GT && size > 0) {
-        effects.consume(code)
-        return after
-      }
-      return nok(code)
-    }
-    function after(code: Code): State | undefined {
-      if (!markdownSpace(code)) return nok(code)
-      effects.exit('latexOverlaySpec')
-      return ok(code)
-    }
-  },
-}
-
-/**
- * 行頭の overlay 指定 `<2-> 項目`(箇条書きの項目の 1 行目)。
- * MDX の JSX 構文は行頭の `<` を必ず JSX として読み、`<2` のような名前でない文字で
- * 構文エラーを出してしまうので、ブロックの段階で先に行全体を拾う(残りは transform.ts が解析する)。
- */
-const latexOverlayLine: Construct = {
-  name: 'latexOverlayLine',
-  concrete: true,
-  tokenize(effects: Effects, ok: State, nok: State) {
-    let size = 0
-    return start
-    function start(code: Code): State | undefined {
-      if (code !== LT) return nok(code)
-      effects.enter('latexOverlayLine')
-      effects.consume(code)
-      return spec
-    }
-    function spec(code: Code): State | undefined {
-      if (code !== null && ((code >= 48 && code <= 57) || code === 43 || code === 45)) {
-        size++
-        effects.consume(code)
-        return spec
-      }
-      if (code === GT && size > 0) {
-        effects.consume(code)
-        return space
-      }
-      return nok(code)
-    }
-    function space(code: Code): State | undefined {
-      if (!markdownSpace(code)) return nok(code)
-      return rest(code)
-    }
-    function rest(code: Code): State | undefined {
-      if (code === null || markdownLineEnding(code)) {
-        effects.exit('latexOverlayLine')
-        return ok(code)
-      }
-      effects.consume(code)
-      return rest
-    }
-  },
-}
-
-/** MDX の JSX・式の構文より先に試すよう add: 'before' で登録する */
+/** MDX の式の構文より先に試すよう add: 'before' で登録する */
 export function beamerSyntax(): Extension {
   return {
-    flow: {
-      [BACKSLASH]: [{ ...latexMathEnv, add: 'before' }, { ...latexLine, add: 'before' }],
-      [LT]: { ...latexOverlayLine, add: 'before' },
-    },
-    text: {
-      [BACKSLASH]: { ...latexCommand, add: 'before' },
-      [LT]: { ...latexOverlaySpec, add: 'before' },
-    },
+    flow: { [BACKSLASH]: [{ ...latexMathEnv, add: 'before' }, { ...latexLine, add: 'before' }] },
+    text: { [BACKSLASH]: { ...latexCommand, add: 'before' } },
   }
 }

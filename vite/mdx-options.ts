@@ -34,7 +34,8 @@ export function mdxOptions({ bibliography, strict }: { bibliography: string; str
         },
       ],
       rehypeMathErrors,
-      [rehypeCitation, { bibliography, csl: 'vancouver', linkCitations: true }],
+      // CSL は公式リポジトリの NLM/Vancouver(角括弧版)。本文の引用は [1] / [1,2] の形になる
+      [rehypeCitation, { bibliography, csl: 'src/csl/nlm-citation-sequence-brackets.csl', linkCitations: true }],
     ],
   }
 }

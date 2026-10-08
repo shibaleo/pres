@@ -7,7 +7,7 @@ import { createPortal } from 'react-dom'
  * 記法エラーはここではなく Vite のエラー画面に出る。
  * warnings は slides.mdx の export(vite/remark-beamer が出力する)。
  */
-export default function DevDiagnostics({ warnings }: { warnings: { line?: number; message: string }[] }) {
+export default function DevDiagnostics({ warnings }: { warnings: { file?: string; line?: number; message: string }[] }) {
   const [open, setOpen] = useState(true)
   if (warnings.length === 0) return null
   return createPortal(
@@ -17,7 +17,10 @@ export default function DevDiagnostics({ warnings }: { warnings: { line?: number
         <ul>
           {warnings.map((w, i) => (
             <li key={i}>
-              <code>slides.mdx{w.line ? `:${w.line}` : ''}</code>{' '}
+              <code>
+                {w.file ?? 'slides.mdx'}
+                {w.line ? `:${w.line}` : ''}
+              </code>{' '}
               {w.message}
             </li>
           ))}

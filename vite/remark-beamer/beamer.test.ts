@@ -1,3 +1,6 @@
+import { mkdtempSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { unified } from 'unified'
 import remarkParse from 'remark-parse'
@@ -157,10 +160,14 @@ describe('段階表示', () => {
     expect(jsx(jsx(col, 'Col')[0], 'Overlay')).toHaveLength(1)
   })
 
-  it('箇条書きの <+-> は 1 つずつ次のステップに', async () => {
-    const { tree } = await run('- <+-> a\n- <+-> b\n- <+-> c')
+  it('\\uncover<+->{…} は 1 つずつ次のステップに(Beamer の + 指定)', async () => {
+    const { tree } = await run('- \\uncover<+->{a}\n- \\uncover<+->{b}\n- \\uncover<+->{c}')
     expect(jsx(tree, 'Overlay').map((o) => attr(o, 'from'))).toEqual(['1', '2', '3'])
     expect(attr(jsx(tree, 'OverlaySteps')[0], 'max')).toBe('3')
+  })
+
+  it('箇条書きの先頭の <2-> は独自記法なので受け付けない(MDX の構文エラー)', async () => {
+    await expect(run('- <2-> a')).rejects.toThrow()
   })
 
   it('\\only / \\uncover: 範囲指定。段落全体なら段落ごと、文中なら span', async () => {
@@ -187,6 +194,53 @@ describe('段階表示', () => {
   it('不正な指定・未対応の命令はエラー', async () => {
     expect((await fails('\\only<x>{a}')).message).toContain('overlay 指定')
     expect((await fails('\\textbf{a}')).message).toContain('未対応の命令')
+  })
+})
+
+describe('\\input', () => {
+  // 一時ディレクトリに主ファイルと取り込むファイルを置く
+  const dir = mkdtempSync(join(tmpdir(), 'beamer-input-'))
+  const main = join(dir, 'slides.mdx')
+  writeFileSync(join(dir, 'part.mdx'), "import X from 'x'\n\n\\begin{theorem}\\label{thm:p}\np\n\\end{theorem}\n\n---\n\n## 取り込んだ 2 枚目\n")
+  writeFileSync(join(dir, 'bad.mdx'), 'a\n\n\\begin{lemma}\nb\n')
+  writeFileSync(join(dir, 'loop.mdx'), '\\input{loop}\n')
+  writeFileSync(join(dir, 'syntax.mdx'), 'a\n\n<Frame>\n')
+  const runMain = async (src: string) => {
+    const processor = unified().use(remarkParse).use(remarkMdx).use(remarkMath).use(remarkBeamer)
+    const file = new VFile({ path: main, value: src })
+    const tree = (await processor.run(processor.parse(file), file)) as Root
+    return { tree: tree as unknown as N, file }
+  }
+  const failMain = async (src: string) => {
+    try {
+      await runMain(src)
+    } catch (e) {
+      return e as { message: string; line?: number; place?: { start?: { line: number } } }
+    }
+    throw new Error('エラーになりませんでした')
+  }
+
+  it('取り込んだファイルも 1 つの文書として番号・参照・スライド分割が通る', async () => {
+    const { tree } = await runMain("import X from 'x'\n\n\\begin{theorem}\na\n\\end{theorem}\n\n\\input{part}\n\n\\ref{thm:p}")
+    expect(jsx(tree, 'Theorem').map((n) => attr(n, 'n'))).toEqual(['1', '2'])
+    expect(jsx(tree, 'Slide')).toHaveLength(2)
+    expect(textOf(tree)).toContain('2')
+    // 同じ import は 1 つにまとめる
+    expect(tree.children!.filter((c) => c.type === 'mdxjsEsm' && c.value!.includes("from 'x'"))).toHaveLength(1)
+    const second = jsx(tree, 'Slide')[1]
+    expect(attr(second, 'data-slide-file')).toBe('part.mdx')
+  })
+
+  it('取り込んだファイルのエラーは「ファイル:行」で、位置は主ファイルの \\input の行', async () => {
+    const e = await failMain('x\n\n\\input{bad}')
+    expect(e.message).toContain('bad.mdx:3:')
+    expect(e.place?.start?.line ?? e.line).toBe(3)
+  })
+
+  it('無いファイル・循環・取り込んだファイルの MDX 構文エラー', async () => {
+    expect((await failMain('\\input{nothing}')).message).toContain('nothing.mdx がありません')
+    expect((await failMain('\\input{loop}')).message).toContain('循環')
+    expect((await failMain('\\input{syntax}')).message).toContain('syntax.mdx')
   })
 })
 

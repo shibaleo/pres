@@ -11,7 +11,9 @@
  * エラーは file.fail、警告は file.message(unified の標準)。位置は構文解析器が付けた元の行。
  */
 import { readFileSync } from 'node:fs'
+import { dirname, extname, relative, resolve, sep } from 'node:path'
 import { parse as parseJs } from 'acorn'
+import { VFile as VFileCtor } from 'vfile'
 import type { Paragraph, Parent, PhrasingContent, Root, RootContent, Text } from 'mdast'
 import type { InlineMath } from 'mdast-util-math'
 import type { MdxJsxAttribute, MdxJsxFlowElement, MdxJsxTextElement } from 'mdast-util-mdx-jsx'
@@ -80,6 +82,28 @@ function inlineMath(value: string, position?: Position): InlineMath {
 }
 const text = (value: string, position?: Position): Text => ({ type: 'text', value, position })
 
+/** \input で取り込んだノードの出どころ。input は主ファイルでの \input の位置 */
+type Source = { file: string; input?: Position }
+const sourceOf = (n?: { data?: object }) => (n?.data as { beamerSource?: Source } | undefined)?.beamerSource
+/** 取り込んだ木の全ノードに出どころを記録する。数式は MathJax のエラー報告用に hast の属性にも残す */
+function markSource(node: AnyNode, src: Source) {
+  node.data = { ...node.data, beamerSource: src } as unknown as typeof node.data
+  if (node.type === 'math' || node.type === 'inlineMath') {
+    const label = `${src.file}:${node.position?.start.line ?? '?'}`
+    const d = node.data as { hProperties?: Record<string, unknown>; hChildren?: { properties?: Record<string, unknown> }[] }
+    if (node.type === 'inlineMath') d.hProperties = { ...d.hProperties, dataBeamerSource: label }
+    else if (d.hChildren?.[0]) d.hChildren[0].properties = { ...d.hChildren[0].properties, dataBeamerSource: label }
+    node.position = src.input
+  }
+  if ('children' in node) for (const c of node.children) markSource(c as AnyNode, src)
+}
+/** 生成したノードに、元になったノードの出どころを引き継ぐ */
+function inherit<T extends { data?: object }>(to: T, from?: { data?: object }): T {
+  const src = sourceOf(from)
+  if (src) to.data = { ...to.data, beamerSource: src } as T['data']
+  return to
+}
+
 /** BibTeX の key 一覧(`@book{key,` の key) */
 function readBibKeys(path: string): Set<string> {
   return new Set([...readFileSync(path, 'utf8').matchAll(/@\w+\s*\{\s*([^,\s]+)\s*,/g)].map((m) => m[1]))
@@ -132,19 +156,81 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
   const bibKeys = options.bibliography ? readBibKeys(options.bibliography) : null
 
   return function (tree: Root, file: VFile) {
-    const errors: { message: string; place?: Position | Point }[] = []
-    const warnings: { message: string; place?: Position | Point }[] = []
-    const error = (message: string, node?: { position?: Position }) => errors.push({ message, place: node?.position })
-    const warn = (message: string, node?: { position?: Position }) => warnings.push({ message, place: node?.position })
+    // 診断。\input で取り込んだファイルのノードは「ファイル:行」をメッセージに含め、
+    // 位置(place)は主ファイルの \input の行にする(VFile は主ファイルのものなので)
+    // raw: ファイル名なしのメッセージ(開発時の一覧で使う)
+    type Diag = { message: string; raw: string; place?: Position | Point; file?: string; line?: number }
+    const errors: Diag[] = []
+    const warnings: Diag[] = []
+    const diag = (message: string, node?: { position?: Position; data?: object }): Diag => {
+      const src = sourceOf(node)
+      if (!src) return { message, raw: message, place: node?.position, line: node?.position?.start.line }
+      const line = node?.position?.start.line
+      return { message: `${src.file}:${line ?? '?'}: ${message}`, raw: message, place: src.input, file: src.file, line }
+    }
+    const error = (message: string, node?: { position?: Position; data?: object }) => errors.push(diag(message, node))
+    const warn = (message: string, node?: { position?: Position; data?: object }) => warnings.push(diag(message, node))
 
-    // (1) スライド分割。import / export は Slide の外(文書の先頭)に残す
+    // (0) \input{file}: 取り込むファイルを構文解析して、その場に差し込む(1 つの文書として番号を通す)。
+    //     パスは LaTeX と同じく主ファイルのあるディレクトリから。拡張子が無ければ .mdx
+    const mainPath = file.path ? resolve(file.path) : undefined
+    const baseDir = mainPath ? dirname(mainPath) : process.cwd()
+    const texts = new Map<string | undefined, string>([[undefined, String(file.value)]])
+    const rel = (abs: string) => relative(baseDir, abs).split(sep).join('/')
+    tree.children = expandInputs(tree.children, mainPath ? [mainPath] : [])
+
+    function expandInputs(children: RootContent[], chain: string[], via?: Position): RootContent[] {
+      const out: RootContent[] = []
+      for (const child of children) {
+        if ('children' in child && (child.type === 'mdxJsxFlowElement' || child.type === 'blockquote' || child.type === 'listItem' || child.type === 'list')) {
+          ;(child as Parent).children = expandInputs((child as Parent).children as RootContent[], chain, via) as Parent['children']
+        }
+        const m = child.type === 'latexLine' ? child.value.match(/^\s*\\input\{([^}]+)\}\s*$/) : null
+        if (!m) {
+          out.push(child)
+          continue
+        }
+        const target = m[1].trim()
+        const abs = resolve(baseDir, extname(target) ? target : `${target}.mdx`)
+        if (chain.includes(abs)) {
+          error(`\\input{${target}} が循環しています(${[...chain, abs].map(rel).join(' → ')})`, child)
+          continue
+        }
+        let value: string
+        try {
+          value = readFileSync(abs, 'utf8')
+        } catch {
+          error(`\\input{${target}}: ファイル ${rel(abs)} がありません`, child)
+          continue
+        }
+        const at = via ?? child.position // 主ファイルでの位置(入れ子の \input でも一番外側)
+        let sub: Root
+        try {
+          sub = processor.parse(new VFileCtor({ path: abs, value })) as Root
+        } catch (e) {
+          const err = e as { reason?: string; message: string; line?: number }
+          const where = { position: child.position, data: child.data }
+          error(`${rel(abs)}:${err.line ?? '?'}: MDX の構文エラー: ${err.reason ?? err.message}`, where)
+          continue
+        }
+        texts.set(rel(abs), value)
+        markSource(sub, { file: rel(abs), input: at })
+        out.push(...expandInputs(sub.children, [...chain, abs], at))
+      }
+      return out
+    }
+
+    // (1) スライド分割。import / export は Slide の外(文書の先頭)に残す(取り込んだファイルの同じ import は 1 つに)
     const esm: RootContent[] = []
     const stacks: RootContent[][][] = [[[]]]
-    const source = String(file.value)
-    const isSeparator = (n: RootContent, sep: string) =>
-      n.position?.start.offset !== undefined && source.slice(n.position.start.offset, n.position.end.offset).trim() === sep
+    const isSeparator = (n: RootContent, sep: string) => {
+      const text = texts.get(sourceOf(n)?.file)
+      return n.position?.start.offset !== undefined && text?.slice(n.position.start.offset, n.position.end.offset).trim() === sep
+    }
     for (const node of tree.children) {
-      if (node.type === 'mdxjsEsm') esm.push(node)
+      if (node.type === 'mdxjsEsm') {
+        if (!esm.some((e) => e.type === 'mdxjsEsm' && e.value === node.value)) esm.push(node)
+      }
       else if (node.type === 'thematicBreak' && isSeparator(node, '---')) stacks.push([[]])
       else if (node.type === 'paragraph' && isSeparator(node, '--')) stacks[stacks.length - 1].push([])
       else stacks[stacks.length - 1][stacks[stacks.length - 1].length - 1].push(node)
@@ -178,7 +264,7 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
         }
         const line = parseLine((child as LatexLine).value)
         if (line.kind === 'pause') {
-          stack.push({ kind: 'pause', node: overlayFlow({ pause: true }, [], child.position), items: [] })
+          stack.push({ kind: 'pause', node: inherit(overlayFlow({ pause: true }, [], child.position), child), items: [] })
         } else if (line.kind === 'begin') {
           const tag = ENV_TAGS[line.name]
           if (!tag) {
@@ -187,6 +273,7 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
           }
           const el = jsxFlow(tag, tag === 'Proof' ? { heading: line.opt } : {}, [], child.position)
           el.data = { beamer: { spec: line.spec, label: line.label } } as object
+          inherit(el, child)
           const head = line.opt && tag !== 'Proof' ? [titleElement(line.opt, child.position)] : []
           stack.push({ kind: 'env', node: el, name: line.name, items: [], head })
         } else {
@@ -227,8 +314,12 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
     }
 
     // (3) 番号付け(デッキ全体・文書順)。定理型の環境と \label、数式中の \label を集める
-    // offset: 式のラベルの位置(前方参照の判定用)
-    type Label = { kind: 'thm' | 'eq'; n?: number; offset?: number }
+    // order: 文書順の通し位置(\input をまたいでも比べられる。前方参照の判定用)
+    type Label = { kind: 'thm' | 'eq'; n?: number; order?: number }
+    let order = 0
+    const refOrder = new WeakMap<object, number>()
+    /** 文献 key の初出順(\cite を文書順に処理しながら記録する) */
+    const citeOrder = new Map<string, number>()
     const labels = new Map<string, Label>()
     const addLabel = (key: string, value: Label, node: { position?: Position }) => {
       if (labels.has(key)) warn(`\\label{${key}} が重複しています`, node)
@@ -236,6 +327,8 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
     }
     let thm = 0
     const numberWalk = (node: AnyNode, envs: Jsx[]) => {
+      order++
+      if (node.type === 'latexCommand') refOrder.set(node, order)
       let inner = envs
       if ((node.type === 'mdxJsxFlowElement' || node.type === 'mdxJsxTextElement') && node.name && THEOREM_TAGS.has(node.name)) {
         thm++
@@ -251,7 +344,7 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
         else error(`\\label{${key}} が定理環境・数式の外にあります`, node)
       }
       if (node.type === 'math' || node.type === 'inlineMath') {
-        for (const m of node.value.matchAll(/\\label\{([^}]+)\}/g)) addLabel(m[1].trim(), { kind: 'eq', offset: node.position?.start.offset }, node)
+        for (const m of node.value.matchAll(/\\label\{([^}]+)\}/g)) addLabel(m[1].trim(), { kind: 'eq', order }, node)
         // \begin{align} などの閉じ忘れ(構文上は数式の終わりまで取り込まれている)
         const env = node.value.match(/^\\begin\{([A-Za-z]+\*?)\}/)?.[1]
         if (env && MATH_ENVS.includes(env.replace(/\*$/, '')) && !node.value.includes(`\\end{${env}}`)) {
@@ -276,7 +369,8 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
         }
         if (steps.max >= 2) root.children.push(jsxFlow('OverlaySteps', { max: steps.max }, []))
         const line = nodes[0]?.position?.start.line
-        return jsxFlow('Slide', { 'data-slide-line': line }, root.children, nodes[0]?.position)
+        // 開発時のはみ出し警告で原稿の位置を示すため(\input で取り込んだスライドはそのファイル)
+        return jsxFlow('Slide', { 'data-slide-line': line, 'data-slide-file': sourceOf(nodes[0])?.file }, root.children, nodes[0]?.position)
       })
       return els.length === 1 ? els[0] : jsxFlow('Stack', {}, els)
     })
@@ -310,27 +404,6 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
           overlays.push(flow)
           return [flow]
         }
-      }
-      // 箇条書きの先頭の overlay 指定 `- <2-> 項目`(1 行目は構文拡張が行ごと拾っている)
-      if (node.type === 'listItem' && node.children[0]?.type === 'latexOverlayLine') {
-        const line = node.children[0]
-        const m = line.value.match(/^<([^>]*)>\s+([\s\S]*)$/)!
-        const parsed = processor.parse(m[2]) as Root
-        const first = parsed.children[0]
-        const rest = first?.type === 'paragraph' ? first.children : []
-        setPosition(rest, line.position)
-        const el = jsxText('Overlay', { as: 'span', li: true }, rest, line.position)
-        applySpec(el, m[1], steps, line)
-        overlays.push(el)
-        node.children[0] = { type: 'paragraph', children: [el], position: line.position }
-      }
-      if (node.type === 'latexOverlayLine') {
-        error(`overlay 指定 ${node.value.split(/\s/)[0]} は箇条書きの先頭にだけ書けます`, node)
-        return []
-      }
-      if (node.type === 'latexOverlaySpec') {
-        error(`overlay 指定 ${node.value} は箇条書きの先頭にだけ書けます`, node)
-        return []
       }
       if (node.type === 'latexCommand') return replaceCommand(node, steps, overlays)
       if (node.type === 'latexLine') return [] // buildEnvs で処理済み(エラー報告済みのもの)
@@ -368,8 +441,8 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
      * rehype-mathjax は文書順に 1 式ずつ描くため、後ろにある式への参照(前方参照)は解決できない(??? になる)。
      */
     function eqRef(name: 'ref' | 'eqref', key: string, l: Label, node: LatexCommand): InlineMath {
-      const here = node.position?.start.offset ?? 0
-      if (l.offset !== undefined && l.offset > here) {
+      const here = refOrder.get(node) ?? 0
+      if (l.order !== undefined && l.order > here) {
         warn(`\\${name}{${key}} は後ろにある式への参照です。数式の描画(rehype-mathjax)の制約で表示できません`, node)
       }
       return inlineMath(`\\${name}{${key}}`, node.position)
@@ -396,6 +469,10 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
         case 'cite': {
           const keys = cmd.body.split(',').map((k) => k.trim()).filter(Boolean)
           for (const k of keys) if (bibKeys && !bibKeys.has(k)) warn(`文献 "${k}" が ${options.bibliography} に見つかりません`, node)
+          // 初出順(= 番号順)に並べてから渡す。rehype-citation は複数文献の引用で、番号の並べ替え(CSL)と
+          // リンク先の割り当て(書いた順)が食い違い、[1,2] の 1 が別の文献を指してしまうため
+          for (const k of keys) if (!citeOrder.has(k)) citeOrder.set(k, citeOrder.size)
+          keys.sort((a, b) => citeOrder.get(a)! - citeOrder.get(b)!)
           // rehype-citation(pandoc 記法)の入力に。LaTeX の ~ は改行しない空白
           const locator = cmd.opt ? `, ${cmd.opt.replace(/~/g, ' ')}` : ''
           return [text(`[${keys.map((k) => `@${k}`).join('; ')}${locator}]`, node.position)]
@@ -414,7 +491,7 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
     tree.children = [...esm, ...slideElements]
 
     // 開発時の画面表示用に、警告を deck の export として出す
-    const list = warnings.map((w) => ({ line: lineOf(w.place), message: w.message }))
+    const list = warnings.map((w) => ({ file: w.file, line: w.line, message: w.raw }))
     const code = `export const deckWarnings = ${JSON.stringify(list)}`
     tree.children.unshift({
       type: 'mdxjsEsm',
@@ -422,13 +499,15 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
       data: { estree: parseJs(code, { ecmaVersion: 'latest', sourceType: 'module' }) as unknown as Program },
     })
 
+    // 取り込んだファイルの診断はメッセージに「ファイル:行」が入っているので行番号を足さない
+    const where = (d: Diag) => (d.file ? '' : `${lineOf(d.place) ?? '?'} 行目: `)
     if (errors.length) {
-      const rest = errors.slice(1).map((e) => `\n  ${lineOf(e.place) ?? '?'} 行目: ${e.message}`).join('')
+      const rest = errors.slice(1).map((e) => `\n  ${where(e)}${e.message}`).join('')
       file.fail(`${errors[0].message}${rest ? `\n他 ${errors.length - 1} 件:${rest}` : ''}`, { place: errors[0].place })
     }
     for (const w of warnings) file.message(w.message, { place: w.place })
     if (options.strict && warnings.length) {
-      const all = warnings.map((w) => `\n  ${lineOf(w.place) ?? '?'} 行目: ${w.message}`).join('')
+      const all = warnings.map((w) => `\n  ${where(w)}${w.message}`).join('')
       file.fail(`原稿に警告が ${warnings.length} 件あります(DECK_ALLOW_WARNINGS=1 で許可):${all}`, { place: warnings[0].place })
     }
   }

@@ -8,7 +8,8 @@ reveal.js プレゼンテーション。**MDX + TSX** で執筆し、可視化�
 
 ## 方針
 
-- **記法は LaTeX / Beamer に合わせる**（`\begin{theorem}`, `\label`/`\ref`, `\cite`, `\pause` …）。
+- **記法は確立した標準にあるものだけ**（LaTeX / Beamer、Markdown(GFM)・MDX、reveal.js の慣習）。
+  独自の記法は作らない（[CLAUDE.md](CLAUDE.md) の取り決め）。
 - **処理は標準のライブラリと仕組みに任せる**。記法の追加は remark-math や remark-directive と同じ
   unified の標準の作り方（micromark の構文拡張 + 構文木の変換）で行い、数式の番号は MathJax、
   引用は rehype-citation、MDX のコンパイルは `@mdx-js/rollup` が担う。
@@ -18,12 +19,12 @@ reveal.js プレゼンテーション。**MDX + TSX** で執筆し、可視化�
 
 | 領域 | 採用 |
 |---|---|
-| 執筆 | MDX (`src/slides.mdx` 1 ファイル) + TSX |
+| 執筆 | MDX (`src/slides.mdx` と `\input` で取り込むファイル) + TSX |
 | ビルド | Vite 6 + `@mdx-js/rollup` |
 | スライド | reveal.js 5 (`@revealjs/react`) |
 | 記法 | `vite/remark-beamer/`（LaTeX / Beamer 風記法の remark プラグイン） |
 | 数式 | `remark-math` + `rehype-mathjax`（MathJax 3・SVG。式番号・`\label`・`\eqref` は AMS の規則） |
-| 文献 | BibTeX (`src/references.bib`) + `rehype-citation`（CSL: Vancouver） |
+| 文献 | BibTeX (`src/references.bib`) + `rehype-citation`（CSL: NLM/Vancouver 角括弧版。公式リポジトリの `src/csl/nlm-citation-sequence-brackets.csl`） |
 | その他 | `remark-gfm`（表など）、Tailwind CSS v4 |
 | 図 | D3 / JSXGraph を React コンポーネント化 |
 | 配布 | `vite-plugin-singlefile` で単一 HTML 化、フォントは subset woff2 |
@@ -52,8 +53,10 @@ npm run check        # typecheck + test + build:single。コミット前・CI �
 
 ```
 src/
-  slides.mdx           スライド原稿(1 ファイル。--- で横、-- で縦に区切る)
+  slides.mdx           スライド原稿の主ファイル(--- で横、-- で縦に区切る)
+  slides/              \input{…} で取り込む原稿(例: guide.mdx)
   references.bib       BibTeX 文献データ
+  csl/                 引用スタイル(CSL。公式リポジトリのものをそのまま置く)
   App.tsx              デッキ本体(<Deck> に原稿と <Menu> を合成)
   main.tsx             エントリ。reveal/KaTeX/テーマCSS を読み込む
   theme.css            Tailwind v4 エントリ + デザイントークン + @font-face + reveal 上書き
@@ -86,7 +89,7 @@ scripts/subset-fonts.mjs  フォントサブセット化スクリプト
 LaTeX / Beamer 風の記法はすべて JSX の部品に変換されるので、同じことを JSX でも書けます。
 
 ### スライドの区切り
-原稿は `src/slides.mdx` の 1 ファイルです（Slidev・mdx-deck・Quarto などと同じ）。
+原稿の主ファイルは `src/slides.mdx` です。分けたい部分は LaTeX と同じ `\input` で取り込みます（下記）。
 
 ```mdx
 import Globe from '@/components/Globe'
@@ -107,6 +110,20 @@ import Globe from '@/components/Globe'
 - 区切りの前後には空行を入れます（直前が文章だと Markdown の見出しと解釈されるため）。横線が要るときは `***`。
 - 縦スライドの進め方は `App.tsx` の `navigationMode`（`'linear'` にすると ←→ だけで縦も順に進む）。
 - 自分の部品や画像は原稿の先頭で `@/components/...`、`@/img/...` から import します。
+
+### ファイルの取り込み（`\input`）
+```latex
+\input{slides/guide}
+```
+
+- 行単独で書きます。パスは LaTeX と同じく主ファイル（`src/slides.mdx`）のあるディレクトリから。拡張子を省くと `.mdx`。
+- 取り込んだ内容はその場に差し込まれ、**1 つの文書として扱われます**。定理・式・文献の番号、`\ref`、
+  スライドの区切り（`---` / `--`）は、ファイルをまたいでも通しで働きます。入れ子の `\input` も可。
+- 取り込んだファイルの `import` は主ファイルの `import` と同じ扱い（同じ文は 1 つにまとめる）。パスは `@/…` で書きます。
+- エラー・警告は「取り込んだファイル:行」で報告します。無いファイル・循環した取り込みはエラー。
+- 開発サーバーは取り込んだファイルの編集でもページを再読み込みします。
+- MDX の `import Part from './part.mdx'`（部品として読み込む）方式は、ファイルごとに別々にコンパイルされて
+  番号が通しにならないので、原稿の分割には使いません。
 
 ### 定理環境（LaTeX と同じ記法）
 ```latex
@@ -141,9 +158,7 @@ $f$ が凸なら …
 | 書き方 | 意味 |
 |---|---|
 | `\pause`（行単独） | 以降を次のステップで表示。環境や `<Col>` などのブロックの中ではそのブロックの終わりまで |
-| `- <2-> 項目` | 箇条書きの項目に overlay を指定（行頭記号も一緒に隠れる） |
-| `- <+-> 項目` | 次のステップから（項目を 1 つずつ出す） |
-| `\uncover<2->{…}` / `\visible` / `\onslide` | 指定ステップで表示。非表示の間も場所は残る |
+| `\uncover<2->{…}` / `\visible` / `\onslide` | 指定ステップで表示。非表示の間も場所は残る。`- \uncover<+->{…}` で項目を 1 つずつ |
 | `\only<2>{…}` | 指定ステップだけ表示。非表示の間は場所も消える |
 | `\begin{theorem}<2->` | 環境ごと段階表示 |
 | `<Fragment>…</Fragment>` | reveal の fragment をそのまま使う（Beamer 記法のステップの後に出る） |
@@ -154,7 +169,9 @@ $f$ が凸なら …
 ### 文献の引用
 `src/references.bib` にエントリを追加し、本文で LaTeX と同じく `\cite{key}`、`\cite{a,b}`、`\cite[p.~5]{key}` と書きます。
 番号付け・整形・文献リストは rehype-citation（CSL）が行い、`<Bibliography />` の位置に文献リストが入ります。
-表示の形は CSL のスタイル次第です（Vancouver は頁指定を表示しない）。
+本文の引用は `[1]` / `[1,2]` の形です（CSL: NLM/Vancouver 角括弧版）。このスタイルは頁指定（`[p.~5]`）を表示しません。
+スタイルを替えるときは CSL の公式リポジトリ（citation-style-language/styles）のファイルを `src/csl/` に置いて
+`vite/mdx-options.ts` で指定します。
 
 ### その他の部品（import なしで使える）
 | 部品 | 用途 |
