@@ -57,7 +57,7 @@ npm run check        # typecheck + test + build:single。コミット前・CI �
 ```
 src/
   slides.mdx           スライド原稿の主ファイル(--- で横、-- で縦に区切る)
-  slides/              \input{…} で取り込む原稿(例: guide.mdx)
+  slides/              \input{…} で取り込む原稿(guide.mdx: 記法の一覧、typography.mdx: 書き方の見本)
   references.bib       BibTeX 文献データ
   csl/                 引用スタイル(CSL。公式リポジトリのものをそのまま置く)
   App.tsx              デッキ本体(<Deck> に原稿と <Menu> を合成)
@@ -211,6 +211,33 @@ $f$ が凸なら …
 
 一覧は `src/deck/mdx-components.tsx`。個別の図（`Globe` など）は原稿の先頭で import します。
 コード（`` `…` ``、コードブロック、テンプレート文字列）と数式の中の記法は変換されないので、記法の説明はそこに書けます。
+
+### 強調・用語・脚注などの書き方（標準の記法の範囲）
+見本は `src/slides/typography.mdx`。どれも変換処理に手を加えず、CommonMark・JSX・LaTeX（MathJax）の標準の書き方で書けます。
+
+| したいこと | 書き方 |
+|---|---|
+| 新しく定めた用語・行頭のラベル（「疑問：」「答え：」） | `**用語**` |
+| 文の一部に色 | `<span style={{ color: 'var(--color-frame-red)' }}>任意の</span>` |
+| 数式の一部に色 | `\textcolor{red}{S}`。色は名前（`red` など）か `\definecolor{名前}{RGB}{235,235,235}`（`gray` 形式も可。一度定義すれば後の数式で使える） |
+| 大事な式を囲む | `$\colorbox{lightgray}{\(K = \ker\xi\)}$`（中の式は `\(…\)` で書く。`$…$` は外側と衝突する） |
+| ブロックの見出しに出典 | `\begin{theorem}[ダルブーの定理 \cite{key}]` |
+| 用語と説明（description 環境） | `<dl>` `<dt>用語</dt>` `<dd>説明</dd>` `</dl>` |
+| 脚注 | 本文に `<sup>*1)</sup>`、下に `***`（区切り線）と `<small>*1) …</small>` |
+| 再掲・補足 | `<small>（再掲）…</small>` |
+| 要点を中央に | `<Center>` |
+| 別のスライドへのリンク | `[定理環境のスライド](#/5/1)`（reveal のスライド番号。スライドを足すと変わる） |
+| 節番号 | 自動。横のスライドが `4.`、その下の縦のスライドが `4.1.` |
+
+次のものは今の構成では書けません。
+
+| したいこと | 理由 |
+|---|---|
+| `\footnote` | LaTeX の命令として未対応（エラーになる）。上の手書きの脚注で代える |
+| `\begin{description}` / `\begin{itemize}` / `\emph` / `\textbf` | 未対応（エラーになる）。CommonMark と JSX（`<dl>`・リスト・`**`）で書く |
+| `\ref` をクリックして参照先のスライドへ移る（hyperref の動き） | `\ref` は番号の文字になるだけでリンクにならない |
+| スライドごとの文献リスト（使った文献だけ） | `<Bibliography />` はどこに置いても全文献を出す（rehype-citation の動き） |
+| `\definecolor{…}{HTML}{EBEBEB}` | MathJax が HTML 形式に未対応。`RGB` か `gray` 形式で書く |
 
 ### 記法エラーと警告
 不完全な原稿から成果物は作りません。どれも **原稿（`slides.mdx`）の行番号** で報告します（unified の VFile メッセージ）。

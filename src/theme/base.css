@@ -60,8 +60,8 @@
   font-feature-settings: 'palt';
 }
 
-/* 見出しと強調の文字。部品の見出し(Frame の題・定理の見出し・表紙の主の行)も同じ扱い */
-.reveal :is(h1, h2, h3, h4, strong, b, .frame-title, .thm-head, .byline > :first-child) {
+/* 見出しと強調の文字。部品の見出し(Frame の題・定理の見出し・用語・表紙の主の行)も同じ扱い */
+.reveal :is(h1, h2, h3, h4, strong, b, dt, .frame-title, .thm-head, .byline > :first-child) {
   font-family: var(--font-heading);
   font-weight: var(--heading-weight);
 }
@@ -84,18 +84,50 @@
   background: var(--color-brand);
 }
 
-/* 節番号(旧 adoc の :sectnums: 相当)。CSS カウンタは display:none の要素を数えないため、
-   App.tsx で viewDistance を広げて全スライドを表示状態にしている */
+/* 節番号(旧 adoc の :sectnums: 相当)。スライドの題(先頭の h2)に振る。
+   横のスライドが節(1.)、縦のスライド(reveal の .stack の 2 枚目以降)がその小節(1.1.)。
+   CSS カウンタは display:none の要素を数えないため、App.tsx で viewDistance を広げて全スライドを表示状態にしている */
 .reveal .slides {
   counter-reset: sec;
 }
-.reveal .slides section h2::before {
+.reveal .slides > section {
+  counter-reset: sub;
+}
+.reveal .slides > section:not(.stack) > h2:first-child::before,
+.reveal .slides > section.stack > section:first-child > h2:first-child::before {
   counter-increment: sec;
   content: counter(sec) '. ';
+}
+.reveal .slides > section.stack > section:not(:first-child) > h2:first-child::before {
+  counter-increment: sub;
+  content: counter(sec) '.' counter(sub) '. ';
 }
 
 .reveal li::marker {
   color: var(--color-brand);
+}
+
+/* 用語と説明(HTML の <dl>。LaTeX の description 環境に当たる): 用語を見出しの書体で置き、説明を一段下げる */
+.reveal dl {
+  margin: var(--space) 0;
+}
+.reveal dd {
+  margin: 0 0 calc(var(--space) / 2) calc(2 * var(--space));
+}
+
+/* 区切り線(CommonMark の *** など)。脚注の上の線にも使う */
+.reveal hr {
+  margin: var(--space) 0;
+  border: none;
+  border-top: thin solid var(--color-muted);
+}
+
+/* 小さい文字(<small>): 脚注・再掲など。文字の段階の 1 段下 */
+.reveal small {
+  display: inline;
+  font-size: calc(1em / var(--type-ratio));
+  line-height: inherit;
+  vertical-align: baseline;
 }
 /* ページ番号: 右上に置き、帯と同じ色の地にする(帯のあるスライドでは帯に溶け込み、無いスライドでは小さな札になる) */
 .reveal .slide-number {
