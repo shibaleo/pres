@@ -19,8 +19,7 @@ export default function BarChart({ width = 600, height = 300 }: { width?: number
           y={height - d * 2}
           width={barWidth}
           height={d * 2}
-          fill="#4360f4"
-          stroke="#4360f4"
+          className="fill-brand stroke-brand"
           strokeWidth={2}
         />
       ))}

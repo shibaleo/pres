@@ -11,7 +11,7 @@ reveal.js プレゼンテーション。**MDX + TSX** で執筆し、可視化�
 | 領域 | 採用 |
 |---|---|
 | 執筆 | MDX (`.mdx`) + TSX |
-| ビルド | Vite 5 + `@mdx-js/rollup` |
+| ビルド | Vite 6 + `@mdx-js/rollup` |
 | スライド | reveal.js 5 (`@revealjs/react`) |
 | スタイル | Tailwind CSS v4 |
 | 数式 | KaTeX (`remark-math` + `rehype-katex`) |

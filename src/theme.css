@@ -35,8 +35,10 @@
 }
 
 /* ---------- design tokens (旧 _variables.scss → Tailwind @theme) ----------
-   token 名は Tailwind 組込みユーティリティ(font-bold 等)と衝突しないよう配慮。 */
-@theme {
+   token 名は Tailwind 組込みユーティリティ(font-bold 等)と衝突しないよう配慮。
+   static: ユーティリティから使われていない変数も必ず出力する
+   (Frame などが var(--color-frame-*) を直接参照するため)。 */
+@theme static {
   --font-body: 'number', 'Computer Modern', 'Noto Serif JP', serif;
   --font-heading: 'Computer Modern bold', 'Noto Sans JP', sans-serif;
   --font-code: 'GenShinGothic Monospace', monospace;
@@ -47,7 +49,7 @@
 
   --color-frame-gray: gray;
   --color-frame-red: orangered;
-  --color-frame-blue: #4360f4;
+  --color-frame-blue: var(--color-brand);
   --color-frame-gold: gold;
   --color-frame-green: green;
   --color-frame-purple: purple;

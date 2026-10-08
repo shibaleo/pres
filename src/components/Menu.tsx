@@ -54,7 +54,7 @@ export default function Menu() {
           background: 'transparent',
           border: 'none',
           cursor: 'pointer',
-          color: '#4360f4',
+          color: 'var(--color-brand)',
           padding: 4,
         }}
       >
@@ -93,7 +93,7 @@ export default function Menu() {
                 padding: '14px 16px',
                 fontWeight: 'bold',
                 color: '#fff',
-                background: '#4360f4',
+                background: 'var(--color-brand)',
               }}
             >
               スライド一覧
@@ -112,8 +112,8 @@ export default function Menu() {
                       padding: '10px 16px',
                       cursor: 'pointer',
                       fontSize: 14,
-                      background: i === current ? '#eef1ff' : 'transparent',
-                      color: i === current ? '#4360f4' : '#333',
+                      background: i === current ? 'color-mix(in srgb, white 90%, var(--color-brand))' : 'transparent',
+                      color: i === current ? 'var(--color-brand)' : 'var(--color-ink)',
                       fontWeight: i === current ? 'bold' : 'normal',
                     }}
                   >

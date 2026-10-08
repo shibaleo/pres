@@ -7,16 +7,8 @@ import type { ReactNode } from 'react'
  * ここでは色を props で受け、色ごとの modifier class 地獄をコンポーネントに閉じる。
  * タイトル下線 = 濃い色、背景 = 白 85% と混ぜた淡色 (旧 mix(white,$c,85%))。
  */
-const FRAME_COLORS = {
-  gray: 'gray',
-  red: 'orangered',
-  blue: '#4360f4',
-  gold: 'gold',
-  green: 'green',
-  purple: 'purple',
-} as const
-
-export type FrameColor = keyof typeof FRAME_COLORS
+// 実際の色は theme.css の --color-frame-* トークンが持つ(ここは名前の一覧だけ)
+export type FrameColor = 'gray' | 'red' | 'blue' | 'gold' | 'green' | 'purple'
 
 export default function Frame({
   color = 'red',
@@ -30,7 +22,7 @@ export default function Frame({
   math?: boolean
   children: ReactNode
 }) {
-  const c = FRAME_COLORS[color]
+  const c = `var(--color-frame-${color})`
   const background = math ? 'var(--color-eq)' : `color-mix(in srgb, white 85%, ${c})`
   return (
     <div className="my-1 px-1 py-0.5" style={{ backgroundColor: background }}>

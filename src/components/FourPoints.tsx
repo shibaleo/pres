@@ -1,13 +1,17 @@
 import { useEffect, useRef } from 'react'
 import JXG from 'jsxgraph'
+import katex from 'katex'
 import '../jsxgraph.css'
+
+// JSXGraph の useKatex はグローバル変数 `katex` を参照する(import はしない)。
+// CDN ではなく同梱済みの KaTeX を渡す。代入するのはこの1つだけ。
+;(globalThis as unknown as { katex: typeof katex }).katex = katex
 
 /**
  * 一直線上の4点 (旧 four-points-on-a-line.adoc の JSXGraph).
  *
- * 旧版は label に useMathJax:true で \( a \) を組んでいたが、
- * JSXGraph の KaTeX/MathJax ラベルはグローバル読み込みに依存するため、
- * ここでは素のラベル(a,b,c,d)にして依存を切る。見た目はほぼ同じ。
+ * 旧版は label に useMathJax:true で \( a \) を組んでいた。
+ * ここではバンドル済み KaTeX で同じ数式ラベルを描く(オフラインでも動く)。
  */
 export default function FourPoints({ width = 600, height = 200 }: { width?: number; height?: number }) {
   const ref = useRef<HTMLDivElement>(null)
@@ -25,7 +29,7 @@ export default function FourPoints({ width = 600, height = 200 }: { width?: numb
     labels.forEach((label, i) => {
       board.create('point', [i, 0], {
         name: label,
-        label: { offset: [-5, 20], fontSize: 20 },
+        label: { offset: [-5, 20], fontSize: 20, useKatex: true },
         strokeColor: pointColor,
         fillColor: pointColor,
         size: 5,

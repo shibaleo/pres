@@ -82,8 +82,10 @@ export default function ConnectedScatterplot() {
       .style('font-size', '15px')
       .style('cursor', 'pointer')
       .on('click', (_event, d) => {
-        const opacity = d3.selectAll<SVGElement, unknown>('.' + d.name).style('opacity')
-        d3.selectAll<SVGElement, unknown>('.' + d.name)
+        // svg 配下だけを選択する(d3.selectAll だとページ全体の同名 class に波及する)
+        const series = svg.selectAll<SVGElement, unknown>('.' + d.name)
+        const opacity = series.style('opacity')
+        series
           .transition()
           .style('opacity', opacity === '1' ? 0 : 1)
       })
