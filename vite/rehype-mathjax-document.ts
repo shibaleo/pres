@@ -11,6 +11,11 @@
  * 入力の見つけ方と出力の形は rehype-mathjax 7 と同じ:
  *   remark-math の <code class="math-inline"> / <pre><code class="math-display"> を <mjx-container> に置き換え、
  *   文書の末尾に MathJax のスタイルシートを足す。
+ * SVG の字形を文書全体で 1 回だけ持つ設定(svg.fontCache: 'global')のときは、MathJax がページに置く
+ * 字形の定義(pageElements。隠れた <svg id="MJX-SVG-global-cache">)も文書の末尾に 1 回だけ足す。
+ * 各数式はそれを <use> で参照する(数式ごとに同じ字形の輪郭を埋め込まないので小さくなる)。
+ * 各数式には MathJax の assistive MathML(画面には見えない <mjx-assistive-mml><math>…</math>)も添える。
+ * SVG の字形はどちらの方式でも意味を持たないので、数式の中身を機械やスクリーンリーダーに伝えるのはこちら。
  */
 import type { Element, ElementContent, Parents, Root } from 'hast'
 import { h } from 'hastscript'
@@ -20,6 +25,7 @@ import { liteAdaptor } from 'mathjax-full/js/adaptors/liteAdaptor.js'
 import type { LiteElement } from 'mathjax-full/js/adaptors/lite/Element.js'
 import type { LiteText } from 'mathjax-full/js/adaptors/lite/Text.js'
 import { RegisterHTMLHandler } from 'mathjax-full/js/handlers/html.js'
+import { AssistiveMmlHandler } from 'mathjax-full/js/a11y/assistive-mml.js'
 import { TeX } from 'mathjax-full/js/input/tex.js'
 import { SVG } from 'mathjax-full/js/output/svg.js'
 import { mathjax } from 'mathjax-full/js/mathjax.js'
@@ -63,7 +69,9 @@ export default function rehypeMathjaxDocument(options: Options = {}) {
 
     // (2) 1 つの MathJax 文書に入れて、MathJax の標準の手順で組む
     const adaptor = liteAdaptor()
-    const handler = RegisterHTMLHandler(adaptor)
+    // assistive MathML(MathJax の標準の a11y 部品): 各数式に、画面には見えない MathML を添える。
+    // スクリーンリーダーはこちらを読み(SVG は aria-hidden になる)、HTML を読む人や LLM にも数式の構造が伝わる
+    const handler = AssistiveMmlHandler(RegisterHTMLHandler(adaptor))
     try {
       const input = new TeX(options.tex)
       const output = new SVG(options.svg)
@@ -77,6 +85,7 @@ export default function rehypeMathjaxDocument(options: Options = {}) {
       })
       // compile: 全部の式を組み、後ろの式への参照を含むものを組み直す。typeset: SVG にする
       doc.compile().typeset()
+      ;(doc as unknown as { assistiveMml(): void }).assistiveMml()
 
       // (3) 結果を文書に戻す(後ろから置き換えても位置がずれないよう、親の中の位置はその都度探す)
       found.forEach((f, i) => {
@@ -85,6 +94,8 @@ export default function rehypeMathjaxDocument(options: Options = {}) {
         f.parent.children.splice(index, 1, fromLite(root))
       })
       tree.children.push(fromLite(output.styleSheet(doc) as LiteElement, true))
+      const cache = output.pageElements(doc) as LiteElement | null
+      if (cache) tree.children.push(fromLite(cache))
     } finally {
       mathjax.handlers.unregister(handler)
     }

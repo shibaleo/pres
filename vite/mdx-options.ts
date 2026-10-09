@@ -28,7 +28,8 @@ export function mdxOptions({ bibliography, strict }: { bibliography: string; str
         rehypeMathjaxDocument,
         {
           tex: { tags: 'ams', packages: AllPackages.filter((p) => p !== 'noundefined') },
-          svg: { displayAlign: 'left', displayIndent: '0' },
+          // fontCache: 'global' = 字形の輪郭を文書全体で 1 回だけ持ち、各数式は参照する(出力が小さくなる)
+          svg: { displayAlign: 'left', displayIndent: '0', fontCache: 'global' },
         },
       ],
       rehypeMathErrors,

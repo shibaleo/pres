@@ -80,7 +80,13 @@ export default defineConfig(({ command, mode }) => ({
       // 本番ビルドでは原稿の警告も失敗扱い。DECK_ALLOW_WARNINGS=1 で許可
       ...mdx(mdxOptions({ bibliography: BIB, strict: command === 'build' && process.env.DECK_ALLOW_WARNINGS !== '1' })),
     },
-    react({ include: /\.(mdx|js|jsx|ts|tsx)$/ }),
+    react({
+      include: /\.(mdx|js|jsx|ts|tsx)$/,
+      // 原稿のコンパイル結果は MathJax の SVG を含み、開発時(要素ごとに原稿の位置が付く)は 500KB を超える。
+      // Babel はその大きさで「整形を省いた」と知らせる([BABEL] Note: … deoptimised the styling …)ので、
+      // 自動生成のコードである .mdx は最初から整形しない出力にする(ほかのファイルは既定と同じく整形する)
+      babel: (id) => ({ compact: /\.mdx(\?|$)/.test(id) }),
+    }),
     tailwindcss(),
     ...(mode === 'single' ? [viteSingleFile()] : []),
   ],

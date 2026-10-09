@@ -26,7 +26,7 @@ reveal.js プレゼンテーション。**MDX + TSX** で執筆し、可視化�
 | ビルド | Vite 6 + `@mdx-js/rollup` |
 | スライド | reveal.js 5 (`@revealjs/react`) |
 | 記法 | `vite/remark-beamer/`（LaTeX / Beamer 風記法の remark プラグイン） |
-| 数式 | `remark-math` + MathJax 3（SVG。式番号・`\label`・`\eqref` は AMS の規則。後ろにある式への参照も解決する） |
+| 数式 | `remark-math` + MathJax 3（SVG。式番号・`\label`・`\eqref` は AMS の規則。後ろにある式への参照も解決する。字形は文書全体で 1 回だけ持ち、各数式には画面に見えない MathML（assistive MathML）を添える） |
 | 文献 | BibTeX (`src/references.bib`) + `rehype-citation`（CSL: NLM/Vancouver 角括弧版。公式リポジトリの `src/csl/nlm-citation-sequence-brackets.csl`） |
 | その他 | Tailwind CSS v4 |
 | 図 | visx（React + D3 の SVG の部品）で React コンポーネント化。点や線のドラッグ・スライダーで操作できる |

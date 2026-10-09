@@ -34,7 +34,10 @@ describe('デッキの描画', () => {
   })
 
   it('スライドの並び: 最上位は section(横のスライド・縦の束)と MathJax のスタイルだけ', () => {
-    for (const c of root.children) expect(['SECTION', 'STYLE'], c.outerHTML.slice(0, 80)).toContain(c.tagName)
+    // MathJax の字形の定義(fontCache: 'global' の隠れた <svg id="MJX-SVG-global-cache">)も最上位に 1 つ
+    const kind = (c: Element) => (c.id === 'MJX-SVG-global-cache' ? 'GLYPHS' : c.tagName)
+    for (const c of root.children) expect(['SECTION', 'STYLE', 'GLYPHS'], c.outerHTML.slice(0, 80)).toContain(kind(c))
+    expect([...root.children].filter((c) => kind(c) === 'GLYPHS').length).toBe(1)
     expect(leaves.length).toBeGreaterThan(1)
     // 縦の束の中にさらに束は無い(reveal は 2 段まで)
     for (const l of leaves) expect(isStack(l.el), where(l)).toBe(false)
@@ -143,6 +146,27 @@ describe('デッキの描画', () => {
   })
 
   describe('数式', () => {
+    it('数式の字形の参照(<use>)は、すべて字形の定義の中にある', () => {
+      const glyphs = root.querySelector('#MJX-SVG-global-cache')!
+      const uses = [...root.querySelectorAll('mjx-container use')]
+      expect(uses.length).toBeGreaterThan(0)
+      for (const u of uses) {
+        const ref = (u.getAttribute('xlink:href') ?? u.getAttribute('href'))!.slice(1)
+        expect(glyphs.querySelector(`[id="${ref}"]`), ref).not.toBeNull()
+      }
+    })
+
+    it('各数式に MathML(assistive MathML)が添えられ、それを画面から隠すスタイルがある', () => {
+      const containers = [...root.querySelectorAll('mjx-container')]
+      expect(containers.length).toBeGreaterThan(0)
+      for (const m of containers) {
+        expect(m.querySelector(':scope > mjx-assistive-mml > math'), m.outerHTML.slice(0, 80)).not.toBeNull()
+        expect(m.querySelector(':scope > svg')?.getAttribute('aria-hidden')).toBe('true')
+      }
+      const css = [...root.querySelectorAll('style')].map((s) => s.textContent).join('\n')
+      expect(css).toMatch(/mjx-assistive-mml\s*\{[^}]*clip:/)
+    })
+
     it('誤りのある数式(merror)が無い', () => {
       expect(root.querySelector('[data-mjx-error]')).toBeNull()
     })
