@@ -6,7 +6,7 @@ import Slides, { deckWarnings } from './slides.mdx'
 import { mdxComponents } from './deck/mdx-components'
 import { watchOverflow } from './deck/overflow'
 import DevDiagnostics from './deck/DevDiagnostics'
-import { useSlideSize } from './deck/slide-size'
+import { isPrint, useSlideSize } from './deck/slide-size'
 
 type RevealApi = NonNullable<ReturnType<typeof useReveal>>
 
@@ -34,6 +34,9 @@ export default function App() {
         center: false,
         slideNumber: 'c/t',
         hash: true,
+        // PDF では 1 枚のスライドを 1 ページに収める(画面と同じく、収まらない部分は切れる。
+        // 開発中ははみ出しとして警告される)。紙の枚数とページ番号の全体が一致する
+        pdfMaxPagesPerSlide: 1,
         // 縦スライド(原稿の --)の進め方。'linear' にすると ←→ だけで縦も含めて順に進む
         // (見た目の切り替わり方は変わらない)。'grid' は縦の位置を保って列を移る
         navigationMode: 'default',
@@ -43,7 +46,22 @@ export default function App() {
       plugins={[RevealNotes]}
       onReady={(deck) => {
         deckRef.current = deck
-        if (!import.meta.env.DEV) return
+        if (isPrint) {
+          // 印刷用の表示では、reveal はページ番号を通し番号だけで書く。画面と同じ「i/全体」に書き直す。
+          // i と全体は PDF のページで数える(段階表示のあるスライドはステップごとに 1 ページ、
+          // 1 ページに収まらないスライドは続きのページができる。続きのページには reveal が番号を付けない)
+          const numberPages = () => {
+            const pages = document.querySelectorAll('.pdf-page')
+            pages.forEach((page, i) => {
+              const n = page.querySelector('.slide-number-pdf')
+              if (n) n.textContent = `${i + 1}/${pages.length}`
+            })
+          }
+          deck.on('pdf-ready', numberPages)
+          numberPages()
+        }
+        // 印刷用の表示(?print-pdf)はページの大きさが最小サイズと違うので、はみ出しの検査などはしない
+        if (!import.meta.env.DEV || isPrint) return
         stopOverflow.current = watchOverflow(deck)
         const saved = sessionStorage.getItem(SLIDE_KEY)
         if (saved) {

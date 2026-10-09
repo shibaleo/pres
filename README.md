@@ -29,7 +29,7 @@ reveal.js プレゼンテーション。**MDX + TSX** で執筆し、可視化�
 | 数式 | `remark-math` + MathJax 3（SVG。式番号・`\label`・`\eqref` は AMS の規則。後ろにある式への参照も解決する） |
 | 文献 | BibTeX (`src/references.bib`) + `rehype-citation`（CSL: NLM/Vancouver 角括弧版。公式リポジトリの `src/csl/nlm-citation-sequence-brackets.csl`） |
 | その他 | Tailwind CSS v4 |
-| 図 | D3 / JSXGraph を React コンポーネント化 |
+| 図 | visx（React + D3 の SVG の部品）で React コンポーネント化。点や線のドラッグ・スライダーで操作できる |
 | 配布 | `vite-plugin-singlefile` で単一 HTML 化、フォントは subset woff2 |
 
 ## 必要環境
@@ -61,7 +61,7 @@ src/
   references.bib       BibTeX 文献データ
   csl/                 引用スタイル(CSL。公式リポジトリのものをそのまま置く)
   App.tsx              デッキ本体(<Deck> に原稿と <Menu> を合成)
-  main.tsx             エントリ。reveal/KaTeX/テーマCSS を読み込む
+  main.tsx             エントリ。reveal とテーマの CSS を読み込む
   theme/               見た目(テンプレート側)。詳しくは「見た目のカスタマイズ」
     index.css          入口(tokens → base → custom の順に読み込む)
     tokens.css         トークンの既定値(色・書体・文字の段階・間隔)
@@ -258,8 +258,10 @@ $f$ が凸なら …
 検査はウィンドウの大きさに依らず、スライドを最小の幅で組み直して測ります。
 
 ### 図（インタラクティブ可視化）
-`src/components/` に React コンポーネントとして追加。D3 は「React が DOM を持ち D3 は計算」、
-JSXGraph は `useEffect` 内で `initBoard` → クリーンアップで `freeBoard`、が基本形。
+`src/components/` に React コンポーネントとして追加。visx の部品（縮尺 `@visx/scale`、座標軸 `@visx/axis`、
+格子 `@visx/grid`、図形 `@visx/shape`、地図 `@visx/geo`）で SVG を組み、状態は React の state で持つ。
+ドラッグは `src/components/figure/useSvgDrag.ts`（reveal の拡大縮小があっても図の座標で受け取れる）。
+SVG なので拡大しても鮮明で、印刷・PDF にもそのまま残る。色は `theme/base.css` の `.figure-*` でトークンから決める。
 
 ## 見た目のカスタマイズ
 
@@ -318,8 +320,11 @@ JSXGraph は `useEffect` 内で `initBoard` → クリーンアップで `freeBo
 URL に `?print-pdf` を付けて開き、ブラウザの印刷 → PDF に保存。
 印刷設定は **余白=なし / 背景のグラフィック=ON** を推奨（フレームの色を出すため）。
 
+ページの大きさは紙の大きさで、既定は **A4 横**。`src/deck/slide-size.ts` の `PRINT_PAPER`（mm）で変えられます
+（例: B5 横なら `{ width: 257, height: 182 }`）。スライドはその大きさで組み直されるので、
+画面の最小サイズ（933×700）より広い A4 横では、余白に少しゆとりが出ます。
+
 ## 既知の制約
 
 - `@revealjs/react` は 0.x（pre-1.0）。API が変わる可能性あり。
 - 数式は MathJax の SVG を埋め込むため、別行立ての式 1 つあたり十数 KB 増える。
-- JSXGraph のラベル（FourPoints）だけは KaTeX で描いている（JSXGraph が KaTeX を直接呼ぶため）。

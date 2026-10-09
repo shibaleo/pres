@@ -16,8 +16,12 @@
   "dependencies": {
     "@revealjs/react": "^0.2.1",
     "@tailwindcss/vite": "^4.3.3",
+    "@visx/axis": "^4.0.0",
+    "@visx/geo": "^4.0.0",
+    "@visx/grid": "^4.0.0",
+    "@visx/scale": "^4.0.0",
+    "@visx/shape": "^4.0.0",
     "d3": "^7.9.0",
-    "jsxgraph": "^1.11.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "reveal.js": "^5.1.0",
@@ -40,7 +44,6 @@
     "happy-dom": "^20.14.5",
     "hast-util-to-text": "^4.0.2",
     "hastscript": "^9.0.1",
-    "katex": "^0.19.0",
     "mathjax-full": "^3.2.1",
     "mdast-util-from-markdown": "^2.1.0",
     "micromark-util-character": "^2.1.1",
@@ -57,9 +60,6 @@
     "vite": "^6.4.4",
     "vite-plugin-singlefile": "^2.3.3",
     "vitest": "^3.2.7"
-  },
-  "overrides": {
-    "katex": "^0.19.0"
   },
   "allowScripts": {
     "esbuild": true

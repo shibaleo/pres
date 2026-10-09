@@ -5,7 +5,6 @@
 
 import BarChart from '@/components/BarChart'
 import d3js from '@/img/d3js.png'
-import jsxgraph from '@/img/jsxgraph.png'
 import ConnectedScatterplot from '@/components/ConnectedScatterplot'
 import FourPoints from '@/components/FourPoints'
 import LogSpiral from '@/components/LogSpiral'
@@ -32,7 +31,7 @@ import Globe from '@/components/Globe'
 - **MDX** (Markdown + JSX) syntax for documentation
 - $\LaTeX$ notation for math formula
 - <img src={d3js} height="20" className="inline align-middle" /> for image drawing
-- <img src={jsxgraph} height="20" className="inline align-middle" /> for interactive math graphs
+- **visx** for interactive math graphs
 
 </Frame>
 
@@ -127,25 +126,25 @@ $$
 
 ---
 
-## jsxgraph — 一直線上の 4 点
+## visx — 一直線上の 4 点
 
-You can draw math graphs with jsxgraph.
+線分の両端と線分そのもの、点 $a, b, c, d$ をそれぞれドラッグで動かせる。
 
 <FourPoints width={600} height={200} />
 
 --
 
-## jsxgraph — 対数螺旋
+## visx — 対数螺旋
 
-スライダー a, b を動かすと $r(\varphi)=a\,e^{b\varphi}$ の形が変わります。
+スライダー $a, b$ を動かすと $r(\varphi)=a\,e^{b\varphi}$ の形が変わる。曲線の上の点をドラッグすると接線がついてくる。
 
 <LogSpiral width={520} height={320} />
 
 ---
 
-## 3D chart for d3.js
+## visx — 地球儀
 
-there is a 3D chart for d3.js, but it is not a good idea to use it in a presentation.
+正射図法の SVG。ドラッグで向きを変えられる。
 
 <Globe size={400} />
 

@@ -136,13 +136,21 @@
 .reveal small * {
   vertical-align: revert;
 }
-/* ページ番号: 右上に置き、帯と同じ色の地にする(帯のあるスライドでは帯に溶け込み、無いスライドでは小さな札になる) */
+/* ページ番号「i/全体」: 右上に地を付けずに置く。題の帯のあるスライドでは帯の上なので地の色(白)、
+   帯の無いスライドではアクセント色。帯の有無は表示中のスライド(印刷ではページ)の先頭が h2 かで決める */
 .reveal .slide-number {
   inset: 0 0 auto auto;
   padding: calc(var(--ui-space) / 2) var(--ui-space);
   font-family: var(--font-ui);
+  color: var(--color-brand);
+  background: none;
+}
+.reveal .slide-number-delimiter {
+  margin: 0;
+}
+html:not(.reveal-print) .reveal:has(.slides section.present:not(.stack) > h2:first-child) .slide-number,
+html.reveal-print .pdf-page:has(> section > h2:first-child) .slide-number {
   color: var(--color-canvas);
-  background: var(--color-brand);
 }
 .reveal :is(.controls, .progress) {
   color: var(--color-brand);
@@ -272,9 +280,128 @@
   fill: var(--color-brand);
   stroke: var(--color-brand);
 }
-/* KaTeX は JSXGraph のラベル(FourPoints)だけで使う */
-.reveal .katex {
-  font-size: 1em;
+/* 図(components/ の FourPoints・LogSpiral・Globe。visx で描く SVG)。色はすべてトークンから。
+   SVG の属性(stroke など)より CSS が優先されるので、visx の部品の既定の色もここで上書きできる */
+.reveal .figure {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+  overflow: visible;
+}
+.reveal .figure-ink {
+  stroke: var(--color-ink);
+}
+.reveal .figure-point {
+  fill: var(--color-ink);
+}
+.reveal .figure-handle {
+  fill: var(--color-canvas);
+  stroke: var(--color-brand);
+  stroke-width: var(--rule);
+}
+.reveal .figure-label {
+  font-family: var(--font-body);
+  font-style: italic;
+  fill: var(--color-ink);
+}
+.reveal .figure-curve {
+  fill: none;
+  stroke: var(--color-brand);
+  stroke-width: var(--rule);
+}
+.reveal .figure-tangent {
+  stroke: var(--color-frame-purple);
+  stroke-width: calc(var(--rule) / 2);
+  stroke-dasharray: var(--rule) var(--rule);
+}
+.reveal .figure-grid line {
+  stroke: var(--color-surface);
+}
+.reveal .figure-axis :is(line, path) {
+  stroke: var(--color-muted);
+}
+/* 目盛りの文字。visx は font-size="10" の <svg> で包んで描くので、em ではなく本文の大きさから決める */
+.reveal .figure-axis text {
+  font-family: var(--font-body);
+  font-size: calc(var(--text-base) / var(--type-ratio) / var(--type-ratio));
+  fill: var(--color-muted);
+}
+.reveal .figure-globe {
+  cursor: grab;
+}
+.reveal .figure-globe-sea {
+  fill: var(--color-brand);
+}
+.reveal .figure-globe-land {
+  fill: var(--color-ink);
+  stroke: var(--color-canvas);
+  stroke-width: 0.5;
+}
+/* 図の入れ物: 図の幅に合わせ、右上にリセットのボタンを置く */
+.reveal .figure-block {
+  position: relative;
+  width: fit-content;
+  max-width: 100%;
+  margin: var(--space) auto;
+}
+/* 図を元に戻すボタン(components/figure/ResetButton.tsx): 普段は薄く、マウスを乗せたときだけはっきり出す */
+.reveal .figure-reset {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: grid;
+  place-items: center;
+  width: 1em;
+  height: 1em;
+  padding: 0;
+  font-size: inherit; /* ボタンの既定(13px ほど)ではなく本文の大きさを基準にする */
+  border: none;
+  background: none;
+  color: var(--color-muted);
+  cursor: pointer;
+  opacity: var(--ui-idle);
+  transition: opacity 0.2s;
+}
+.reveal .figure-reset:hover,
+.reveal .figure-reset:focus-visible {
+  opacity: 1;
+}
+.reveal .figure-reset svg {
+  width: 70%;
+  height: 70%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+html.reveal-print .reveal .figure-reset {
+  display: none;
+}
+@media print {
+  .reveal .figure-reset {
+    display: none;
+  }
+}
+/* 図の下の操作部品(スライダー) */
+.reveal .figure-controls {
+  display: flex;
+  justify-content: center;
+  gap: calc(4 * var(--space));
+  font-size: calc(1em / var(--type-ratio));
+}
+.reveal .figure-controls label {
+  display: flex;
+  align-items: center;
+  gap: var(--space);
+}
+.reveal .figure-controls input[type='range'] {
+  accent-color: var(--color-brand);
+}
+.reveal .figure-controls output {
+  min-width: 4ch; /* 「-0.15」の幅 */
+  font-variant-numeric: tabular-nums;
 }
 
 /* 段階表示(components/Overlay.tsx。Beamer の \pause / <2-> / \only など) */
@@ -431,7 +558,16 @@ body {
   background: red;
 }
 
-/* PDF 出力(?print-pdf)ではデッキの外側の UI を出さない */
+/* PDF 出力(?print-pdf)。reveal は印刷用の表示(html.reveal-print)でスライドの余白を 0 にする
+   (padding: 0 !important)。題の帯は余白を負の margin で打ち消して端まで伸ばしているので、
+   余白が 0 だと帯がページの外に出て切れる。スライドの余白を戻す */
+html.reveal-print .reveal .slides section:not(.stack) {
+  padding: var(--slide-pad) !important;
+}
+/* デッキの外側の UI は、印刷用の表示でも印刷でも出さない */
+html.reveal-print :is(.deck-menu, .deck-diagnostics) {
+  display: none !important;
+}
 @media print {
   .deck-menu,
   .deck-diagnostics {

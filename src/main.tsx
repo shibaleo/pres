@@ -2,11 +2,10 @@ import React from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
 
-// reveal.js core + theme + KaTeX, all bundled locally (no CDN).
+// reveal.js core + theme, all bundled locally (no CDN).
 // theme/index.css は最後に読み込む(reveal white テーマを上書きするため)。
 import 'reveal.js/dist/reveal.css'
 import 'reveal.js/dist/theme/white.css'
-import 'katex/dist/katex.min.css'
 import './theme/index.css'
 
 // デッキ全体にかけるプリセット(src/custom.css の --deck-preset。空白区切りで複数可)を

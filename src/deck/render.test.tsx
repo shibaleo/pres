@@ -1,7 +1,7 @@
 /**
  * デッキ(src/slides.mdx と \input で取り込むファイル)を実際に描いて、出来上がりを確かめる。
  * 開発時と同じ Vite の設定で原稿を読み込み、サーバー側の描画(renderToStaticMarkup)で HTML にする
- * (useEffect は走らないので、D3・JSXGraph の初期化には依存しない)。番号・参照・構造はすべて
+ * (useEffect は走らないので、図の動き(自転など)には依存しない)。番号・参照・構造はすべて
  * ビルド時に決まるので、ここで描いた HTML がそのままブラウザに出るものと同じになる。
  */
 import { describe, expect, it } from 'vitest'

@@ -7,17 +7,28 @@ import { useSyncExternalStore } from 'react'
  * 固定の縦横比だとウィンドウとの差が上下や左右の余白になり、題の帯がウィンドウの端に届かないため。
  * 原稿が当てにしてよいのは最小サイズ(MIN_WIDTH × SLIDE_HEIGHT)だけで、
  * ウィンドウが横長なら横に、縦長なら縦に広がる。はみ出しの検査も最小サイズで行う(deck/overflow.ts)。
- * PDF 出力(?print-pdf)はページの大きさをウィンドウに左右されないよう 16:9 に固定する。
+ *
+ * PDF 出力(?print-pdf)では、論理サイズを紙の大きさ(PRINT_PAPER)にする。reveal は論理サイズを
+ * そのまま @page の大きさ(CSS の px)にするので、mm を px に直して渡せば PDF のページが紙と一致する。
  */
 export const SLIDE_HEIGHT = 700
 export const MIN_WIDTH = Math.round((SLIDE_HEIGHT * 4) / 3)
-const PRINT_WIDTH = Math.round((SLIDE_HEIGHT * 16) / 9)
 
-const isPrint = new URLSearchParams(location.search).has('print-pdf')
+/** PDF 出力の紙の大きさ(mm)。既定は A4 横。B5 横なら { width: 257, height: 182 } など */
+export const PRINT_PAPER = { width: 297, height: 210 }
+
+/** CSS の 1mm(= 96px / 25.4mm) */
+const PX_PER_MM = 96 / 25.4
+
+export const isPrint = new URLSearchParams(location.search).has('print-pdf')
 
 export type SlideSize = { width: number; height: number }
 
-let last: SlideSize = { width: PRINT_WIDTH, height: SLIDE_HEIGHT }
+// 紙からはみ出して 2 ページに分かれないよう、切り捨てる(reveal も切り捨てて @page にする)
+let last: SlideSize = {
+  width: Math.floor(PRINT_PAPER.width * PX_PER_MM),
+  height: Math.floor(PRINT_PAPER.height * PX_PER_MM),
+}
 
 function measure(): SlideSize {
   if (isPrint) return last
