@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { scaleLinear } from '@visx/scale'
 import { Line } from '@visx/shape'
 import { useSvgDrag, type Point } from './figure/useSvgDrag'
+import { mathItalic } from './figure/mathItalic'
 import ResetButton from './figure/ResetButton'
 
 /**
@@ -73,7 +74,7 @@ export default function FourPoints({ width = 600, height = 200 }: { width?: numb
           <g key={label} {...bind(label)}>
             <circle cx={x(points[i].x)} cy={y(points[i].y)} r={7} className="figure-point" />
             <text x={x(points[i].x)} y={y(points[i].y) - 16} textAnchor="middle" className="figure-label">
-              {label}
+              {mathItalic(label)}
             </text>
           </g>
         ))}

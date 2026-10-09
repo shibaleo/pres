@@ -4,6 +4,7 @@ import { AxisBottom, AxisLeft } from '@visx/axis'
 import { GridColumns, GridRows } from '@visx/grid'
 import { Line, LinePath } from '@visx/shape'
 import { useSvgDrag } from './figure/useSvgDrag'
+import { mathItalic } from './figure/mathItalic'
 import ResetButton from './figure/ResetButton'
 
 /**
@@ -86,12 +87,12 @@ export default function LogSpiral({ width = 600, height = 300 }: { width?: numbe
       </svg>
       <div className="figure-controls">
         <label>
-          <i>a</i>
+          <span className="figure-label">{mathItalic('a')}</span>
           <input type="range" min={0} max={1} step={0.01} value={a} onChange={(e) => setA(Number(e.target.value))} />
           <output>{a.toFixed(2)}</output>
         </label>
         <label>
-          <i>b</i>
+          <span className="figure-label">{mathItalic('b')}</span>
           <input type="range" min={-1} max={1} step={0.01} value={b} onChange={(e) => setB(Number(e.target.value))} />
           <output>{b.toFixed(2)}</output>
         </label>

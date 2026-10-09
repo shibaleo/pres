@@ -11,6 +11,12 @@
   src: url('../fonts/NotoSansJP.woff2') format('woff2');
   font-weight: 100 900;
 }
+/* 数式用フォント(図のラベル。Unicode の数式用イタリックの文字を MathJax の数式と同じ字形で描く)。
+   New Computer Modern Math の Book。ライセンスは GUST Font License(fonts-src/NewCM-License.txt) */
+@font-face {
+  font-family: 'New Computer Modern Math';
+  src: url('../fonts/NewCMMath-Book.woff2') format('woff2');
+}
 @font-face {
   font-family: 'GenShinGothic Monospace';
   src: url('../fonts/GenShinGothic-Monospace.woff2') format('woff2');

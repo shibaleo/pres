@@ -300,15 +300,62 @@ html.reveal-print .pdf-page:has(> section > h2:first-child) .slide-number {
   stroke: var(--color-brand);
   stroke-width: var(--rule);
 }
+/* 図のラベル: 数式用イタリックの文字(components/figure/mathItalic.ts)を数式用フォントで描く。
+   文字そのものがイタリックなので、斜体にはしない */
 .reveal .figure-label {
-  font-family: var(--font-body);
-  font-style: italic;
+  font-family: var(--font-math);
   fill: var(--color-ink);
+}
+.reveal .figure-controls .figure-label {
+  color: var(--color-ink);
 }
 .reveal .figure-curve {
   fill: none;
   stroke: var(--color-brand);
   stroke-width: var(--rule);
+}
+.reveal .figure-ink-curve {
+  fill: none;
+  stroke: var(--color-ink);
+  stroke-width: calc(var(--rule) * 0.75);
+}
+/* 速度ベクトル(赤の矢印)と単位法線ベクトル(アクセント色の矢印)。CuspNormal */
+.reveal .figure-velocity {
+  stroke: var(--color-frame-red);
+  stroke-width: var(--rule);
+}
+.reveal .figure-velocity-head {
+  fill: var(--color-frame-red);
+}
+.reveal .figure-normal {
+  stroke: var(--color-brand);
+  stroke-width: var(--rule);
+}
+.reveal .figure-normal-head {
+  fill: var(--color-brand);
+}
+/* 複数の系列(NormalFamily の 3 つの点と曲線)。点・曲線・凡例を同じ色で対応させる */
+.reveal .figure-series-0 {
+  --series: var(--color-frame-red);
+}
+.reveal .figure-series-1 {
+  --series: var(--color-frame-green);
+}
+.reveal .figure-series-2 {
+  --series: var(--color-brand);
+}
+.reveal .figure-series {
+  fill: none;
+  stroke: var(--series);
+  stroke-width: var(--rule);
+}
+.reveal .figure-series-point {
+  fill: var(--series);
+}
+.reveal .figure-legend {
+  font-family: var(--font-body);
+  font-size: calc(var(--text-base) / var(--type-ratio) / var(--type-ratio));
+  fill: var(--series);
 }
 .reveal .figure-tangent {
   stroke: var(--color-frame-purple);
@@ -345,8 +392,8 @@ html.reveal-print .pdf-page:has(> section > h2:first-child) .slide-number {
   max-width: 100%;
   margin: var(--space) auto;
 }
-/* 図を元に戻すボタン(components/figure/ResetButton.tsx): 普段は薄く、マウスを乗せたときだけはっきり出す */
-.reveal .figure-reset {
+/* 図のボタン(components/figure/ の ResetButton・PlayPauseButton): 右上に置き、普段は薄く、マウスを乗せたときだけはっきり出す */
+.reveal .figure-button {
   position: absolute;
   top: 0;
   right: 0;
@@ -363,11 +410,11 @@ html.reveal-print .pdf-page:has(> section > h2:first-child) .slide-number {
   opacity: var(--ui-idle);
   transition: opacity 0.2s;
 }
-.reveal .figure-reset:hover,
-.reveal .figure-reset:focus-visible {
+.reveal .figure-button:hover,
+.reveal .figure-button:focus-visible {
   opacity: 1;
 }
-.reveal .figure-reset svg {
+.reveal .figure-button svg {
   width: 70%;
   height: 70%;
   fill: none;
@@ -376,11 +423,16 @@ html.reveal-print .pdf-page:has(> section > h2:first-child) .slide-number {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-html.reveal-print .reveal .figure-reset {
+/* 塗りの印(再生・一時停止) */
+.reveal .figure-button .figure-icon-fill {
+  fill: currentColor;
+  stroke: none;
+}
+html.reveal-print .reveal .figure-button {
   display: none;
 }
 @media print {
-  .reveal .figure-reset {
+  .reveal .figure-button {
     display: none;
   }
 }

@@ -49,12 +49,17 @@ for (const f of files) text += readFileSync(f, 'utf8')
 let base = ''
 for (let c = 0x20; c <= 0x7e; c++) base += String.fromCharCode(c)
 const extra = '　、。，．・：；？！゛゜（）「」『』【】〔〕…—–‐※→←↑↓°±×÷≤≥≠≒∞∫∂√πλμαβγθφ'
-const glyphs = [...new Set([...base, ...extra, ...text])]
+// 数式用イタリックの文字(図のラベル。src/components/figure/mathItalic.ts が実行時に作るので、ソースには現れない)
+let mathItalic = 'ℎ'
+for (let c = 0x1d434; c <= 0x1d467; c++) mathItalic += String.fromCodePoint(c) // 𝐴〜𝑧
+for (let c = 0x1d6fc; c <= 0x1d714; c++) mathItalic += String.fromCodePoint(c) // 𝛼〜𝜔
+const glyphs = [...new Set([...base, ...extra, ...mathItalic, ...text])]
   .filter((c) => c.codePointAt(0) >= 0x20)
   .join('')
 
 const FONTS = [
   ['NewCM10-Book.otf', 'NewCM10-Book.woff2'],
+  ['NewCMMath-Book.otf', 'NewCMMath-Book.woff2'],
   ['NotoSerifJP-VariableFont_wght.ttf', 'NotoSerifJP.woff2'],
   ['NotoSansJP-VariableFont_wght.ttf', 'NotoSansJP.woff2'],
   ['GenShinGothic-Monospace-Regular.ttf', 'GenShinGothic-Monospace.woff2'],

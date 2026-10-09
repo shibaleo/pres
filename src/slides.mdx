@@ -9,6 +9,8 @@ import ConnectedScatterplot from '@/components/ConnectedScatterplot'
 import FourPoints from '@/components/FourPoints'
 import LogSpiral from '@/components/LogSpiral'
 import Globe from '@/components/Globe'
+import CuspNormal from '@/components/CuspNormal'
+import NormalFamily from '@/components/NormalFamily'
 
 # shibaleo/presentation
 
@@ -139,6 +141,37 @@ $$
 スライダー $a, b$ を動かすと $r(\varphi)=a\,e^{b\varphi}$ の形が変わる。曲線の上の点をドラッグすると接線がついてくる。
 
 <LogSpiral width={520} height={320} />
+
+--
+
+## visx — カスプの速度と法線
+
+<Cols>
+<Col>
+
+**3/2-カスプ** $\gamma(t) = (t^2, t^3)$
+
+**速度ベクトル**（赤）$\dot\gamma(t) = (2t, 3t^2)$ は原点 $t = 0$ で消える。
+
+**単位法線ベクトル**（青）$\nu(t)/|\nu(t)|$，$\nu(t) = (-3t, 2)$ は原点でも残る。
+
+点は曲線の上を往復する。ドラッグでも動かせる。
+
+</Col>
+<Col>
+
+<CuspNormal width={420} height={420} />
+
+</Col>
+</Cols>
+
+--
+
+## visx — 正規分布の族
+
+$H = \{(\mu, \sigma) \mid \sigma > 0\}$ の点をドラッグすると、同じ色の密度関数 $p(x; \mu, \sigma)$ が変わる。
+
+<NormalFamily width={840} height={340} />
 
 ---
 

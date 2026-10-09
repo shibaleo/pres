@@ -66,7 +66,7 @@ src/
     index.css          入口(tokens → base → custom の順に読み込む)
     tokens.css         トークンの既定値(色・書体・文字の段階・間隔)
     base.css           汎用の規則(トークンから導いた値だけを使う)
-    fonts.css          土台の書体(本文の明朝 Noto Serif JP・見出しと強調のゴシック Noto Sans JP・等幅)
+    fonts.css          土台の書体(本文の明朝 Noto Serif JP・見出しと強調のゴシック Noto Sans JP・等幅・図のラベルの数式用 New Computer Modern Math)
     presets/math.css   数学向けのプリセット(欧文と数字を New Computer Modern に)
     presets/manual.css 業務マニュアル向けのプリセット(本文もゴシック・太さで強調・等幅数字・手順の番号を太く)
   custom.css           クローンごとの特化(テンプレートは中身を書かない)
