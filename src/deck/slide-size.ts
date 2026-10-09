@@ -20,7 +20,14 @@ export const PRINT_PAPER = { width: 297, height: 210 }
 /** CSS の 1mm(= 96px / 25.4mm) */
 const PX_PER_MM = 96 / 25.4
 
-export const isPrint = new URLSearchParams(location.search).has('print-pdf')
+const params = new URLSearchParams(location.search)
+export const isPrint = params.has('print-pdf')
+/**
+ * 配布用の PDF(?print-pdf&handout)。Beamer の handout モード(\documentclass[handout]{beamer})と同じく、
+ * 段階表示をステップごとのページに分けず、1 枚のスライドを最後のステップの状態で 1 ページにする
+ * (reveal の pdfSeparateFragments: false。fragment をすべて表示した状態で組む)
+ */
+export const isHandout = isPrint && params.has('handout')
 
 export type SlideSize = { width: number; height: number }
 

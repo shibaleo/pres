@@ -6,7 +6,7 @@ import Slides, { deckWarnings } from './slides.mdx'
 import { mdxComponents } from './deck/mdx-components'
 import { watchOverflow } from './deck/overflow'
 import DevDiagnostics from './deck/DevDiagnostics'
-import { isPrint, useSlideSize } from './deck/slide-size'
+import { isHandout, isPrint, useSlideSize } from './deck/slide-size'
 
 type RevealApi = NonNullable<ReturnType<typeof useReveal>>
 
@@ -37,6 +37,8 @@ export default function App() {
         // PDF では 1 枚のスライドを 1 ページに収める(画面と同じく、収まらない部分は切れる。
         // 開発中ははみ出しとして警告される)。紙の枚数とページ番号の全体が一致する
         pdfMaxPagesPerSlide: 1,
+        // 段階表示はステップごとに 1 ページ(Beamer の既定と同じ)。配布用(?print-pdf&handout)では最後の状態の 1 ページだけ
+        pdfSeparateFragments: !isHandout,
         // 縦スライド(原稿の --)の進め方。'linear' にすると ←→ だけで縦も含めて順に進む
         // (見た目の切り替わり方は変わらない)。'grid' は縦の位置を保って列を移る
         navigationMode: 'default',

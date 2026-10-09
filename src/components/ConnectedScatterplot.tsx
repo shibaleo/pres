@@ -37,12 +37,13 @@ export default function ConnectedScatterplot() {
       values: connectedScatterData.map((d) => ({ time: d.time, value: d[name] })),
     }))
 
-    const color = d3.scaleOrdinal<string>().domain(allGroup).range(d3.schemeSet2)
+    // 系列の色は theme/base.css の .figure-series-N(--series。トークンの色)から取る
+    const series = (i: number) => `figure-series-${i}`
     const x = d3.scaleLinear().domain([0, 10]).range([0, width])
     const y = d3.scaleLinear().domain([0, 20]).range([height, 0])
 
-    svg.append('g').attr('transform', `translate(0, ${height})`).call(d3.axisBottom(x))
-    svg.append('g').call(d3.axisLeft(y))
+    svg.append('g').attr('class', 'figure-axis').attr('transform', `translate(0, ${height})`).call(d3.axisBottom(x))
+    svg.append('g').attr('class', 'figure-axis').call(d3.axisLeft(y))
 
     const line = d3
       .line<{ time: number; value: number }>()
@@ -53,9 +54,9 @@ export default function ConnectedScatterplot() {
       .selectAll('.line')
       .data(dataReady)
       .join('path')
-      .attr('class', (d) => d.name)
+      .attr('class', (d, i) => `${d.name} ${series(i)}`)
       .attr('d', (d) => line(d.values))
-      .attr('stroke', (d) => color(d.name))
+      .style('stroke', 'var(--series)')
       .style('stroke-width', 4)
       .style('fill', 'none')
 
@@ -63,15 +64,15 @@ export default function ConnectedScatterplot() {
       .selectAll('.dotgroup')
       .data(dataReady)
       .join('g')
-      .style('fill', (d) => color(d.name))
-      .attr('class', (d) => d.name)
+      .attr('class', (d, i) => `${d.name} ${series(i)}`)
+      .style('fill', 'var(--series)')
       .selectAll('circle')
       .data((d) => d.values)
       .join('circle')
       .attr('cx', (d) => x(d.time))
       .attr('cy', (d) => y(d.value))
       .attr('r', 5)
-      .attr('stroke', 'white')
+      .style('stroke', 'var(--color-canvas)')
 
     // クリックで系列の表示/非表示をトグル
     svg
@@ -80,8 +81,9 @@ export default function ConnectedScatterplot() {
       .join('text')
       .attr('x', (_d, i) => 30 + i * 60)
       .attr('y', 30)
+      .attr('class', (_d, i) => series(i))
       .text((d) => d.name)
-      .style('fill', (d) => color(d.name))
+      .style('fill', 'var(--series)')
       .style('font-size', '15px')
       .style('cursor', 'pointer')
       .on('click', (_event, d) => {

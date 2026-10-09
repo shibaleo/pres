@@ -28,3 +28,19 @@ test('PDF 用の表示: 題の帯が切れず、ページ番号は「i/全体」
 
   for (const b of await page.locator('.figure-buttons').all()) await expect(b).toBeHidden()
 })
+
+test('配布用の PDF(?print-pdf&handout): 段階表示はステップに分けず、最後の状態の 1 ページだけ', async ({ page }) => {
+  const count = async (query: string) => {
+    await page.goto(deckUrl('', query))
+    await page.waitForFunction(() => document.querySelectorAll('.pdf-page .slide-number-pdf').length > 0)
+    await page.waitForTimeout(500)
+    return page.locator('.pdf-page').count()
+  }
+  const steps = await count('?print-pdf')
+  const handout = await count('?print-pdf&handout')
+  expect(handout).toBeLessThan(steps)
+  // 段階表示のスライドも、どのステップで現れる中身も表示されている
+  const overlay = page.locator('.pdf-page', { hasText: '段階表示（Beamer の overlay）' })
+  await expect(overlay).toHaveCount(1)
+  await expect(overlay.getByText('reveal の Fragment も使える').last()).toBeVisible()
+})

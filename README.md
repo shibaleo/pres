@@ -49,6 +49,9 @@ npm run typecheck    # 型チェック(ブラウザ側 tsconfig.json + ビルド
 npm run test         # テスト(Vitest)。transform: 記法の変換とビルド設定 / render: デッキを実際に描いて番号・参照・構造を確かめる
 npm run test:e2e     # e2e テスト(Playwright)。ビルドした dist/index.html を Chrome で開き、図の操作と PDF 用の表示を確かめる
 npm run check        # typecheck + test + build:single + test:e2e。コミット前に実行する
+npm run shots        # build:single のあと、PDF 用の表示の全ページを screenshots/NN.png に、一覧を screenshots/all.png に撮る(見た目の確認用。git には入れない)
+                     # node scripts/screenshots.mjs --handout で配布用の表示を screenshots/handout/ に撮る
+npm run pdf          # build:single のあと、PDF を pdf/slides.pdf(段階表示はステップごと)と pdf/handout.pdf(配布用)に書き出す
 ```
 
 `build` / `build:single` は先頭で自動的に `subset` を実行します。
@@ -319,12 +322,18 @@ SVG なので拡大しても鮮明で、印刷・PDF にもそのまま残る。
 
 ## PDF 出力
 
-URL に `?print-pdf` を付けて開き、ブラウザの印刷 → PDF に保存。
+`npm run pdf` で、ビルドから PDF まで書き出します（`pdf/slides.pdf` と、配布用の `pdf/handout.pdf`。git には入れない）。
+
+手で書き出すときは、URL に `?print-pdf` を付けて開き、ブラウザの印刷 → PDF に保存。
 印刷設定は **余白=なし / 背景のグラフィック=ON** を推奨（フレームの色を出すため）。
 
 ページの大きさは紙の大きさで、既定は **A4 横**。`src/deck/slide-size.ts` の `PRINT_PAPER`（mm）で変えられます
 （例: B5 横なら `{ width: 257, height: 182 }`）。スライドはその大きさで組み直されるので、
 画面の最小サイズ（933×700）より広い A4 横では、余白に少しゆとりが出ます。
+
+段階表示（`\pause`・`<2->` など）は、Beamer の既定と同じくステップごとに 1 ページになります。
+配布用には `?print-pdf&handout` で開くと、Beamer の handout モードと同じく、各スライドを最後の状態の 1 ページだけにします
+（reveal の `pdfSeparateFragments: false`）。
 
 ## 既知の制約
 

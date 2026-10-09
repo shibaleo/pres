@@ -4,7 +4,8 @@
    規則はトークン(tokens.css)から導いた値だけを使い、個別の数値(0.7em など)を書かない。概念は次の 4 つ:
      - 役割の色と書体 … 本文 / 見出し / アクセント / 補足 / 地 / 面
      - 文字の段階     … 本文を 1 とし、比 --type-ratio の累乗で大小を決める
-     - 間隔の単位     … スライドの中は --space、外の UI は --ui-space の倍数だけを使う
+     - 間隔の単位     … スライドの中の縦は半行(--space)、字下げは和文 1 文字(1ic)、外の UI は --ui-space の
+                        倍数だけを使う。帯やラベルの高さも半行の倍数にそろえ、縦の刻みを全体で揃える
      - パネル         … 囲み(Frame / Note / 定理環境 / コード)の共通の形。面はすべて同じ灰色で、
                         部品ごとに変わるのは見出しの下線のアクセント色だけ(色は線にだけ使う)
 
@@ -50,6 +51,9 @@
    プリセットはその範囲でトークンを上書きするので、上の要素で一度決まった本文の書体・太さ・行間を
    ここで改めてトークンから決め直す(デッキ全体にかけるときは <html data-preset> で、上の規則がそのまま効く) */
 .reveal [data-preset] {
+  /* 間隔の刻み(tokens.css)も、その範囲の本文の大きさと行間から導き直す */
+  --line: calc(var(--text-base) * var(--leading));
+  --space: calc(var(--line) / 2);
   font-family: var(--font-body);
   font-weight: var(--body-weight);
   line-height: var(--leading);
@@ -74,16 +78,19 @@
   font-feature-settings: 'palt';
 }
 
-/* 見出しと強調の文字。部品の見出し(Frame の題・定理の見出し・用語・表紙の主の行)も同じ扱い */
-.reveal :is(h1, h2, h3, h4, strong, b, dt, .frame-title, .thm-head, .byline > :first-child) {
+/* 見出しと強調の文字。部品の見出し(Frame の題・定理の見出し・用語・表紙の主の行)も同じ扱い。
+   ブラウザや reveal の white テーマが既定で太字にする要素(h1〜h6・th・dt・strong・b)はすべてここに入れ、
+   明朝の本文の書体のまま太字にならないようにする(太字ではなく、ゴシックの中太で際立たせる) */
+.reveal :is(h1, h2, h3, h4, h5, h6, th, strong, b, dt, .frame-title, .thm-head, .byline > :first-child) {
   font-family: var(--font-heading);
   font-weight: var(--heading-weight);
 }
 
-/* スライドの題(先頭の h2): スライドの幅いっぱいの帯。余白を負の margin で打ち消して端まで伸ばす */
+/* スライドの題(先頭の h2): スライドの幅いっぱいの帯。余白を負の margin で打ち消して端まで伸ばす。
+   帯の高さは 3 半行(1.5 行)。上下の padding は、その高さから見出しの行の高さを引いた残りを等分したもの */
 .reveal .slides section > h2:first-child {
   margin: calc(-1 * var(--slide-pad)) calc(-1 * var(--slide-pad)) var(--space);
-  padding: calc(var(--space) / 2) var(--slide-pad);
+  padding: calc((3 * var(--space) - var(--leading-tight) * 1em) / 2) var(--slide-pad);
   color: var(--color-canvas);
   background: var(--color-brand);
 }
@@ -91,9 +98,9 @@
 .reveal h1 {
   text-align: center;
 }
-/* 区切りのラベル(h3。「参考文献」「証明のアイデア」など): スライドの題の帯を小さくしたもの */
+/* 区切りのラベル(h3。「参考文献」「証明のアイデア」など): スライドの題の帯を小さくしたもの。高さは 1 行 */
 .reveal h3 {
-  padding: 0 var(--space);
+  padding: calc((2 * var(--space) - var(--leading-tight) * 1em) / 2) var(--space);
   color: var(--color-canvas);
   background: var(--color-brand);
 }
@@ -113,7 +120,7 @@
   margin: var(--space) 0;
 }
 .reveal dd {
-  margin: 0 0 calc(var(--space) / 2) calc(2 * var(--space));
+  margin: 0 0 calc(var(--space) / 2) 1ic;
 }
 
 /* 区切り線(CommonMark の *** など)。脚注の上の線にも使う */
@@ -182,7 +189,7 @@ html.reveal-print .pdf-page:has(> section > h2:first-child) .slide-number {
   border-bottom: var(--rule) solid var(--accent);
 }
 .reveal :is(.frame-body, .thm-body) {
-  padding-left: calc(2 * var(--space));
+  padding-left: 1ic; /* 箇条書きの字下げと同じ 1 文字 */
 }
 /* 囲みの本文の直下の箇条書きは、行頭の記号を本文の字下げの中にぶら下げる
    (箇条書きの文字は本文の文字に、記号は見出しの位置に揃う。字下げが 2 段にならない) */
@@ -235,16 +242,23 @@ html.reveal-print .pdf-page:has(> section > h2:first-child) .slide-number {
 
 /* ========== 4. その他の部品 ========== */
 
-/* 横並び(layout.tsx の Cols / Col) */
+/* 横並び(layout.tsx の Cols / Col)。列の間はスライドの余白と同じ 1 行 */
 .reveal .cols {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  gap: calc(2 * var(--space));
+  gap: var(--slide-pad);
 }
 .reveal .col {
   flex: 1;
   min-width: 0;
+}
+/* 列の上端と下端は中身の余白を持ち込まず、どの列も同じ高さから始める */
+.reveal .col > :first-child {
+  margin-top: 0;
+}
+.reveal .col > :last-child {
+  margin-bottom: 0;
 }
 
 /* 表紙の署名(layout.tsx の Byline): 1 行目を主、以降(氏名・日付など)を従にする */
@@ -283,7 +297,13 @@ html.reveal-print .pdf-page:has(> section > h2:first-child) .slide-number {
 }
 .reveal mjx-container[jax='SVG'] > svg a {
   fill: var(--color-brand);
-  stroke: var(--color-brand);
+}
+/* 数式の字形は塗りだけで描く。MathJax は自前の CSS で字形(path / use[data-c])に stroke-width: 3 を付け、
+   輪郭に線を足して太らせる。線の色は文字の色(currentColor)で、リンク(\eqref)の中では MathJax の
+   svg a { stroke: blue } で純色の青になる。PDF では足された線が目立ち、数式が太く、リンクはさらに太く見えるので、
+   字形の線そのものを消す(リンクの色は上の fill で付ける) */
+.reveal mjx-container[jax='SVG'] :is(path, use)[data-c] {
+  stroke: none;
 }
 /* 図(components/ の FourPoints・LogSpiral・Globe。visx で描く SVG)。色はすべてトークンから。
    SVG の属性(stroke など)より CSS が優先されるので、visx の部品の既定の色もここで上書きできる */
@@ -456,7 +476,7 @@ html.reveal-print .reveal .figure-buttons {
 .reveal .figure-controls {
   display: flex;
   justify-content: center;
-  gap: calc(4 * var(--space));
+  gap: var(--slide-pad);
   font-size: calc(1em / var(--type-ratio));
 }
 .reveal .figure-controls label {
@@ -631,6 +651,15 @@ body {
    余白が 0 だと帯がページの外に出て切れる。スライドの余白を戻す */
 html.reveal-print .reveal .slides section:not(.stack) {
   padding: var(--slide-pad) !important;
+}
+/* PDF のページ番号はページと同じ論理座標で組まれるので、題の帯(高さ 3 半行)の縦の中央に置き、
+   右端からの距離を題の字下げ(スライドの余白)と揃える */
+html.reveal-print .reveal .slide-number-pdf {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  height: calc(3 * var(--space));
+  padding: 0 var(--slide-pad);
 }
 /* デッキの外側の UI は、印刷用の表示でも印刷でも出さない */
 html.reveal-print :is(.deck-menu, .deck-diagnostics) {

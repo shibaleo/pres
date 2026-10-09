@@ -20,3 +20,9 @@ Thumbs.db
 # Playwright の実行結果
 test-results/
 playwright-report/
+
+# スクリーンショット(npm run shots)
+screenshots/
+
+# PDF(npm run pdf)
+pdf/

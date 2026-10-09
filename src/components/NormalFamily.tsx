@@ -10,14 +10,14 @@ import ResetButton from './figure/ResetButton'
  * 正規分布の族(SVG・visx)。左はパラメタ空間 H = {(μ, σ) | σ > 0}、右はその点の密度関数 p(x; μ, σ)。
  *   - 左の点をドラッグすると、同じ色の密度関数の形が右で変わる
  *   - 右上のボタンで初期状態(μ = 0、σ = 0.1, 0.5, 0.9。前身の資料の図と同じ)に戻す
- * 密度の山は σ が小さいと高くなるので、右の図の上は切り取る。
+ * 右の図の縦の範囲は、すべての曲線の山(最大値 1/(√(2π)σ))に余白 MARGIN を足して決める(山が切れないように)。
  */
 const SIGMA_MAX = 1.2
 // 左の枠は正方形で縦横の縮尺を等しくするので、μ の範囲は σ の範囲と同じ幅
 const MU_RANGE: [number, number] = [-SIGMA_MAX / 2, SIGMA_MAX / 2]
 const SIGMA_MIN = 0.05
 const X_RANGE: [number, number] = [-3, 3]
-const P_MAX = 2.5
+const MARGIN = 0.1 // 縦の範囲の余白(いちばん高い山に対する割合)
 const INITIAL: Point[] = [
   { x: 0, y: 0.1 },
   { x: 0, y: 0.5 },
@@ -45,7 +45,8 @@ export default function NormalFamily({ width = 880, height = 360 }: { width?: nu
   const mu = scaleLinear({ domain: MU_RANGE, range: [pad, pad + leftW] })
   const sigma = scaleLinear({ domain: [0, SIGMA_MAX], range: [pad + plotH, pad] })
   const xs = scaleLinear({ domain: X_RANGE, range: [rightX0, rightX0 + rightW] })
-  const ps = scaleLinear({ domain: [0, P_MAX], range: [pad + plotH, pad] })
+  const pMax = Math.max(...params.map((p) => density(p.x, p.x, p.y))) * (1 + MARGIN)
+  const ps = scaleLinear({ domain: [0, pMax], range: [pad + plotH, pad], nice: true })
 
   const grid = useMemo(() => Array.from({ length: 601 }, (_, i) => X_RANGE[0] + ((X_RANGE[1] - X_RANGE[0]) * i) / 600), [])
 
@@ -82,7 +83,7 @@ export default function NormalFamily({ width = 880, height = 360 }: { width?: nu
 
         {/* 右: 密度関数 */}
         <AxisBottom top={pad + plotH} scale={xs} tickValues={[-2, -1, 0, 1, 2]} axisClassName="figure-axis" />
-        <AxisLeft left={xs(0)} scale={ps} tickValues={[1, 2]} axisClassName="figure-axis" />
+        <AxisLeft left={xs(0)} scale={ps} numTicks={4} hideZero axisClassName="figure-axis" />
         <text x={rightX0 + rightW} y={pad + plotH - 8} textAnchor="end" className="figure-label">
           {mathItalic('x')}
         </text>
