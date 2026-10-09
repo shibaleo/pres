@@ -7,9 +7,9 @@
 import type { Processor } from 'unified'
 import type { Extension as MicromarkExtension } from 'micromark-util-types'
 import type { Extension as FromMarkdownExtension } from 'mdast-util-from-markdown'
-import { beamerSyntax } from './syntax'
-import { beamerFromMarkdown } from './mdast'
-import { beamerTransform, type BeamerOptions } from './transform'
+import { beamerSyntax } from './syntax.ts'
+import { beamerFromMarkdown } from './mdast.ts'
+import { beamerTransform, type BeamerOptions } from './transform.ts'
 
 export type { BeamerOptions }
 

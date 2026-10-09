@@ -4,8 +4,8 @@ import App from './App'
 
 // reveal.js core + theme, all bundled locally (no CDN).
 // theme/index.css は最後に読み込む(reveal white テーマを上書きするため)。
-import 'reveal.js/dist/reveal.css'
-import 'reveal.js/dist/theme/white.css'
+import 'reveal.js/reveal.css'
+import 'reveal.js/theme/white.css'
 import './theme/index.css'
 
 // デッキ全体にかけるプリセット(src/custom.css の --deck-preset。空白区切りで複数可)を

@@ -23,8 +23,8 @@ reveal.js プレゼンテーション。**MDX + TSX** で執筆し、可視化�
 | 領域 | 採用 |
 |---|---|
 | 執筆 | MDX (`src/slides.mdx` と `\input` で取り込むファイル) + TSX |
-| ビルド | Vite 6 + `@mdx-js/rollup` |
-| スライド | reveal.js 5 (`@revealjs/react`) |
+| ビルド | Vite 8 + `@mdx-js/rollup`（React 19・TypeScript 7・Vitest 5） |
+| スライド | reveal.js 6 (`@revealjs/react`) |
 | 記法 | `vite/remark-beamer/`（LaTeX / Beamer 風記法の remark プラグイン） |
 | 数式 | `remark-math` + MathJax 3（SVG。式番号・`\label`・`\eqref` は AMS の規則。後ろにある式への参照も解決する。字形は文書全体で 1 回だけ持ち、各数式には画面に見えない MathML（assistive MathML）を添える） |
 | 文献 | BibTeX (`src/references.bib`) + `rehype-citation`（CSL: NLM/Vancouver 角括弧版。公式リポジトリの `src/csl/nlm-citation-sequence-brackets.csl`） |
@@ -47,7 +47,8 @@ npm run preview      # ビルド結果をプレビュー
 npm run subset       # フォントを使用文字だけに再サブセット(下記)
 npm run typecheck    # 型チェック(ブラウザ側 tsconfig.json + ビルド側 tsconfig.node.json)
 npm run test         # テスト(Vitest)。transform: 記法の変換とビルド設定 / render: デッキを実際に描いて番号・参照・構造を確かめる
-npm run check        # typecheck + test + build:single。コミット前・CI で実行する
+npm run test:e2e     # e2e テスト(Playwright)。ビルドした dist/index.html を Chrome で開き、図の操作と PDF 用の表示を確かめる
+npm run check        # typecheck + test + build:single + test:e2e。コミット前に実行する
 ```
 
 `build` / `build:single` は先頭で自動的に `subset` を実行します。
@@ -93,6 +94,7 @@ vite/
     mdast.ts           構文木ノードへの変換
     transform.ts       意味づけ(スライド分割・環境・節番号と定理番号・参照・引用・段階表示)
     rehype-math-errors.ts  MathJax の数式エラーを原稿の位置で報告
+e2e/                   e2e テスト(Playwright。入っている Chrome を使う)
 fonts-src/             サブセット元のフルフォント(.ttf / .otf)とライセンス。ビルド成果物には含めない
 scripts/subset-fonts.mjs  フォントサブセット化スクリプト
 ```

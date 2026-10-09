@@ -8,7 +8,7 @@ import remarkMdx from 'remark-mdx'
 import remarkMath from 'remark-math'
 import { VFile } from 'vfile'
 import type { Root } from 'mdast'
-import remarkBeamer, { type BeamerOptions } from './index'
+import remarkBeamer, { type BeamerOptions } from './index.ts'
 
 type N = { type: string; name?: string; value?: string; children?: N[]; attributes?: { name: string; value: string | null }[] }
 

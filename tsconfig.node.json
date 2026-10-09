@@ -8,11 +8,12 @@
     "types": ["node"],
     "skipLibCheck": true,
     "noEmit": true,
+    "allowImportingTsExtensions": true,
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "allowJs": true,
     "checkJs": true
   },
-  "include": ["vite", "vite.config.ts", "vitest.config.ts"]
+  "include": ["vite", "vite.config.ts", "vitest.config.ts", "playwright.config.ts"]
 }

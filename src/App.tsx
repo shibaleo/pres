@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { Deck, useReveal } from '@revealjs/react'
-import RevealNotes from 'reveal.js/plugin/notes/notes.esm.js'
+import RevealNotes from 'reveal.js/plugin/notes'
 import Menu from './components/Menu'
 import Slides, { deckWarnings } from './slides.mdx'
 import { mdxComponents } from './deck/mdx-components'

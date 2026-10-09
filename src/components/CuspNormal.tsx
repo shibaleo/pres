@@ -5,6 +5,7 @@ import { Line, LinePath } from '@visx/shape'
 import { useSvgDrag } from './figure/useSvgDrag'
 import { mathItalic } from './figure/mathItalic'
 import PlayPauseButton from './figure/PlayPauseButton'
+import { prefersReducedMotion, useOnPresentSlide } from './figure/motion'
 
 /**
  * 3/2-カスプ γ(t) = (t², t³) と、その上の点での速度ベクトル・単位法線ベクトル(SVG・visx)。
@@ -26,13 +27,11 @@ const VECTOR_SCALE = 0.3 // ベクトルを描く倍率(速度・単位法線と
 
 const gamma = (t: number) => ({ x: t * t, y: t * t * t })
 
-function prefersReducedMotion() {
-  return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
-}
-
 export default function CuspNormal({ width = 420, height = 420 }: { width?: number; height?: number }) {
   const [t, setT] = useState(INITIAL_T)
   const [playing, setPlaying] = useState(() => !prefersReducedMotion())
+  const block = useRef<HTMLDivElement>(null)
+  const present = useOnPresentSlide(block) // 動きの処理は表示中のスライドのときだけ回す
   const id = useId()
   const velocityHead = `${id}-velocity`
   const normalHead = `${id}-normal`
@@ -50,7 +49,7 @@ export default function CuspNormal({ width = 420, height = 420 }: { width?: numb
   const tNow = useRef(t)
   tNow.current = t
   useEffect(() => {
-    if (!playing) return
+    if (!playing || !present) return
     let frame = 0
     const t0 = performance.now()
     const p0 = Math.asin(Math.min(1, Math.max(-1, tNow.current / T_SWING)))
@@ -60,7 +59,7 @@ export default function CuspNormal({ width = 420, height = 420 }: { width?: numb
     }
     frame = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(frame)
-  }, [playing])
+  }, [playing, present])
 
   // 一時停止中のドラッグ: ドラッグした位置にいちばん近い曲線の上の点へ
   const bind = useSvgDrag((_, point) => {
@@ -90,8 +89,8 @@ export default function CuspNormal({ width = 420, height = 420 }: { width?: numb
   const showVelocity = Math.hypot(velocity.x, velocity.y) * VECTOR_SCALE * (height / 3) > 1
 
   return (
-    <div className="figure-block">
-      <svg className="figure" viewBox={`0 0 ${width} ${height}`} width={width} height={height}>
+    <div className="figure-block" ref={block}>
+      <svg className="figure" viewBox={`0 0 ${width} ${height}`} width={width} height={height} role="group" aria-label="3/2-カスプ γ(t) = (t², t³) と、その上の点での速度ベクトルと単位法線ベクトル">
         <defs>
           <marker id={velocityHead} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
             <path d="M0,0 L10,5 L0,10 z" className="figure-velocity-head" />
@@ -115,9 +114,11 @@ export default function CuspNormal({ width = 420, height = 420 }: { width?: numb
         {showVelocity && <Line {...arrow(velocity)} className="figure-velocity" markerEnd={`url(#${velocityHead})`} />}
         <Line {...arrow(normal)} className="figure-normal" markerEnd={`url(#${normalHead})`} />
         {/* 一時停止中だけドラッグできる */}
-        <circle cx={x(g.x)} cy={y(g.y)} r={8} className="figure-point" {...(playing ? {} : bind('point'))} />
+        <circle cx={x(g.x)} cy={y(g.y)} r={8} className="figure-point" {...(playing ? {} : bind('point', 'カスプの上の点(曲線に沿って動く)'))} />
       </svg>
-      <PlayPauseButton playing={playing} onToggle={() => setPlaying((p) => !p)} />
+      <div className="figure-buttons">
+        <PlayPauseButton playing={playing} onToggle={() => setPlaying((p) => !p)} />
+      </div>
     </div>
   )
 }

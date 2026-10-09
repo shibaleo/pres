@@ -1,7 +1,7 @@
 import type { useReveal } from '@revealjs/react'
 import { MIN_WIDTH, SLIDE_HEIGHT } from './slide-size'
 
-// reveal.js 5 は型定義を同梱しないので、@revealjs/react の戻り値型から取る
+// デッキの API の型は、App と同じく @revealjs/react の useReveal の戻り値から取る
 type RevealApi = NonNullable<ReturnType<typeof useReveal>>
 
 /**

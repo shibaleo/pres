@@ -83,12 +83,22 @@ $$\int_a^b f(x)\,dx = S$$
 
 ## COLOR FRAMES
 
-<Frame color="gray" title="gray frame">Good Job!</Frame>
-<Frame color="red" title="red frame">Good Job!</Frame>
-<Frame color="blue" title="blue frame">Good Job!</Frame>
-<Frame color="gold" title="gold frame">Good Job!</Frame>
-<Frame color="green" title="green frame">Good Job!</Frame>
-<Frame color="purple" title="purple frame">Good Job!</Frame>
+<Cols>
+<Col>
+
+<Frame color="gray" title="補足">`color="gray"`</Frame>
+<Frame color="red" title="注意">`color="red"`</Frame>
+<Frame color="blue" title="定義・要点">`color="blue"`</Frame>
+
+</Col>
+<Col>
+
+<Frame color="gold" title="例">`color="gold"`</Frame>
+<Frame color="green" title="事実・結果">`color="green"`</Frame>
+<Frame color="purple" title="参考">`color="purple"`</Frame>
+
+</Col>
+</Cols>
 
 ---
 
@@ -128,7 +138,7 @@ $$
 
 ---
 
-## visx — 一直線上の 4 点
+## visx：一直線上の 4 点
 
 線分の両端と線分そのもの、点 $a, b, c, d$ をそれぞれドラッグで動かせる。
 
@@ -136,7 +146,7 @@ $$
 
 --
 
-## visx — 対数螺旋
+## visx：対数螺旋
 
 スライダー $a, b$ を動かすと $r(\varphi)=a\,e^{b\varphi}$ の形が変わる。曲線の上の点をドラッグすると接線がついてくる。
 
@@ -144,7 +154,7 @@ $$
 
 --
 
-## visx — カスプの速度と法線
+## visx：カスプの速度と法線
 
 <Cols>
 <Col>
@@ -153,9 +163,9 @@ $$
 
 **速度ベクトル**（赤）$\dot\gamma(t) = (2t, 3t^2)$ は原点 $t = 0$ で消える。
 
-**単位法線ベクトル**（青）$\nu(t)/|\nu(t)|$，$\nu(t) = (-3t, 2)$ は原点でも残る。
+**単位法線ベクトル**（青）$\nu(t)/|\nu(t)|$、$\nu(t) = (-3t, 2)$ は原点でも残る。
 
-点は曲線の上を往復する。ドラッグでも動かせる。
+再生中は点が曲線の上を往復する。右上のボタンで一時停止すると、点をドラッグで動かせる。
 
 </Col>
 <Col>
@@ -167,7 +177,7 @@ $$
 
 --
 
-## visx — 正規分布の族
+## visx：正規分布の族
 
 $H = \{(\mu, \sigma) \mid \sigma > 0\}$ の点をドラッグすると、同じ色の密度関数 $p(x; \mu, \sigma)$ が変わる。
 
@@ -175,9 +185,9 @@ $H = \{(\mu, \sigma) \mid \sigma > 0\}$ の点をドラッグすると、同じ�
 
 ---
 
-## visx — 地球儀
+## visx：地球儀
 
-正射図法の SVG。ドラッグで向きを変えられる。
+正射図法の SVG。ドラッグで向きを変えられる。右上のボタンで自転の再生・一時停止と、向きの戻し。
 
 <Globe size={400} />
 
@@ -197,8 +207,8 @@ $H = \{(\mu, \sigma) \mid \sigma > 0\}$ の点をドラッグすると、同じ�
 
 ## closing part
 
-- conclusion
-- acknowledgement
+- まとめ
+- 謝辞
 
 ---
 

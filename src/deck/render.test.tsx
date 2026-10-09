@@ -36,7 +36,9 @@ describe('デッキの描画', () => {
   it('スライドの並び: 最上位は section(横のスライド・縦の束)と MathJax のスタイルだけ', () => {
     // MathJax の字形の定義(fontCache: 'global' の隠れた <svg id="MJX-SVG-global-cache">)も最上位に 1 つ
     const kind = (c: Element) => (c.id === 'MJX-SVG-global-cache' ? 'GLYPHS' : c.tagName)
-    for (const c of root.children) expect(['SECTION', 'STYLE', 'GLYPHS'], c.outerHTML.slice(0, 80)).toContain(kind(c))
+    // React 19 のサーバー側の描画は画像の先読み(<link rel="preload">)を先頭に足す。ブラウザでの描画には無いので数えない
+    const preload = (c: Element) => c.tagName === 'LINK' && c.getAttribute('rel') === 'preload'
+    for (const c of root.children) if (!preload(c)) expect(['SECTION', 'STYLE', 'GLYPHS'], c.outerHTML.slice(0, 80)).toContain(kind(c))
     expect([...root.children].filter((c) => kind(c) === 'GLYPHS').length).toBe(1)
     expect(leaves.length).toBeGreaterThan(1)
     // 縦の束の中にさらに束は無い(reveal は 2 段まで)

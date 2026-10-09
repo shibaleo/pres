@@ -23,6 +23,9 @@ export default function ConnectedScatterplot() {
 
     const svg = root
       .append('svg')
+      // 列の幅に合わせて縮む(.figure: max-width 100%)。座標は viewBox のまま
+      .attr('class', 'figure')
+      .attr('viewBox', `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`)
       .attr('width', width + margin.left + margin.right)
       .attr('height', height + margin.top + margin.bottom)
       .append('g')

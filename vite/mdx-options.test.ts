@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { compile } from '@mdx-js/mdx'
 import { VFile } from 'vfile'
-import { mdxOptions } from './mdx-options'
+import { mdxOptions } from './mdx-options.ts'
 
 // 実際のビルドと同じ設定でコンパイルする(MathJax・rehype-citation を含む)
 const build = (src: string, strict = false) =>

@@ -9,12 +9,13 @@
     "build": "npm run subset && tsc -b && vite build",
     "build:single": "npm run subset && tsc -b && vite build --mode single",
     "preview": "vite preview",
-    "typecheck": "tsc -b && tsc -p tsconfig.node.json",
+    "typecheck": "tsc -b && tsc -p tsconfig.node.json && tsc -p e2e/tsconfig.json",
     "test": "vitest run",
-    "check": "npm run typecheck && npm run test && npm run build:single"
+    "test:e2e": "playwright test",
+    "check": "npm run typecheck && npm run test && npm run build:single && npm run test:e2e"
   },
   "dependencies": {
-    "@revealjs/react": "^0.2.1",
+    "@revealjs/react": "^0.2.2",
     "@tailwindcss/vite": "^4.3.3",
     "@visx/axis": "^4.0.0",
     "@visx/geo": "^4.0.0",
@@ -22,9 +23,9 @@
     "@visx/scale": "^4.0.0",
     "@visx/shape": "^4.0.0",
     "d3": "^7.9.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "reveal.js": "^5.1.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "reveal.js": "^6.0.2",
     "tailwindcss": "^4.3.3",
     "topojson-client": "^3.1.0",
     "world-atlas": "^2.0.2"
@@ -32,16 +33,17 @@
   "devDependencies": {
     "@mdx-js/mdx": "^3.1.1",
     "@mdx-js/rollup": "^3.1.1",
+    "@playwright/test": "^1.64.0",
     "@types/d3": "^7.4.3",
     "@types/hast": "^3.0.5",
     "@types/mdast": "^4.0.4",
-    "@types/node": "^22.20.5",
-    "@types/react": "^18.3.12",
-    "@types/react-dom": "^18.3.1",
+    "@types/node": "^26.6.4",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "@types/topojson-client": "^3.1.5",
-    "@vitejs/plugin-react": "^4.3.4",
+    "@vitejs/plugin-react": "^6.1.2",
     "acorn": "^8.19.0",
-    "happy-dom": "^20.14.5",
+    "happy-dom": "^20.14.6",
     "hast-util-to-text": "^4.0.2",
     "hastscript": "^9.0.1",
     "mathjax-full": "^3.2.1",
@@ -52,16 +54,19 @@
     "remark-math": "^6.0.0",
     "remark-mdx": "^3.1.1",
     "remark-parse": "^11.0.0",
-    "subset-font": "^2.5.0",
-    "typescript": "^5.6.3",
+    "subset-font": "^2.9.0",
+    "typescript": "^7.0.2",
     "unified": "^11.0.5",
     "unist-util-visit-parents": "^6.0.2",
     "vfile": "^6.0.3",
-    "vite": "^6.4.4",
+    "vite": "^8.3.4",
     "vite-plugin-singlefile": "^2.3.3",
-    "vitest": "^3.2.7"
+    "vitest": "^5.0.3"
   },
   "allowScripts": {
     "esbuild": true
+  },
+  "overrides": {
+    "katex": "^0.19.0"
   }
 }

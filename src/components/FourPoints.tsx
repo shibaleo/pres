@@ -57,7 +57,7 @@ export default function FourPoints({ width = 600, height = 200 }: { width?: numb
 
   return (
     <div className="figure-block">
-      <svg className="figure" viewBox={`0 0 ${width} ${height}`} width={width} height={height}>
+      <svg className="figure" viewBox={`0 0 ${width} ${height}`} width={width} height={height} role="group" aria-label="線分と、動かせる 4 点 a, b, c, d">
         {/* 線分そのもの: 見た目より太い透明な線でつかみやすくする */}
         <Line from={{ x: x(p.x), y: y(p.y) }} to={{ x: x(q.x), y: y(q.y) }} className="figure-ink" strokeWidth={2} />
         <Line
@@ -65,13 +65,13 @@ export default function FourPoints({ width = 600, height = 200 }: { width?: numb
           to={{ x: x(q.x), y: y(q.y) }}
           stroke="transparent"
           strokeWidth={16}
-          {...bind('line')}
+          {...bind('line', '線分(平行移動)')}
         />
         {(['p', 'q'] as const).map((id, i) => (
-          <circle key={id} cx={x(ends[i].x)} cy={y(ends[i].y)} r={7} className="figure-handle" {...bind(id)} />
+          <circle key={id} cx={x(ends[i].x)} cy={y(ends[i].y)} r={7} className="figure-handle" {...bind(id, `線分の端 ${i + 1}`)} />
         ))}
         {LABELS.map((label, i) => (
-          <g key={label} {...bind(label)}>
+          <g key={label} {...bind(label, `点 ${label}`)}>
             <circle cx={x(points[i].x)} cy={y(points[i].y)} r={7} className="figure-point" />
             <text x={x(points[i].x)} y={y(points[i].y) - 16} textAnchor="middle" className="figure-label">
               {mathItalic(label)}
@@ -79,7 +79,9 @@ export default function FourPoints({ width = 600, height = 200 }: { width?: numb
           </g>
         ))}
       </svg>
-      <ResetButton onClick={reset} />
+      <div className="figure-buttons">
+        <ResetButton onClick={reset} />
+      </div>
     </div>
   )
 }

@@ -21,9 +21,9 @@ import type { Program } from 'estree'
 import type { Processor } from 'unified'
 import type { VFile } from 'vfile'
 import type { Point, Position } from 'unist'
-import { MATH_ENVS } from './syntax'
-import { findInclude, parseInclude, resolveInclude, type IncludeContext } from './inputs'
-import type { LatexCommand, LatexLine } from './mdast'
+import { MATH_ENVS } from './syntax.ts'
+import { findInclude, parseInclude, resolveInclude, type IncludeContext } from './inputs.js'
+import type { LatexCommand, LatexLine } from './mdast.ts'
 
 export type BeamerOptions = {
   /** \cite の key を確認する BibTeX ファイル(未登録の key を警告する) */

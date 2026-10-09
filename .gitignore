@@ -17,3 +17,6 @@ npm-debug.log*
 # editor / OS
 .DS_Store
 Thumbs.db
+# Playwright の実行結果
+test-results/
+playwright-report/

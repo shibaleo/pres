@@ -8,9 +8,9 @@ import type { CompileOptions } from '@mdx-js/mdx'
 import remarkMath from 'remark-math'
 import rehypeCitation from 'rehype-citation'
 import { AllPackages } from 'mathjax-full/js/input/tex/AllPackages.js'
-import remarkBeamer from './remark-beamer'
-import rehypeMathjaxDocument from './rehype-mathjax-document'
-import { rehypeMathPositions, rehypeMathErrors } from './remark-beamer/rehype-math-errors'
+import remarkBeamer from './remark-beamer/index.ts'
+import rehypeMathjaxDocument from './rehype-mathjax-document.ts'
+import { rehypeMathPositions, rehypeMathErrors } from './remark-beamer/rehype-math-errors.ts'
 
 export function mdxOptions({ bibliography, strict }: { bibliography: string; strict: boolean }): CompileOptions {
   return {

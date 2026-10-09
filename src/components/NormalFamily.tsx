@@ -60,7 +60,7 @@ export default function NormalFamily({ width = 880, height = 360 }: { width?: nu
 
   return (
     <div className="figure-block">
-      <svg className="figure" viewBox={`0 0 ${width} ${height}`} width={width} height={height}>
+      <svg className="figure" viewBox={`0 0 ${width} ${height}`} width={width} height={height} role="group" aria-label="正規分布のパラメタ空間 H の点と、それぞれの密度関数">
         <defs>
           <clipPath id={clipId}>
             <rect x={rightX0} y={pad} width={rightW} height={plotH} />
@@ -107,11 +107,13 @@ export default function NormalFamily({ width = 880, height = 360 }: { width?: nu
             <text x={mu(p.x) + 14} y={sigma(p.y) + 6} className="figure-legend">
               ({p.x.toFixed(2)}, {p.y.toFixed(2)})
             </text>
-            <circle cx={mu(p.x)} cy={sigma(p.y)} r={8} className="figure-series-point" {...bind(String(i))} />
+            <circle cx={mu(p.x)} cy={sigma(p.y)} r={8} className="figure-series-point" {...bind(String(i), `パラメタ空間の点 ${i + 1}(μ, σ)`)} />
           </g>
         ))}
       </svg>
-      <ResetButton onClick={() => setParams(INITIAL)} />
+      <div className="figure-buttons">
+        <ResetButton onClick={() => setParams(INITIAL)} />
+      </div>
     </div>
   )
 }

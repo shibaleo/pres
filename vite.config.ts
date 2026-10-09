@@ -5,14 +5,14 @@ import { viteSingleFile } from 'vite-plugin-singlefile'
 import type { Plugin } from 'vite'
 import { fileURLToPath } from 'node:url'
 import mdx from '@mdx-js/rollup'
-import { mdxOptions } from './vite/mdx-options'
+import { mdxOptions } from './vite/mdx-options.ts'
 
 const BIB = 'src/references.bib'
 
 /**
- * @font-face の src から woff2 以外(woff/ttf/eot/svg)を削り、
- * woff2 を持たない @font-face(= reveal white テーマの Source Sans Pro。
- * 我々は全フォントを上書きするので未使用)はブロックごと除去する。
+ * @font-face の src から woff2 以外(woff/ttf/eot/svg)を削り、woff2 を持たない @font-face は
+ * ブロックごと除去する。reveal の white テーマは Source Sans Pro を woff の base64 で埋め込んでいるが、
+ * 書体はすべてテーマで上書きしていて使わないので、これで単一 HTML から外れる。
  * アセット解決前に走らせるため enforce:'pre'。
  */
 function woff2OnlyFonts(): Plugin {
@@ -22,11 +22,7 @@ function woff2OnlyFonts(): Plugin {
     transform(code, id) {
       // Vite は CSS モジュール id に ?used 等のクエリを付けるので拡張子判定はクエリを無視する
       if (!/\.css(\?|$)/.test(id)) return null
-      let out = code
-      // (1) reveal white テーマが @import する Source Sans Pro(未使用・全上書き済)を除去
-      out = out.replace(/@import\s+url\([^)]*source-sans-pro[^)]*\)\s*;?/gi, '')
-      // (2) @font-face の src から woff2 以外を削り、woff2 が無いものはブロックごと削除
-      out = out.replace(/@font-face\s*\{([^}]*)\}/g, (block, body: string) => {
+      const out = code.replace(/@font-face\s*\{([^}]*)\}/g, (block, body: string) => {
         const src = body.match(/src\s*:\s*([^;]+);?/i)
         if (!src) return block
         const kept = src[1]
@@ -80,13 +76,7 @@ export default defineConfig(({ command, mode }) => ({
       // 本番ビルドでは原稿の警告も失敗扱い。DECK_ALLOW_WARNINGS=1 で許可
       ...mdx(mdxOptions({ bibliography: BIB, strict: command === 'build' && process.env.DECK_ALLOW_WARNINGS !== '1' })),
     },
-    react({
-      include: /\.(mdx|js|jsx|ts|tsx)$/,
-      // 原稿のコンパイル結果は MathJax の SVG を含み、開発時(要素ごとに原稿の位置が付く)は 500KB を超える。
-      // Babel はその大きさで「整形を省いた」と知らせる([BABEL] Note: … deoptimised the styling …)ので、
-      // 自動生成のコードである .mdx は最初から整形しない出力にする(ほかのファイルは既定と同じく整形する)
-      babel: (id) => ({ compact: /\.mdx(\?|$)/.test(id) }),
-    }),
+    react({ include: /\.(mdx|js|jsx|ts|tsx)$/ }),
     tailwindcss(),
     ...(mode === 'single' ? [viteSingleFile()] : []),
   ],

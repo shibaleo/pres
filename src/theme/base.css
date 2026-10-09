@@ -32,7 +32,7 @@
   --r-heading1-size: calc(1em * var(--type-ratio) * var(--type-ratio));
   /* h2 はスライドの題(帯)、h3 は区切りのラベル(小さな帯)、h4 は書体と色だけの小見出し */
   --r-heading2-size: 1em;
-  --r-heading3-size: calc(1em / var(--type-ratio) / var(--type-ratio));
+  --r-heading3-size: calc(1em / var(--type-ratio));
   --r-heading4-size: 1em;
   --r-code-font: var(--font-code);
   --r-link-color: var(--color-brand);
@@ -184,6 +184,11 @@ html.reveal-print .pdf-page:has(> section > h2:first-child) .slide-number {
 .reveal :is(.frame-body, .thm-body) {
   padding-left: calc(2 * var(--space));
 }
+/* 囲みの本文の直下の箇条書きは、行頭の記号を本文の字下げの中にぶら下げる
+   (箇条書きの文字は本文の文字に、記号は見出しの位置に揃う。字下げが 2 段にならない) */
+.reveal :is(.frame-body, .thm-body) > :is(ul, ol) {
+  margin-left: -1ic; /* 箇条書きの字下げ(1ic)の分だけ戻す */
+}
 .reveal :is(.frame-body, .thm-body, .note) > :first-child {
   margin-top: 0;
 }
@@ -289,6 +294,12 @@ html.reveal-print .pdf-page:has(> section > h2:first-child) .slide-number {
   margin: 0 auto;
   overflow: visible;
 }
+/* キーボードで選んだ図の要素(Tab で選び、矢印キーで動かす。components/figure/useSvgDrag.ts) */
+.reveal .figure [tabindex]:focus-visible,
+.reveal .figure[tabindex]:focus-visible {
+  outline: calc(var(--rule) / 2) solid var(--color-brand);
+  outline-offset: calc(var(--rule) / 2);
+}
 .reveal .figure-ink {
   stroke: var(--color-ink);
 }
@@ -392,11 +403,16 @@ html.reveal-print .pdf-page:has(> section > h2:first-child) .slide-number {
   max-width: 100%;
   margin: var(--space) auto;
 }
-/* 図のボタン(components/figure/ の ResetButton・PlayPauseButton): 右上に置き、普段は薄く、マウスを乗せたときだけはっきり出す */
-.reveal .figure-button {
+/* 図のボタン(components/figure/ の ResetButton・PlayPauseButton): 図の右上に並べ、
+   普段は薄く、マウスを乗せたときだけはっきり出す */
+.reveal .figure-buttons {
   position: absolute;
   top: 0;
   right: 0;
+  display: flex;
+  gap: calc(var(--space) / 2);
+}
+.reveal .figure-button {
   display: grid;
   place-items: center;
   width: 1em;
@@ -428,11 +444,11 @@ html.reveal-print .pdf-page:has(> section > h2:first-child) .slide-number {
   fill: currentColor;
   stroke: none;
 }
-html.reveal-print .reveal .figure-button {
+html.reveal-print .reveal .figure-buttons {
   display: none;
 }
 @media print {
-  .reveal .figure-button {
+  .reveal .figure-buttons {
     display: none;
   }
 }

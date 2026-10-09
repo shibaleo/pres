@@ -69,7 +69,7 @@ export default function LogSpiral({ width = 600, height = 300 }: { width?: numbe
 
   return (
     <div className="figure-block">
-      <svg className="figure" viewBox={`0 0 ${width} ${height}`} width={width} height={height}>
+      <svg className="figure" viewBox={`0 0 ${width} ${height}`} width={width} height={height} role="group" aria-label="対数螺旋 r(φ) = a·e^{bφ} と、曲線の上の点での接線">
         <defs>
           <clipPath id={clipId}>
             <rect width={width} height={height} />
@@ -83,7 +83,7 @@ export default function LogSpiral({ width = 600, height = 300 }: { width?: numbe
           <LinePath data={samples} x={(s) => x(s.x)} y={(s) => y(s.y)} className="figure-curve" />
           <Line {...tangent} className="figure-tangent" />
         </g>
-        <circle cx={x(g.x)} cy={y(g.y)} r={8} className="figure-point" {...bind('glider')} />
+        <circle cx={x(g.x)} cy={y(g.y)} r={8} className="figure-point" {...bind('glider', '曲線の上の点(曲線に沿って動く)')} />
       </svg>
       <div className="figure-controls">
         <label>
@@ -97,13 +97,15 @@ export default function LogSpiral({ width = 600, height = 300 }: { width?: numbe
           <output>{b.toFixed(2)}</output>
         </label>
       </div>
-      <ResetButton
-        onClick={() => {
-          setA(INITIAL.a)
-          setB(INITIAL.b)
-          setPhi(INITIAL.phi)
-        }}
-      />
+      <div className="figure-buttons">
+        <ResetButton
+          onClick={() => {
+            setA(INITIAL.a)
+            setB(INITIAL.b)
+            setPhi(INITIAL.phi)
+          }}
+        />
+      </div>
     </div>
   )
 }
