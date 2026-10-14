@@ -298,6 +298,13 @@ html.reveal-print .pdf-page:has(> section > h2:first-child) .slide-number {
 .reveal mjx-container[jax='SVG'] > svg a {
   fill: var(--color-brand);
 }
+/* 読み上げ用の MathML(MathJax の assistive MathML。画面には見えない)は 1px の高さに抑える。
+   MathJax の規則は clip で隠すだけで高さは中身のままなので、Chrome が対応していない mlabeledtr(番号付きの式)
+   では中身が縦に積み重なり、見えないままスライドの高さを数百 px 押し広げる(はみ出しの検査にもかかる)。
+   overflow: hidden は MathJax の規則にあり、高さを決めれば中身は外に出ない(読み上げには影響しない) */
+.reveal mjx-assistive-mml {
+  height: 1px;
+}
 /* 数式の字形は塗りだけで描く。MathJax は自前の CSS で字形(path / use[data-c])に stroke-width: 3 を付け、
    輪郭に線を足して太らせる。線の色は文字の色(currentColor)で、リンク(\eqref)の中では MathJax の
    svg a { stroke: blue } で純色の青になる。PDF では足された線が目立ち、数式が太く、リンクはさらに太く見えるので、
