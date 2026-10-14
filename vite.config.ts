@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url'
 import { basename, relative } from 'node:path'
 import mdx from '@mdx-js/rollup'
 import { mdxOptions } from './vite/mdx-options.ts'
-import { DECK_NAME, ROOT, bibliographyFor, deckDirOf, deckTitle, listDecks, resolveDeck } from './vite/decks.js'
+import { DECK_NAME, ROOT, bibliographyFor, deckDirOf, deckTitle, listDecks, motionFor, resolveDeck } from './vite/decks.js'
 import { MODE_NAMES, MODE_VARIANTS } from './src/modes/names.ts'
 
 /** デッキのページの入口(仮想モジュール)の URL。/@deck/<名前> */
@@ -56,7 +56,7 @@ function decksPlugin(deck: string | undefined): Plugin {
   return {
     name: 'decks',
     configureServer(server) {
-      // ブラウザのはみ出しの検査(src/deck/overflow.ts)の結果を端末にも出す。エディタで原稿を書いていて
+      // ブラウザのはみ出しの検査(src/devtools/overflow.ts)の結果を端末にも出す。エディタで原稿を書いていて
       // ブラウザを見ていなくても気づけるように。変わったときだけ届く(出た・増えた・消えた)
       const lastCount = new Map<string, number>()
       server.environments.client.hot.on('deck:overflow', (data: { page: string; overflows: { file: string; line: string; message: string }[] }) => {
@@ -96,14 +96,17 @@ function decksPlugin(deck: string | undefined): Plugin {
       if (!id.startsWith(ENTRY_ID)) return
       const d = resolveDeck(id.slice(ENTRY_ID.length))
       const main = rootUrl(d.main)
+      // 動きの設定(decks/<名前>/motion.ts)。モードの選択と既定の遷移に使う(スライドごとの遷移は原稿の変換が付ける)
+      const motion = d.motion ? `import motion from '${rootUrl(d.motion)}'` : `const motion = undefined`
       return [
         `import { startDeck } from '/src/main.tsx'`,
         `import '${rootUrl(d.style)}'`,
         `import Slides, { deckWarnings } from '${main}'`,
-        `const update = startDeck({ Slides, warnings: deckWarnings })`,
+        motion,
+        `const update = startDeck({ Slides, warnings: deckWarnings, motion })`,
         // 原稿の更新(HMR)はここで受け取り、同じ App を新しい原稿で描き直す(ページを読み直さないので、
         // 表示中のスライドの位置が保たれる)。原稿は部品と警告の一覧を export するので、React の差し替えの境界にならない
-        `if (import.meta.hot) import.meta.hot.accept('${main}', (m) => m && update({ Slides: m.default, warnings: m.deckWarnings }))`,
+        `if (import.meta.hot) import.meta.hot.accept('${main}', (m) => m && update({ Slides: m.default, warnings: m.deckWarnings, motion }))`,
       ].join('\n')
     },
     transformIndexHtml: {
@@ -166,11 +169,13 @@ function reloadOnDeckSources(): Plugin {
       // それを取り込み元と見なさないと、CSS だけ入れ替わってデッキが古いままになる
       const importedByJs = modules.some((m) => m.file === file && [...m.importers].some((i) => !/\.css($|\?)/.test(i.id ?? '')))
       const included = /\.mdx?$/.test(file) && !importedByJs
-      if (!file.endsWith('.bib') && !included) return
+      // 動きの設定(motion.ts)は、モードも変わりうるのでページを読み直す(原稿の変換も、題とスライドの照合のためにやり直す)
+      const motion = basename(file) === 'motion.ts' && !!deckDirOf(file)
+      if (!file.endsWith('.bib') && !included && !motion) return
       const graph = this.environment.moduleGraph
       const dir = deckDirOf(file)
       const main = dir && graph.getModulesByFile(normalizePath(resolveDeck(basename(dir)).main))
-      if (main && main.size > 0) {
+      if (main && main.size > 0 && !motion) {
         // 原稿の変換結果を捨てて、原稿の更新として扱う(入口の import.meta.hot.accept が受け取る)
         for (const m of main) graph.invalidateModule(m)
         return [...main]
@@ -202,7 +207,7 @@ export function deckConfig(build?: DeckBuild): UserConfig {
   return {
     base: './',
     resolve: {
-      // スライドがフォルダの深さに依存せず `@/components/...` で import できるように
+      // 原稿やデッキの部品がフォルダの深さに依存せず `@/figure/...` などで土台を import できるように
       alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
     },
     build: out ? { outDir: out.outDir, emptyOutDir: true } : undefined,
@@ -216,7 +221,7 @@ export function deckConfig(build?: DeckBuild): UserConfig {
       {
         enforce: 'pre',
         // ビルドでは原稿の警告も失敗扱い。文献ファイルは原稿の属するデッキのもの(decks/<名前>/references.bib)
-        ...mdx(mdxOptions({ bibliography: bibliographyFor, strict: !!build && !build.allowWarnings })),
+        ...mdx(mdxOptions({ bibliography: bibliographyFor, strict: !!build && !build.allowWarnings, motion: motionFor })),
       },
       // 原稿(.mdx)は Fast Refresh の対象にしない。原稿は部品と警告の一覧(deckWarnings)を export するので
       // Fast Refresh では差し替えられず、ページの読み直しになる。原稿の更新はページの入口が受け取って描き直す
