@@ -1,9 +1,9 @@
-import { useEffect, useRef, type ComponentType } from 'react'
+import { useEffect, useRef, useState, type ComponentType } from 'react'
 import { Deck, useReveal } from '@revealjs/react'
 import RevealNotes from 'reveal.js/plugin/notes'
 import Menu from './components/Menu'
 import { mdxComponents } from './deck/mdx-components'
-import { watchOverflow } from './deck/overflow'
+import { watchOverflow, type Overflow } from './deck/overflow'
 import DevDiagnostics from './deck/DevDiagnostics'
 import { isHandout, isPrint, useSlideSize } from './deck/slide-size'
 
@@ -28,6 +28,8 @@ const SLIDE_KEY = `deck-slide-index:${location.pathname}`
 export default function App({ Slides, warnings }: DeckSource) {
   const deckRef = useRef<RevealApi | null>(null)
   const stopOverflow = useRef<(() => void) | null>(null)
+  // はみ出したスライドの一覧(開発時の画面右上に出す)
+  const [overflows, setOverflows] = useState<Overflow[]>([])
   const { width, height } = useSlideSize()
   useEffect(() => () => stopOverflow.current?.(), [])
 
@@ -72,7 +74,7 @@ export default function App({ Slides, warnings }: DeckSource) {
         // 印刷用の表示(?print-pdf)はページの大きさが最小サイズと違うので、はみ出しの検査などはしない
         if (isPrint) return
         // はみ出しの検査は開発時と、ビルドしたデッキを ?check-overflow で開いたとき(e2e/overflow.spec.ts)
-        if (import.meta.env.DEV || new URLSearchParams(location.search).has('check-overflow')) stopOverflow.current = watchOverflow(deck)
+        if (import.meta.env.DEV || new URLSearchParams(location.search).has('check-overflow')) stopOverflow.current = watchOverflow(deck, setOverflows)
         if (!import.meta.env.DEV) return
         const saved = sessionStorage.getItem(SLIDE_KEY)
         if (saved) {
@@ -89,7 +91,7 @@ export default function App({ Slides, warnings }: DeckSource) {
     >
       <Slides components={mdxComponents} />
       <Menu />
-      {import.meta.env.DEV && <DevDiagnostics warnings={warnings} />}
+      {import.meta.env.DEV && <DevDiagnostics warnings={warnings} overflows={overflows} onJump={(h, v) => deckRef.current?.slide(h, v)} />}
     </Deck>
   )
 }

@@ -35,6 +35,21 @@ function decksPlugin(deck: string | undefined): Plugin {
   return {
     name: 'decks',
     configureServer(server) {
+      // ブラウザのはみ出しの検査(src/deck/overflow.ts)の結果を端末にも出す。エディタで原稿を書いていて
+      // ブラウザを見ていなくても気づけるように。変わったときだけ届く(出た・増えた・消えた)
+      const lastCount = new Map<string, number>()
+      server.environments.client.hot.on('deck:overflow', (data: { page: string; overflows: { file: string; line: string; message: string }[] }) => {
+        const name = data.page.split('/')[1] ?? ''
+        const log = server.config.logger
+        const before = lastCount.get(name) ?? 0
+        lastCount.set(name, data.overflows.length)
+        if (data.overflows.length === 0) {
+          if (before > 0) log.info(`[deck] ${name}: はみ出しは解消しました`, { timestamp: true })
+          return
+        }
+        const lines = data.overflows.map((o) => `  decks/${name}/${o.file}:${o.line} ${o.message}`)
+        log.warn(`[deck] ${name}: はみ出し ${data.overflows.length} 件\n${lines.join('\n')}`, { timestamp: true })
+      })
       server.middlewares.use((req, res, next) => {
         const path = (req.url ?? '/').split(/[?#]/)[0]
         if (path === '/' || path === '/index.html') {

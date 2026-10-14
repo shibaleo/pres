@@ -53,6 +53,34 @@ ${shots.map((b) => `<img src="data:image/png;base64,${b.toString('base64')}">`).
 }
 
 /**
+ * はみ出しの検査: ビルドしたデッキを ?check-overflow で開き、開発時と同じ検査(src/deck/overflow.ts)の結果を集める
+ * (e2e/overflow.spec.ts と同じ手順)。
+ * @returns {Promise<{ file: string; line: string; message: string }[]>} はみ出したスライド(原稿の位置と超過の内容)
+ */
+export async function checkOverflow(html) {
+  const browser = await chromium.launch({ channel: 'chrome' })
+  try {
+    const page = await browser.newPage()
+    await page.goto(pathToFileURL(html).href + '?check-overflow')
+    await page.waitForSelector('.reveal.ready')
+    await page.evaluate(() => document.fonts.ready)
+    await page.waitForFunction(() => {
+      const slides = [...document.querySelectorAll('.reveal .slides section:not(.stack)')]
+      return slides.length > 0 && slides.every((s) => s.dataset.deckOverflow !== undefined)
+    })
+    await page.waitForTimeout(500) // フォントの読み込みの後の測り直しが落ち着くまで
+    // await してから返す(finally でブラウザを閉じる前に結果を受け取る)
+    return await page.evaluate(() =>
+      [...document.querySelectorAll('.reveal .slides section:not(.stack)')]
+        .filter((s) => s.dataset.deckOverflow)
+        .map((s) => ({ file: s.dataset.slideFile ?? 'deck.mdx', line: s.dataset.slideLine ?? '?', message: s.dataset.deckOverflow })),
+    )
+  } finally {
+    await browser.close()
+  }
+}
+
+/**
  * PDF を書き出す。ページの大きさは reveal が @page に書く大きさ(deck/slide-size.ts の PRINT_PAPER)で、
  * 余白なし・背景あり(README の「PDF 出力」で手で印刷するときの推奨設定と同じ)
  * @returns {Promise<number>} ページ数

@@ -4,6 +4,9 @@ import { MIN_WIDTH, SLIDE_HEIGHT } from './slide-size'
 // デッキの API の型は、App と同じく @revealjs/react の useReveal の戻り値から取る
 type RevealApi = NonNullable<ReturnType<typeof useReveal>>
 
+/** はみ出したスライド(原稿の位置・超過の内容・reveal の並びでの位置) */
+export type Overflow = { file: string; line: string; message: string; h: number; v: number }
+
 /**
  * 開発時(と、ビルドしたデッキを ?check-overflow で開いたとき。e2e/overflow.spec.ts): スライドの最小サイズ(MIN_WIDTH × SLIDE_HEIGHT)からはみ出したスライドを検出する。
  *
@@ -13,17 +16,21 @@ type RevealApi = NonNullable<ReturnType<typeof useReveal>>
  *
  * reveal ははみ出し部分を黙って切るので、気づけるように
  *   - 最小サイズの範囲に赤い破線の枠と超過量のバッジ(theme/base.css の .deck-overflow)
- *   - コンソールに警告(ファイルパスと超過 px)
+ *   - 開発時の画面右上の一覧(deck/DevDiagnostics.tsx。押すとそのスライドへ)と、開発サーバーの端末
+ *   - 開発サーバーにつながっていないとき(ビルドしたデッキを ?check-overflow で開いたとき)はコンソールに警告
  * を出す。本文の変更(HMR)やフォント読み込みで大きさが変わるので、DOM 変化のたびに測り直す。
  */
-export function watchOverflow(deck: RevealApi): () => void {
+
+export function watchOverflow(deck: RevealApi, onChange?: (overflows: Overflow[]) => void): () => void {
   const reported = new Map<string, string>()
+  let last = ''
   // 枠の大きさを CSS に渡す
   const slides = deck.getSlidesElement()!
   slides.style.setProperty('--deck-min-width', `${MIN_WIDTH}px`)
   slides.style.setProperty('--deck-min-height', `${SLIDE_HEIGHT}px`)
 
   const check = () => {
+    const overflows: Overflow[] = []
     for (const slide of deck.getSlides() as HTMLElement[]) {
       const { width, height, code } = measureAtMinimum(slide)
       const excess = [
@@ -38,10 +45,22 @@ export function watchOverflow(deck: RevealApi): () => void {
       slide.dataset.deckOverflow = message
       // data-slide-file / data-slide-line は原稿でのスライドの開始位置(vite/remark-beamer が付ける。\input で取り込んだものはそのファイル)
       const path = `${slide.dataset.slideFile ?? 'deck.mdx'}:${slide.dataset.slideLine ?? '?'}`
-      if (message && reported.get(path) !== message) console.warn(`[deck] ${path} が${message}ています`)
+      // コンソールへは開発サーバーにつながっていないときだけ(つながっていれば端末に出す。Vite はブラウザの
+      // console.warn も端末へ転送するので、両方に出すと端末に 2 回出る)
+      if (!import.meta.hot && message && reported.get(path) !== message) console.warn(`[deck] ${path} が${message}ています`)
       if (message) reported.set(path, message)
       else reported.delete(path)
+      if (message) {
+        const { h, v } = deck.getIndices(slide)
+        overflows.push({ file: slide.dataset.slideFile ?? 'deck.mdx', line: slide.dataset.slideLine ?? '?', message, h, v: v ?? 0 })
+      }
     }
+    // 変わったときだけ知らせる(開発時の一覧と、開発サーバーの端末。vite.config.ts の decksPlugin が受け取る)
+    const now = JSON.stringify(overflows)
+    if (now === last) return
+    last = now
+    onChange?.(overflows)
+    import.meta.hot?.send('deck:overflow', { page: location.pathname, overflows })
   }
 
   let timer = 0

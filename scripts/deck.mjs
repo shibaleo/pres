@@ -6,6 +6,7 @@
  *   node scripts/deck.mjs dev [--port <番号>]                開発サーバー(全デッキを /<名前>/ で配信)
  *   node scripts/deck.mjs build [名前...] [--single] [--allow-warnings]
  *                                                           ビルド(dist/<名前>/。--single は 1 枚の index.html)
+ *   node scripts/deck.mjs lint [名前...]                     単一 HTML をビルドして、はみ出しだけを検査する(原稿の位置を一覧。あれば失敗)
  *   node scripts/deck.mjs shots [名前...] [--handout]        単一 HTML をビルドして、各ページと一覧を screenshots/<名前>/ に撮る
  *   node scripts/deck.mjs pdf [名前...]                      単一 HTML をビルドして、pdf/<名前>.pdf と pdf/<名前>-handout.pdf を書き出す
  *
@@ -110,6 +111,20 @@ const commands = {
       const n = await captureScreenshots(join(deck.outDir, 'index.html'), out, { handout: !!flags.handout })
       console.log(`${deck.name}: ${n} ページと一覧(all.png)を ${rel(out)}/ に保存しました`)
     }
+  },
+
+  async lint() {
+    // ビルドして、はみ出しだけを検査する(原稿を書きながら確かめる用。e2e テスト全体より速い)。あれば失敗で終わる
+    let total = 0
+    for (const deck of decksFromArgs()) {
+      await buildDeck(deck, { single: true, allowWarnings: true })
+      const { checkOverflow } = await capture()
+      const overflows = await checkOverflow(join(deck.outDir, 'index.html'))
+      total += overflows.length
+      if (overflows.length === 0) console.log(`${deck.name}: はみ出しはありません`)
+      else console.log(`${deck.name}: はみ出し ${overflows.length} 件\n${overflows.map((o) => `  decks/${deck.name}/${o.file}:${o.line} ${o.message}`).join('\n')}`)
+    }
+    if (total > 0) process.exitCode = 1
   },
 
   async pdf() {
