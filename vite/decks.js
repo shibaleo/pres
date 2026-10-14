@@ -12,9 +12,9 @@
  * (scripts/deck.mjs がデッキの名前を引数で受け取り、vite.config.ts の deckConfig に渡す)。
  * vite.config.ts と Node のスクリプト(scripts/)の両方から使うので、型は JSDoc で付けた JS にする。
  */
-import { existsSync, readdirSync, readFileSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { dirname, join, relative, sep } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 export const DECKS_DIR = join(ROOT, 'decks')
@@ -115,4 +115,16 @@ export function deckTitle(deck) {
 export function motionFor(file) {
   const dir = deckDirOf(file)
   return dir ? motionOf(dir) : undefined
+}
+
+/**
+ * デッキの既定のモード(動きの設定 motion.ts の mode。無ければ reveal)。ビルドにはこのモードだけが入る。
+ * Node が motion.ts の型の注釈を外して読む。開発中に書き換えても読み直すよう、更新時刻を URL に付ける
+ * @param {Deck} deck
+ * @returns {Promise<string>}
+ */
+export async function deckMode(deck) {
+  if (!deck.motion) return 'reveal'
+  const mod = await import(`${pathToFileURL(deck.motion).href}?v=${statSync(deck.motion).mtimeMs}`)
+  return mod.default?.mode ?? 'reveal'
 }

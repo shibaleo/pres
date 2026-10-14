@@ -46,17 +46,18 @@ npm run decks                  # デッキの一覧
 npm run new -- <名前>          # デッキを作る(decks/<名前>/ に deck.mdx と style.css。名前は英小文字・数字・ハイフン)
 npm run dev                    # 開発サーバー(HMR)。全デッキを 1 つのサーバーで配信し、/<名前>/ がそのデッキ、/ が一覧(デッキ × モードの表)
 npm run build [-- <名前>...]   # ビルド → dist/<名前>/(静的ファイル群、ホスティング向け)。名前を省くと全デッキ
+                               # --mode <モード> で motion.ts とは別のモードでビルド(dist/<名前>/<モード>/)
 npm run build:single [-- <名前>...]  # 単一ファイルビルド → dist/<名前>/index.html 1 枚に全インライン
 npm run lint [-- <名前>...]    # 単一ファイルをビルドし、はみ出しだけを検査して原稿の位置を一覧にする(あれば失敗)
-npm run shots [-- <名前>...]   # 単一ファイルをビルドし、PDF 用の表示の全ページを screenshots/<名前>/NN.png に、一覧を all.png に撮る
+npm run shots [-- <名前>...]   # 単一ファイルを reveal モードでビルドし、PDF 用の表示の全ページを screenshots/<名前>/NN.png に、一覧を all.png に撮る
                                # (見た目の確認用。git には入れない。--handout で配布用の表示を screenshots/<名前>/handout/ に)
-npm run pdf [-- <名前>...]     # 単一ファイルをビルドし、pdf/<名前>.pdf(段階表示はステップごと)と pdf/<名前>-handout.pdf(配布用)を書き出す
+npm run pdf [-- <名前>...]     # 単一ファイルを reveal モードでビルドし、pdf/<名前>.pdf(段階表示はステップごと)と pdf/<名前>-handout.pdf(配布用)を書き出す
 npm run preview                # ビルド結果をプレビュー(/<名前>/ でデッキ)
 npm run subset                 # フォントを全デッキで使う文字だけに再サブセット(下記)
 npm run typecheck              # 型チェック(ブラウザ側 tsconfig.json + ビルド側 tsconfig.node.json + e2e)
 npm run test                   # テスト(Vitest)。transform: 記法の変換とビルド設定 / render: 全デッキを実際に描いて番号・参照・構造を確かめる
-npm run test:e2e               # e2e テスト(Playwright)。ビルドしたデッキを Chrome で開き、全デッキのはみ出しと書体、legendre の図の操作、landau の PDF 用の表示を確かめる
-npm run check                  # typecheck + test + build:single(全デッキ) + test:e2e。コミット前に実行する
+npm run test:e2e               # e2e テスト(Playwright)。ビルドしたデッキを Chrome で開き、全デッキのはみ出し(本番のビルド)と書体、legendre の図の操作、landau の PDF 用の表示を確かめる
+npm run check                  # typecheck + test + build:single(全デッキ) + build:single -- --mode reveal(全デッキ) + test:e2e。コミット前に実行する
 ```
 
 - デッキの名前はコマンドの引数で渡します（`npm run build -- landau`）。環境変数は使いません。
@@ -85,7 +86,7 @@ decks/                 デッキ(1 フォルダ = 1 デッキ。vite/decks.js)�
   manual/              形式的な文書の見本。記帳業務の手順書(目的・手順・注意・用語・枠の使い分け)
 index.html             全デッキで共通の器(題と入口のスクリプトは vite.config.ts がデッキごとに入れる)
 src/                   全デッキ・全モードで共有する土台(用途に特化しない)
-  main.tsx             起動(土台の CSS を読み、モードを選び、デッキの入口から原稿を受け取って描く)
+  main.tsx             起動(土台の CSS を読み、デッキの入口から原稿とモードを受け取って描く。モードは入口が motion.ts から決める)
   deck/                モードに依らない仕組み
     source.ts          原稿のコンパイル結果の型(DeckSource。どのモードも受け取る)
     mode.ts            モードとまわり(図・開発時の道具・テスト)との約束(今のスライドの知らせ・移り方・準備完了の印)
@@ -277,7 +278,7 @@ $f$ が凸なら …
 ### その他の部品（import なしで使える）
 | 部品 | 用途 |
 |---|---|
-| `<Notes>` | スピーカーノート。発表者ビューにだけ出る（reveal は `S` キーか、開発サーバーの一覧ページの「発表者」。Spectacle は一覧ページの「発表者」（`?presenterMode=true`）） |
+| `<Notes>` | スピーカーノート。発表者ビューにだけ出る（開き方は「動きの設定」のキーの表） |
 | `<Frame color="blue" title="...">` | 色付きフレーム（gray / red / blue / gold / green / purple） |
 | `<Cols>` `<Col>` `<Center>` `<Byline>` `<Note>` `<Code>` | レイアウト |
 
@@ -378,8 +379,18 @@ export default {
   本文の文字（題）では指しません（題は内容の都合で直すので）。`\label` は動きの命令ではなく、そのスライドの名前（`\ref` やリンクにも使う）です。
 - 無いラベル・スライドの題のものではないラベル・そのモードで使えない遷移・無い並べ方は、原稿の警告と同じく `motion.ts` の行付きで報告されます
   （開発時は画面右上の一覧、本番のビルドは失敗）。名前の書き間違いは型検査でも分かります。
-- モードは URL の `?mode=<名前>` で一時的に替えられます（そのタブの中で覚える。開発サーバーの一覧ページから選べる）。
+- ビルドしたデッキには `mode` のモードだけが入ります（モードを切り替える仕組みは持たない）。
+  開発サーバーでは `/<デッキ>/<モード>/`（例: `/legendre/impress/`）でほかのモードでも開けます（一覧ページの表から選べる）。
   `motion.ts` を直すと、開発サーバーはページを読み直します。
+- 発表者ビューと一覧は、各ライブラリのキーで開きます（単一 HTML をダブルクリックで開いた `file://` でも動く）。
+
+  | モード | 発表者ビュー | 一覧 |
+  |---|---|---|
+  | reveal | `S`（別窓） | `Esc`・`O` |
+  | Spectacle | `Ctrl+Shift+P`（Mac は `⌘+Shift+P`）。聴衆用のデッキは別のタブで開く | `Ctrl+Shift+O` |
+  | impress | なし | `O`（全体を見渡す） |
+  | Shower | なし | `Esc`（一覧と全画面を行き来する） |
+  | Swiper | なし | `Esc`・`O` |
 - `motion.ts` は Node がそのまま読むので（型の注釈を外して読む）、import は型だけ（`import type`）にします。
 
 ## 見た目のカスタマイズ
@@ -439,8 +450,10 @@ export default {
 `npm run pdf -- <名前>` で、ビルドから PDF まで書き出します（`pdf/<名前>.pdf` と、配布用の `pdf/<名前>-handout.pdf`。
 名前を省くと全デッキ。git には入れない）。
 
-手で書き出すときは、URL に `?print-pdf` を付けて開き、ブラウザの印刷 → PDF に保存（PDF 用の表示は reveal モードのものなので、
-既定のモードが reveal でないデッキは `?print-pdf&mode=reveal`。`npm run pdf` と `npm run shots` は自動で reveal にします）。
+PDF 用の表示は reveal モードのものなので、`npm run pdf` と `npm run shots` はデッキを reveal モードでビルドします（`dist/<名前>/reveal/`。
+デッキのモードが別でも、PDF は reveal で組む）。手で書き出すときは、reveal モードのデッキを URL に `?print-pdf` を付けて開き、
+ブラウザの印刷 → PDF に保存（デッキのモードが reveal でなければ `npm run build:single -- <名前> --mode reveal` でビルドしたもの、
+開発サーバーなら `/<名前>/reveal/?print-pdf`）。
 印刷設定は **余白=なし / 背景のグラフィック=ON** を推奨（フレームの色を出すため）。
 
 ページの大きさは紙の大きさで、既定は **A4 横**。`src/modes/reveal/slide-size.ts` の `PRINT_PAPER`（mm）で変えられます
@@ -488,7 +501,7 @@ export default {
 
 - **動きのライブラリごとのモード**（詳しくは [docs/motion.md](docs/motion.md)）。reveal.js・impress.js などを完成品のまま使い、
   原稿の変換が出す中立の部品（`Slide`・`Overlay` など）を、ライブラリごとの実体に対応させる。見た目は土台（`.deck`）が持ち、
-  どのモードでも同じ。impress・Shower・Spectacle・Swiper の各モードは試作中（URL に `?mode=impress` など。Swiper は `&effect=cube` などで切り替えの演出も選べる）。共通の書き方は、モードを増やしながら固める。
+  どのモードでも同じ。impress・Shower・Spectacle・Swiper の各モードは試作中（デッキの `motion.ts` の `mode` で選ぶ。開発サーバーでは `/<デッキ>/<モード>/`）。共通の書き方は、モードを増やしながら固める。
   ほかのライブラリ（Shower・Swiper・Zumly ほか）の調査も docs/motion.md に。
 - **土台の配り方**。デッキを別のリポジトリで持ちたくなったら、土台（部品・見た目・記法の処理・コマンド）を npm のパッケージにして配る
   （Spectacle・MDX Deck と同じ形）。同じリポジトリに `decks/` を置く今の形で困らないうちは、このまま。

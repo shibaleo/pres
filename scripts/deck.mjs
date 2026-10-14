@@ -4,11 +4,14 @@
  *   node scripts/deck.mjs list                              デッキの一覧
  *   node scripts/deck.mjs new <名前>                        デッキを作る(decks/<名前>/ に deck.mdx と style.css)
  *   node scripts/deck.mjs dev [--port <番号>]                開発サーバー(全デッキを /<名前>/ で配信)
- *   node scripts/deck.mjs build [名前...] [--single] [--allow-warnings]
- *                                                           ビルド(dist/<名前>/。--single は 1 枚の index.html)
+ *   node scripts/deck.mjs build [名前...] [--single] [--allow-warnings] [--mode <モード>]
+ *                                                           ビルド(dist/<名前>/。--single は 1 枚の index.html。
+ *                                                           モードはデッキの動きの設定(motion.ts)のもの。--mode で別のモードにすると
+ *                                                           dist/<名前>/<モード>/)
  *   node scripts/deck.mjs lint [名前...]                     単一 HTML をビルドして、はみ出しだけを検査する(原稿の位置を一覧。あれば失敗)
- *   node scripts/deck.mjs shots [名前...] [--handout]        単一 HTML をビルドして、各ページと一覧を screenshots/<名前>/ に撮る
- *   node scripts/deck.mjs pdf [名前...]                      単一 HTML をビルドして、pdf/<名前>.pdf と pdf/<名前>-handout.pdf を書き出す
+ *   node scripts/deck.mjs shots [名前...] [--handout]        単一 HTML を reveal モードでビルドして、各ページと一覧を screenshots/<名前>/ に撮る
+ *   node scripts/deck.mjs pdf [名前...]                      単一 HTML を reveal モードでビルドして、pdf/<名前>.pdf と pdf/<名前>-handout.pdf を書き出す
+ *                                                           (PDF 用の表示は reveal のもの。デッキのモードが別でも、PDF は reveal で組む)
  *
  * package.json の npm run dev / build / shots / pdf / new / decks はこれを呼ぶ(npm run build -- landau のように渡す)。
  * Vite のコマンドは任意の引数を設定に渡せないので、Vite を JS の API で呼び、デッキを vite.config.ts の deckConfig に
@@ -33,6 +36,7 @@ const { values: flags, positionals: names } = parseArgs({
     'allow-warnings': { type: 'boolean' },
     handout: { type: 'boolean' },
     port: { type: 'string' },
+    mode: { type: 'string' },
   },
 })
 const rel = (p) => relative(ROOT, p).split('\\').join('/')
@@ -44,11 +48,17 @@ function decksFromArgs() {
   return list.map(resolveDeck)
 }
 
-/** 1 つのデッキをビルドする(Vite の設定ファイルは読まず、deckConfig の結果をそのまま渡す) */
-async function buildDeck(deck, { single = false, allowWarnings = false } = {}) {
-  const [{ build }, { deckConfig }] = await Promise.all([vite(), viteConfig()])
-  await build({ configFile: false, root: ROOT, logLevel: 'warn', ...deckConfig({ deck: deck.name, single, allowWarnings }) })
-  console.log(`${deck.name}: ${rel(deck.outDir)}/ にビルドしました`)
+/**
+ * 1 つのデッキをビルドする(Vite の設定ファイルは読まず、deckConfig の結果をそのまま渡す)。
+ * mode を渡すと、デッキの動きの設定とは別のモードで dist/<名前>/<モード>/ に。ビルドした index.html の場所を返す
+ */
+async function buildDeck(deck, { single = false, allowWarnings = false, mode } = {}) {
+  const [{ build }, { deckConfig }, { MODE_NAMES }] = await Promise.all([vite(), viteConfig(), import('../src/modes/names.ts')])
+  if (mode !== undefined && !MODE_NAMES.includes(mode)) throw new Error(`モード「${mode}」はありません(${MODE_NAMES.join('・')})`)
+  await build({ configFile: false, root: ROOT, logLevel: 'warn', ...deckConfig({ deck: deck.name, single, allowWarnings, mode }) })
+  const outDir = mode ? join(deck.outDir, mode) : deck.outDir
+  console.log(`${deck.name}: ${rel(outDir)}/ にビルドしました${mode ? `(${mode} モード)` : ''}`)
+  return join(outDir, 'index.html')
 }
 
 const commands = {
@@ -101,15 +111,15 @@ const commands = {
   },
 
   async build() {
-    for (const deck of decksFromArgs()) await buildDeck(deck, { single: !!flags.single, allowWarnings: !!flags['allow-warnings'] })
+    for (const deck of decksFromArgs()) await buildDeck(deck, { single: !!flags.single, allowWarnings: !!flags['allow-warnings'], mode: flags.mode })
   },
 
   async shots() {
     for (const deck of decksFromArgs()) {
-      await buildDeck(deck, { single: true })
+      const html = await buildDeck(deck, { single: true, mode: 'reveal' })
       const out = join(ROOT, 'screenshots', deck.name, flags.handout ? 'handout' : '')
       const { captureScreenshots } = await capture()
-      const n = await captureScreenshots(join(deck.outDir, 'index.html'), out, { handout: !!flags.handout })
+      const n = await captureScreenshots(html, out, { handout: !!flags.handout })
       console.log(`${deck.name}: ${n} ページと一覧(all.png)を ${rel(out)}/ に保存しました`)
     }
   },
@@ -118,9 +128,9 @@ const commands = {
     // ビルドして、はみ出しだけを検査する(原稿を書きながら確かめる用。e2e テスト全体より速い)。あれば失敗で終わる
     let total = 0
     for (const deck of decksFromArgs()) {
-      await buildDeck(deck, { single: true, allowWarnings: true })
+      const html = await buildDeck(deck, { single: true, allowWarnings: true })
       const { checkOverflow } = await capture()
-      const overflows = await checkOverflow(join(deck.outDir, 'index.html'))
+      const overflows = await checkOverflow(html)
       total += overflows.length
       if (overflows.length === 0) console.log(`${deck.name}: はみ出しはありません`)
       else console.log(`${deck.name}: はみ出し ${overflows.length} 件\n${overflows.map((o) => `  decks/${deck.name}/${o.file}:${o.line} ${o.message}`).join('\n')}`)
@@ -130,8 +140,7 @@ const commands = {
 
   async pdf() {
     for (const deck of decksFromArgs()) {
-      await buildDeck(deck, { single: true })
-      const html = join(deck.outDir, 'index.html')
+      const html = await buildDeck(deck, { single: true, mode: 'reveal' })
       const { exportPdf } = await capture()
       for (const [file, handout] of [[`${deck.name}.pdf`, false], [`${deck.name}-handout.pdf`, true]]) {
         const n = await exportPdf(html, join(ROOT, 'pdf', file), { handout })

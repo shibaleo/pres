@@ -1,11 +1,9 @@
 import { useEffect, useRef } from 'react'
 import Swiper from 'swiper'
-import { A11y, EffectCards, EffectCoverflow, EffectCreative, EffectCube, EffectFade, EffectFlip } from 'swiper/modules'
+import { A11y, EffectCards, EffectCube, EffectFade, EffectFlip } from 'swiper/modules'
 import type { SwiperOptions } from 'swiper/types'
 import 'swiper/css'
 import 'swiper/css/effect-cards'
-import 'swiper/css/effect-coverflow'
-import 'swiper/css/effect-creative'
 import 'swiper/css/effect-cube'
 import 'swiper/css/effect-fade'
 import 'swiper/css/effect-flip'
@@ -15,7 +13,7 @@ import { announcePresent, markReady, registerGoTo } from '../../deck/mode'
 import { watchViewSize } from '../../deck/view-size'
 import { Overlay, applyStep } from '../marker-steps'
 import { PageNumber, watchPageNumbers } from '../page-number'
-import { MODE_TRANSITIONS, type SwiperEffect } from '../names'
+import { MODE_TRANSITIONS, type TransitionName } from '../names'
 import { FlatStack, slideAttributes, stepsOf, type SlideProps } from '../structure'
 import './swiper.css'
 
@@ -38,27 +36,20 @@ const swiperComponents = { ...documentComponents, Slide, Stack: FlatStack, Overl
 const slideSteps = (slide: HTMLElement) => Number(slide.dataset.steps ?? 1)
 
 /**
- * 切り替えの演出(Swiper の effect)。URL の &effect=<名前> で選ぶ(既定は slide。選び方は仮)。
+ * 切り替えの演出(Swiper の effect)。デッキの動きの設定(motion.ts)の既定の遷移(transition)で選ぶ。無ければ slide。
+ * Swiper は演出を作るときに 1 つだけ決める作りなので、スライドごとの遷移は使えない(modes/names.ts の MODE_TRANSITIONS)。
  * 影(slideShadows など)は硬い見た目の方針に合わないので、どの演出でも切る
  */
-const EFFECTS: Record<SwiperEffect, SwiperOptions> = {
+const EFFECTS: Partial<Record<TransitionName, SwiperOptions>> = {
   slide: {},
   fade: { effect: 'fade', fadeEffect: { crossFade: true } },
   cube: { effect: 'cube', cubeEffect: { shadow: false, slideShadows: false } },
-  coverflow: { effect: 'coverflow', coverflowEffect: { slideShadows: false } },
   flip: { effect: 'flip', flipEffect: { slideShadows: false } },
   cards: { effect: 'cards', cardsEffect: { slideShadows: false } },
-  creative: {
-    effect: 'creative',
-    creativeEffect: {
-      prev: { translate: ['-120%', 0, -500], rotate: [0, 0, -15] },
-      next: { translate: ['120%', 0, -500], rotate: [0, 0, 15] },
-    },
-  },
 }
 
 /**
- * Swiper モード: カルーセルの部品(swiper)でスライドを送る。切り替えの演出を選べる(EFFECTS)。
+ * Swiper モード: カルーセルの部品(swiper)でスライドを送る。切り替えの演出は motion.ts の既定の遷移で選ぶ(EFFECTS)。
  * Swiper には段階表示もプレゼン向けのキー操作も無いので、どちらもこのモードが持つ:
  * キー(→ ↓ Space PageDown で次、← ↑ PageUp で前、Home / End)は、段が残っていれば段を進め、無ければスライドを移る。
  * 前のスライドへ戻ると最後の段、先へ進むと 1 段目から(reveal・Beamer と同じ)。スワイプ・ドラッグはスライドを移る。
@@ -76,14 +67,12 @@ export default function SwiperApp({ Slides, motion }: DeckSource) {
     const stopFit = watchViewSize()
     const stopPageNumbers = watchPageNumbers()
 
-    // URL の &effect= が無ければ、デッキの動きの設定の既定の遷移(Swiper にあるもの)
-    const fromMotion = motion?.transition && MODE_TRANSITIONS.swiper.deck.includes(motion.transition) ? motion.transition : undefined
-    const effect = new URLSearchParams(location.search).get('effect') ?? fromMotion ?? 'slide'
-    if (!(effect in EFFECTS)) console.warn(`[deck] 演出「${effect}」はありません(${Object.keys(EFFECTS).join('・')})`)
+    // デッキの動きの設定の既定の遷移(Swiper で使えないものは原稿の変換が警告にする)
+    const effect = motion?.transition && MODE_TRANSITIONS.swiper.deck.includes(motion.transition) ? motion.transition : 'slide'
     const step = new Map<number, number>()
     const swiper = new Swiper(el, {
-      modules: [A11y, EffectCards, EffectCoverflow, EffectCreative, EffectCube, EffectFade, EffectFlip],
-      ...(EFFECTS[effect as SwiperEffect] ?? {}),
+      modules: [A11y, EffectCards, EffectCube, EffectFade, EffectFlip],
+      ...EFFECTS[effect],
       speed: 600,
       initialSlide: activeIndex.current,
       // 図(ドラッグできる点・スライダー・ボタン)の上ではスワイプにしない

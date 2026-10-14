@@ -1,5 +1,4 @@
-import { useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
+import { useRef } from 'react'
 import { Deck, useReveal } from '@revealjs/react'
 import RevealNotes from 'reveal.js/plugin/notes'
 import { announcePresent, markReady, registerGoTo } from '../../deck/mode'
@@ -10,31 +9,6 @@ import { isHandout, isPrint, useSlideSize } from './slide-size'
 import './reveal.css'
 
 type RevealApi = NonNullable<ReturnType<typeof useReveal>>
-
-/**
- * 発表者ビュー(reveal のノートのプラグインの別窓。S キーでも開く)を開く。別窓をブラウザに止められたら false
- * (プラグインは止められると例外で止まる)
- */
-function openPresenter(deck: RevealApi): boolean {
-  try {
-    ;(deck.getPlugin('notes') as unknown as { open(): void }).open()
-    return true
-  } catch {
-    return false
-  }
-}
-
-/**
- * ?presenter で開いたとき(開発サーバーの一覧ページの「発表者」)、準備ができたら発表者ビューも開く。
- * 発表者ビューは今と次のスライドを、このページの URL の iframe で映すので、開く前に URL から presenter を外す
- * (残すと iframe の中のデッキも発表者ビューを開こうとし、同じ名前の窓を書き直して空にする)。iframe の中では開かない
- */
-const wantsPresenter = new URLSearchParams(location.search).has('presenter') && window === window.top
-function dropPresenterParam() {
-  const url = new URL(location.href)
-  url.searchParams.delete('presenter')
-  history.replaceState(history.state, '', url)
-}
 
 
 // 開発時(HMR)にスライド位置を保持する。本番では常に1枚目から始める。
@@ -49,8 +23,6 @@ const SLIDE_KEY = `deck-slide-index:${location.pathname}`
 export default function RevealApp({ Slides, motion }: DeckSource) {
   const deckRef = useRef<RevealApi | null>(null)
   const { width, height } = useSlideSize()
-  // 別窓は操作の無いうちは止められることが多い(開いた直後のページには操作が無い)。そのときは押して開くボタンを出す
-  const [presenterBlocked, setPresenterBlocked] = useState(false)
 
   return (
     <Deck
@@ -86,10 +58,6 @@ export default function RevealApp({ Slides, motion }: DeckSource) {
         })
         announcePresent(deck.getCurrentSlide())
         markReady()
-        if (wantsPresenter && !isPrint) {
-          dropPresenterParam()
-          if (!openPresenter(deck)) setPresenterBlocked(true)
-        }
         if (isPrint) {
           // 印刷用の表示では、reveal はページ番号を通し番号だけで書く。画面と同じ「i/全体」に書き直す。
           // i と全体は PDF のページで数える(段階表示のあるスライドはステップごとに 1 ページ、
@@ -121,18 +89,6 @@ export default function RevealApp({ Slides, motion }: DeckSource) {
     >
       <Slides components={revealComponents} />
       <Menu />
-      {presenterBlocked &&
-        createPortal(
-          <button
-            className="deck-presenter-open"
-            onClick={() => {
-              if (deckRef.current && openPresenter(deckRef.current)) setPresenterBlocked(false)
-            }}
-          >
-            発表者ビューを開く
-          </button>,
-          document.body,
-        )}
     </Deck>
   )
 }

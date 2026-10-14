@@ -147,23 +147,3 @@ html.reveal-print :is(.deck-menu, .deck-diagnostics) {
     display: none !important;
   }
 }
-
-/* 発表者ビューを開くボタン(?presenter で開いて、別窓をブラウザに止められたとき。RevealApp.tsx)。画面の下の中央に(題の帯に重ねない) */
-.deck-presenter-open {
-  position: fixed;
-  bottom: calc(2 * var(--ui-space));
-  left: 50%;
-  translate: -50% 0;
-  z-index: 50;
-  padding: var(--ui-space) calc(2 * var(--ui-space));
-  font: 16px/1.5 var(--font-ui);
-  color: var(--color-canvas);
-  background: var(--color-brand);
-  border: none;
-  cursor: pointer;
-}
-@media print {
-  .deck-presenter-open {
-    display: none !important;
-  }
-}

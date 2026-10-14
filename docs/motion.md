@@ -23,15 +23,16 @@ PDF・操作ボタン・タッチ操作）を作り直すことになり、壊�
 
 ### 今のモード
 
-reveal 以外は試作で、URL の `?mode=<名前>` で選ぶ（選び方は仮）。選んだモードはそのタブの中で覚える（sessionStorage。ライブラリが URL を書き換えて `?mode` を消しても、読み直したときに同じモードで開く。reveal に戻すには `?mode=reveal`）。reveal 以外は選んだときだけ読み込む（`src/main.tsx`）。
+reveal 以外は試作。デッキのモードは動きの設定（`motion.ts` の `mode`）で決め、ビルドにはそのモードだけが入る（デッキの入口 `vite.config.ts` がそのモードの部品だけを読み込む）。開発サーバーでは `/<デッキ>/<モード>/` でほかのモードでも開ける（開発時だけ）。テストと PDF は reveal の作りを使うので、`--mode reveal` でビルドしたもの（`dist/<デッキ>/reveal/`）を開く。
+URL の検索の部分で受けるのは、ライブラリ自身の約束（reveal の `?print-pdf`、Shower の `?full`、Spectacle の `?presenterMode` など）とテスト用の `?check-overflow` だけ（以前の仮の `?mode=`・`&effect=`・`?presenter` はやめた）。
 
 | モード | 場所 | 状態 |
 |---|---|---|
-| reveal（既定） | `src/modes/reveal/` | 完成。一覧・ページ番号・はみ出しの検査・PDF・発表者ビュー（reveal のノートのプラグイン。S キー、または `?presenter` で開くと準備ができたときに開く。別窓を止められたら押して開くボタンを出す） |
-| impress | `src/modes/impress/` | `?mode=impress`。平面に並べてカメラが移る。下の「impress モード」 |
-| Shower | `src/modes/shower/` | `?mode=shower`。一覧と全画面を行き来する。下の「Shower モード」 |
-| Spectacle | `src/modes/spectacle/` | `?mode=spectacle`。React の部品のデッキ。下の「Spectacle モード」 |
-| Swiper | `src/modes/swiper/` | `?mode=swiper`（`&effect=cube` などで演出を選ぶ）。下の「Swiper モード」 |
+| reveal（既定） | `src/modes/reveal/` | 完成。一覧・ページ番号・はみ出しの検査・PDF・発表者ビュー（reveal のノートのプラグイン。S キー） |
+| impress | `src/modes/impress/` | 平面に並べてカメラが移る。下の「impress モード」 |
+| Shower | `src/modes/shower/` | 一覧と全画面を行き来する。下の「Shower モード」 |
+| Spectacle | `src/modes/spectacle/` | React の部品のデッキ。下の「Spectacle モード」 |
+| Swiper | `src/modes/swiper/` | カルーセルの部品で送る（演出は motion.ts の既定の遷移）。下の「Swiper モード」 |
 
 モードとまわりの約束（`src/deck/mode.ts`）: モードに頼むのは、今のスライドの知らせ（`announcePresent`。動く図が受ける）、
 「このスライドへ移る」の登録（`registerGoTo`。開発時の警告の一覧と、原稿の中のリンク `#名前` から移る。`src/deck/links.ts`）、準備完了の印（`markReady`。`<html data-deck-ready>`）、
@@ -66,12 +67,11 @@ impress の substep と Shower の `.next` は、要素を文書順に 1 つず�
 
 - `@shower/core` 3.6.0 の本体（`lib/shower.js`）を直に読む（入口の `lib/index.js` は `document.currentScript` を読んで自動で始めるので、
   まとめて読み込むと壊れる）。容器は body（Shower はキー操作を容器で受ける）
-- 一覧（縮小したスライドを並べる）と全画面。Shower の作りのまま一覧で始まり（URL に `full` があれば全画面。`?mode=shower&full` で開くと全画面から）、一覧でスライドを押すと全画面、Esc で一覧に戻る。Enter・Space・矢印は次へ。
+- 一覧（縮小したスライドを並べる）と全画面。Shower の作りのまま一覧で始まり（URL に `full` があれば全画面から）、一覧でスライドを押すと全画面、Esc で一覧に戻る。Enter・Space・矢印は次へ。
   全画面に入るキーは Shift+F5（Mac は Cmd+Enter）。見た目のテーマ（ribbon など）は使わず、配置だけを `shower.css` で決める
 - 段階表示は段の印（`.next`）。一覧ではどのスライドも最後の段の状態
 - 読み上げ用の領域（Shower が置く `section.region`。今のスライドの複製）は、見た目だけ隠す
-- まだ無いもの: PDF 出力、発表者ビュー。
-  Shower は URL を `?full#番号` に書き換えるので `?mode=shower` は消える（モードはタブの中で覚えているので、読み直しても Shower のまま）
+- まだ無いもの: PDF 出力、発表者ビュー
 
 ### Spectacle モード（試作）
 
@@ -79,7 +79,8 @@ impress の substep と Shower の `.next` は、要素を文書順に 1 つず�
   `theme.size` で窓と同じ縦横比の大きさ（窓の大きさが変わると渡し直す）
 - 段階表示は Spectacle の仕組みそのもの: 段のあるスライドが `useSteps(段の数 - 1)` で段を登録し、返る step（-1〜）+ 2 を
   今の段として部品に配る。段の印は要らない
-- Spectacle の機能がそのまま使える: 一覧（`?overviewMode=true`）、発表者ビュー（`?presenterMode=true`。時計と今・次のスライド）、
+- Spectacle の機能がそのまま使える: 一覧（`?overviewMode=true`。Ctrl+Shift+O）、発表者ビュー（`?presenterMode=true`。Ctrl+Shift+P。時計と今・次のスライド。
+  聴衆用のデッキは別のタブで開き、`BroadcastChannel` でつながる。単一 HTML を `file://` で開いても動く）、
   PDF 用の表示（`?exportMode=true`）。キーは矢印（Space は使わない）
 - 注意: テーマの `backdropStyle` は Spectacle の既定（ウィンドウいっぱいに固定）を丸ごと置き換えるので、既定の値も書く
   （無いと拡大と中央寄せが効かない）。Slide の `padding` はテーマの間隔の段階の番号として読まれるので、値（`"0px"`）で渡す
@@ -91,7 +92,7 @@ impress の substep と Shower の `.next` は、要素を文書順に 1 つず�
 - `swiper` 14.3.0 の本体を、React が描いた DOM（`.swiper > .swiper-wrapper > .swiper-slide`）に後からかける。
   React の部品（`swiper/react`）は直下の子の型でスライドを見分けるので、MDX の部品の中のスライドを見分けられず使えない。
   Swiper はループを使わなければスライドの DOM を動かさない
-- 切り替えの演出は URL の `&effect=<名前>` で選ぶ（選び方は仮）: slide（既定）・fade・cube・coverflow・flip・cards・creative。
+- 切り替えの演出は motion.ts の既定の遷移（`transition`）で選ぶ: slide（既定）・fade・cube・flip・cards（Swiper の演出のうち、共通の遷移の語彙にあるもの）。
   影（slideShadows・cube の shadow）は硬い見た目の方針に合わないので、どの演出でも切る
 - Swiper には段階表示もプレゼン向けのキー操作も無いので、どちらもこのモードが持つ。キー（→ ↓ Space PageDown で次、← ↑ PageUp で前、
   Home / End）は、段が残っていれば段を進め、無ければスライドを移る。前のスライドへ戻ると最後の段、先へ進むと 1 段目から。

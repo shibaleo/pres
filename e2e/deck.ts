@@ -5,27 +5,29 @@ import type { Locator, Page } from '@playwright/test'
 
 /**
  * 全デッキの名前(decks/<名前>/deck.mdx を持つフォルダ)。デッキに依らない規則(はみ出し・書体)のテストは全デッキで回す。
- * ビルドしていないデッキがあれば、そのテストが dist/<名前>/index.html が無いと報告する
+ * ビルドしていないデッキがあれば、そのテストがビルドが無いと報告する(expectBuilt)
  */
 export const allDecks = readdirSync(resolve('decks'), { withFileTypes: true })
   .filter((d) => d.isDirectory() && existsSync(join('decks', d.name, 'deck.mdx')))
   .map((d) => d.name)
 
-/** デッキがビルドされているか(dist/<名前>/index.html) */
-export const isBuilt = (deck: string) => existsSync(join('dist', deck, 'index.html'))
-
-/** ビルドしたデッキの単一 HTML(dist/<デッキ>/index.html)の URL(hash でスライドを指定する。例: '#/7/2') */
-export const deckUrl = (deck: string, hash = '', query = '') =>
-  pathToFileURL(resolve('dist', deck, 'index.html')).href + withRevealMode(query) + hash
-
 /**
- * テストは reveal モードで開く(reveal の並び・hash・PDF 用の表示を使うテストがあり、デッキの動きの設定(motion.ts)で
- * 既定のモードが別のデッキもあるため)。query に mode= があればそのまま
+ * 開くビルド。reveal は reveal モードでビルドしたもの(dist/<名前>/reveal/index.html。npm run build:single -- --mode reveal)で、
+ * reveal の並び・hash・PDF 用の表示を使うテストが開く(デッキの動きの設定(motion.ts)で既定のモードが別のデッキもあるため)。
+ * deck は本番のビルド(dist/<名前>/index.html。デッキのモード)で、モードに依らないテスト(はみ出し)が開く
  */
-function withRevealMode(query: string) {
-  if (/[?&]mode=/.test(query)) return query
-  return query ? `${query}&mode=reveal` : '?mode=reveal'
+export type Build = 'reveal' | 'deck'
+const builtFile = (deck: string, build: Build) => join('dist', deck, ...(build === 'reveal' ? ['reveal'] : []), 'index.html')
+
+/** デッキがビルドされているか。無ければ、その場所とビルドのコマンドを報告する */
+export function expectBuilt(deck: string, build: Build = 'reveal') {
+  const command = build === 'reveal' ? 'npm run build:single -- --mode reveal' : 'npm run build:single'
+  return [existsSync(builtFile(deck, build)), `${builtFile(deck, build).split('\\').join('/')} が無い(${command})`] as const
 }
+
+/** ビルドしたデッキの単一 HTML の URL(hash でスライドを指定する。例: '#/7/2') */
+export const deckUrl = (deck: string, hash = '', query = '', build: Build = 'reveal') =>
+  pathToFileURL(resolve(builtFile(deck, build))).href + query + hash
 
 /**
  * 題に text を含むスライドへ移動する(スライドの番号は原稿を足し引きすると変わるので、題で探す)。

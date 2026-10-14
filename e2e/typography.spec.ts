@@ -2,11 +2,12 @@
  * 書体の規則を、ビルドした全デッキの全要素で確かめる(デッキに依らない規則なので全デッキで回す)。
  */
 import { expect, test } from '@playwright/test'
-import { allDecks, deckUrl, isBuilt } from './deck'
+import { allDecks, deckUrl, expectBuilt } from './deck'
 
 for (const deck of allDecks) {
   test(`${deck}: 本文の書体(明朝)のまま、本文より太くなる要素はない(太くする所はゴシックで際立たせる)`, async ({ page }) => {
-    expect(isBuilt(deck), `dist/${deck}/index.html が無い(npm run build:single)`).toBe(true)
+    const [built, missing] = expectBuilt(deck)
+    expect(built, missing).toBe(true)
     await page.goto(deckUrl(deck))
     await page.waitForSelector('[data-deck-ready]')
     const bold = await page.evaluate(() => {
@@ -34,7 +35,8 @@ for (const deck of allDecks) {
   })
 
   test(`${deck}: 数式の字形は塗りだけで描き、輪郭に線を足さない(リンクの中も。PDF で太く見えないように)`, async ({ page }) => {
-    expect(isBuilt(deck), `dist/${deck}/index.html が無い(npm run build:single)`).toBe(true)
+    const [built, missing] = expectBuilt(deck)
+    expect(built, missing).toBe(true)
     await page.goto(deckUrl(deck))
     await page.waitForSelector('[data-deck-ready]')
     const stroked = await page.evaluate(() => {

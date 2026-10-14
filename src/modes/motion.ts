@@ -19,7 +19,7 @@ import type { ImpressLayout, ModeName, TransitionName } from './names'
  * Node がそのまま読む(型の注釈を外して読む)ので、import は型だけ(import type)にする。
  */
 export type MotionConfig = {
-  /** このデッキの既定のモード(URL の ?mode= で一時的に上書きできる)。省略すると reveal */
+  /** このデッキのモード。ビルドにはこのモードだけが入る(開発サーバーでは /<デッキ>/<モード>/ でほかのモードも開ける)。省略すると reveal */
   mode?: ModeName
   /** 既定の遷移(そのモードの既定の動きのままなら省略) */
   transition?: TransitionName

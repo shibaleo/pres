@@ -1,53 +1,22 @@
-// CSS の順: reveal.js の本体(スライドの配置と遷移・UI) → 土台の見た目(theme/) → モードの見た目(modes/<名前>/ の CSS。
-// モードのモジュールが読む) → デッキの見た目(デッキの style.css。ページの入口が読む)。後のものが前のものを上書きする。
-// この 2 つはモードより先に評価されるよう先頭に置く(reveal のテーマは使わない)
-import 'reveal.js/reveal.css'
+// CSS の順: ライブラリの本体の CSS(reveal.js/reveal.css。そのモードのときだけ、入口が先に読む)→ 土台の見た目(theme/)
+// → モードの見た目(modes/<名前>/ の CSS。モードのモジュールが読む)→ デッキの見た目(デッキの style.css。ページの入口が読む)。
+// 後のものが前のものを上書きする(reveal のテーマは使わない)
 import './theme/index.css'
-import React, { lazy, Suspense, type ComponentType } from 'react'
+import React, { type ComponentType } from 'react'
 import { createRoot } from 'react-dom/client'
 import { watchInternalLinks } from './deck/links'
 import { setSlideSizeVariables } from './deck/mode'
 import type { DeckSource } from './deck/source'
 import DevDiagnostics from './devtools/DevDiagnostics'
-import type { ModeName } from './modes/names'
-import RevealApp from './modes/reveal/RevealApp'
-import { isPrint } from './modes/reveal/slide-size'
 
 /**
- * モード(スライドを動かすライブラリ。docs/motion.md。名前の一覧は modes/names.ts)。既定は reveal。
- * ほかは試作で、URL の ?mode=<名前> で選ぶ(選び方は仮)。reveal 以外は選んだときだけ読み込む
- */
-const MODES: Record<ModeName, ComponentType<DeckSource>> = {
-  reveal: RevealApp,
-  impress: lazy(() => import('./modes/impress/ImpressApp')),
-  shower: lazy(() => import('./modes/shower/ShowerApp')),
-  spectacle: lazy(() => import('./modes/spectacle/SpectacleApp')),
-  swiper: lazy(() => import('./modes/swiper/SwiperApp')),
-}
-
-/**
- * 使うモードの名前。優先順: URL の ?mode=<名前> → そのタブの中で覚えたもの → デッキの動きの設定(motion.ts の mode)→ reveal。
- * ?mode= で選んだモードは、そのタブの中で覚える(sessionStorage。デッキごと)。ライブラリが URL を書き換えて ?mode を消しても
- * (Shower は ?full#番号 にする)、読み直したときに同じモードで開くため。デッキの既定に戻すには ?mode=<デッキの既定>
- */
-function modeName(deckDefault: string): string {
-  const key = `deck-mode:${location.pathname}`
-  const chosen = new URLSearchParams(location.search).get('mode')
-  try {
-    if (chosen) sessionStorage.setItem(key, chosen)
-    return chosen ?? sessionStorage.getItem(key) ?? deckDefault
-  } catch {
-    return chosen ?? deckDefault // sessionStorage が使えないとき(プライベートモードなど)
-  }
-}
-
-
-/**
- * デッキを起動する。ページの入口(vite.config.ts の /@deck/<名前>)が、このモジュールの後にデッキの style.css と
- * 原稿を読み込んでから呼ぶ(土台の見た目 → デッキの見た目の特化 の順に CSS が入る)。
+ * デッキを起動する。ページの入口(vite.config.ts の /@deck/<名前>)が、このモジュールの後にモード・デッキの style.css・
+ * 原稿を読み込んでから呼ぶ(土台の見た目 → モードの見た目 → デッキの見た目の特化 の順に CSS が入る)。
+ * Mode はスライドを動かすライブラリの作り(src/modes/。docs/motion.md)。入口が、デッキの動きの設定(motion.ts の mode)の
+ * モードだけを読み込んで渡す(ビルドにはそのモードだけが入る)。
  * 返す関数は、新しい原稿で描き直す(開発時の HMR。同じ App を描き直すので、表示中のスライドの位置は保たれる)。
  */
-export function startDeck(deck: DeckSource): (next: DeckSource) => void {
+export function startDeck(deck: DeckSource, Mode: ComponentType<DeckSource>): (next: DeckSource) => void {
   // デッキ全体にかけるプリセット(デッキの style.css の --deck-preset。空白区切りで複数可)を
   // <html data-preset> に移す。プリセットは [data-preset~="名前"] の範囲にかかる(theme/presets/)
   const preset = getComputedStyle(document.documentElement).getPropertyValue('--deck-preset').trim()
@@ -57,18 +26,14 @@ export function startDeck(deck: DeckSource): (next: DeckSource) => void {
   // 文書の中のリンク(#名前。\ref・[文字](#名前))でそのスライドへ移る(どのモードでも同じ)
   watchInternalLinks()
   // はみ出しの検査は開発時と、ビルドしたデッキを ?check-overflow で開いたとき(e2e/overflow.spec.ts)。
-  // 印刷用の表示(?print-pdf)はページの大きさが最小サイズと違うので検査しない
-  const check = (import.meta.env.DEV || new URLSearchParams(location.search).has('check-overflow')) && !isPrint
-  const name = modeName(deck.motion?.mode ?? 'reveal')
-  if (!(name in MODES)) console.warn(`[deck] モード「${name}」はありません(${Object.keys(MODES).join('・')})。reveal で開きます`)
-  const Mode = MODES[name as ModeName] ?? RevealApp
+  // 印刷用の表示(reveal の ?print-pdf)はページの大きさが最小サイズと違うので検査しない
+  const params = new URLSearchParams(location.search)
+  const check = (import.meta.env.DEV || params.has('check-overflow')) && !params.has('print-pdf')
   const root = createRoot(document.getElementById('root')!)
   const render = (d: DeckSource) =>
     root.render(
       <React.StrictMode>
-        <Suspense>
-          <Mode {...d} />
-        </Suspense>
+        <Mode {...d} />
         <DevDiagnostics warnings={d.warnings} check={check} />
       </React.StrictMode>,
     )

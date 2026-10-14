@@ -17,7 +17,7 @@
     "lint": "npm run subset && node scripts/deck.mjs lint",
     "shots": "npm run subset && node scripts/deck.mjs shots",
     "pdf": "npm run subset && node scripts/deck.mjs pdf",
-    "check": "npm run typecheck && npm run test && npm run build:single && npm run test:e2e"
+    "check": "npm run typecheck && npm run test && npm run build:single && npm run build:single -- --mode reveal && npm run test:e2e"
   },
   "dependencies": {
     "@revealjs/react": "^0.2.2",
