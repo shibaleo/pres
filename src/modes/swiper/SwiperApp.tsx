@@ -65,7 +65,10 @@ const EFFECTS: Record<SwiperEffect, SwiperOptions> = {
  */
 export default function SwiperApp({ Slides, motion }: DeckSource) {
   const container = useRef<HTMLDivElement>(null)
+  /** 今のスライドの番目。原稿が変わって(開発時の HMR)作り直したとき、同じ番目から始める */
+  const activeIndex = useRef(0)
 
+  // 原稿が変わると React はスライドを描き直すが、Swiper は前のスライドを持っているので、Slides が変わるたびに作り直す
   useEffect(() => {
     const el = container.current!
     // 容器の大きさと倍率: 窓と同じ縦横比の大きさを、窓に合わせて縮小する(Swiper は倍率をかける前の大きさで組む)
@@ -81,6 +84,7 @@ export default function SwiperApp({ Slides, motion }: DeckSource) {
       modules: [A11y, EffectCards, EffectCoverflow, EffectCreative, EffectCube, EffectFade, EffectFlip],
       ...(EFFECTS[effect as SwiperEffect] ?? {}),
       speed: 600,
+      initialSlide: activeIndex.current,
       // 図(ドラッグできる点・スライダー・ボタン)の上ではスワイプにしない
       noSwipingSelector: '.figure, input, button, a',
     })
@@ -94,6 +98,7 @@ export default function SwiperApp({ Slides, motion }: DeckSource) {
     let previous = swiper.activeIndex
     swiper.on('slideChange', () => {
       const i = swiper.activeIndex
+      activeIndex.current = i
       const slide = slides()[i]
       show(i, i < previous ? slideSteps(slide) : 1)
       previous = i
@@ -145,7 +150,7 @@ export default function SwiperApp({ Slides, motion }: DeckSource) {
       stopPageNumbers()
       swiper.destroy(true, false)
     }
-  }, [])
+  }, [Slides])
 
   return (
     <div ref={container} className="swiper deck">

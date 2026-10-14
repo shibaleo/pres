@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import type { DeckSource } from '../../deck/source'
 import { viewSize, watchViewSize } from '../../deck/view-size'
 import { announcePresent, markReady, registerGoTo } from '../../deck/mode'
@@ -23,16 +23,27 @@ const syncOverlays = (step: Element) => applyStep(step, currentStep(step, '.subs
  * impress モード: スライドを平面に並べ、カメラが移って拡大・縮小する(impress.js)。
  * 置き方はデッキの動きの設定(motion.ts の impress。既定は横の並びを右へ、縦の続き(--)を下へ。layout.ts)で、
  * 最後に全体を見渡す step を足す。スライドの大きさは窓と同じ縦横比(deck/view-size.ts)で、置き方の間隔もそこから決める。
- * impress は初期化のときの置き場所しか知らないので、窓の大きさが変わったら、置き直して作り直す(tear してから init)。
+ * impress は初期化のときの置き場所と step しか知らないので、窓の大きさが変わったときと原稿を直したとき(開発時の HMR)は、
+ * 置き直して作り直し、同じ番目の step に戻る(rebuild)。
  * 段階表示は段の印(impress の substep。components.tsx)で進める。まわりとの約束は deck/mode.ts。
  */
 export default function ImpressApp({ Slides, motion }: DeckSource) {
+  /** 作り直し(原稿が変わったときに呼ぶ。最初の効果が用意する) */
+  const rebuild = useRef<(() => void) | null>(null)
+
   useEffect(() => {
+    let cancelled = false
+    /** 今の step の番目(#impress の .step の中で。作り直した後に戻る所) */
+    let activeIndex = 0
+    const allSteps = () => [...document.querySelectorAll<HTMLElement>('#impress .step')]
     const onChange = (e: Event) => {
       const step = (e.target as Element).closest('.step')
       if (!step) return
       syncOverlays(step)
-      if (e.type === 'impress:stepenter') announcePresent(step)
+      if (e.type === 'impress:stepenter') {
+        activeIndex = Math.max(0, allSteps().indexOf(step as HTMLElement))
+        announcePresent(step)
+      }
     }
     const events = ['impress:stepenter', 'impress:substep:enter', 'impress:substep:leave']
     for (const name of events) document.addEventListener(name, onChange)
@@ -56,10 +67,10 @@ export default function ImpressApp({ Slides, motion }: DeckSource) {
       )
       slides.forEach((s, i) => applyPlace(s, places[i]))
       applyPlace(document.getElementById('overview')!, overviewOf(places, size))
+      slides.forEach(syncOverlays)
       return size
     }
     let size = layout()
-    document.querySelectorAll('#impress .step.slide').forEach(syncOverlays)
 
     let api: ImpressApi | null = null
     const start = () => {
@@ -70,26 +81,52 @@ export default function ImpressApp({ Slides, motion }: DeckSource) {
     }
     // impress.js は読み込むとグローバルの impress を作る(このモードのときだけ読み込む)
     import('impress.js').then(() => {
+      if (cancelled) return // React の StrictMode が効果を 2 回走らせたときの 1 回目
       start()
       markReady()
     })
 
-    // 窓の大きさが変わったら、落ち着いてから置き直して作り直し、今のスライドに戻る
+    /**
+     * 置き直して作り直し、同じ番目の step に戻る。impress の tear は、全体の中身を innerHTML で書き直して元に戻す
+     * (React が描いた要素が別の要素に置き換わり、図などが動かなくなる)。そこで React の要素(スライドの束と全体を見渡す step)を
+     * 先に外へ出し、空の step だけを残して tear し、終わったら元の要素を戻して、impress が付けた class と style を外す
+     */
+    const rebuildNow = () => {
+      if (!api) return
+      const root = document.getElementById('impress')!
+      const own = [root.querySelector<HTMLElement>('.impress-slides')!, document.getElementById('overview')!]
+      own.forEach((el) => el.remove())
+      const placeholder = document.createElement('div')
+      placeholder.className = 'step active' // tear は今の step(.active)があるものとして読む
+      root.firstElementChild!.append(placeholder)
+      api.tear()
+      root.replaceChildren(...own)
+      for (const step of root.querySelectorAll<HTMLElement>('.step')) {
+        step.classList.remove('future', 'past', 'present', 'active')
+        step.style.position = step.style.transform = step.style.transformStyle = ''
+      }
+      for (const el of root.querySelectorAll('.substep-visible, .substep-active')) el.classList.remove('substep-visible', 'substep-active')
+      for (const c of [...document.body.classList]) if (c.startsWith('impress-on-')) document.body.classList.remove(c)
+      size = layout()
+      start()
+      const steps = allSteps()
+      api.goto(steps[Math.min(activeIndex, steps.length - 1)], 0)
+    }
+    rebuild.current = rebuildNow
+
+    // 窓の大きさが変わったら、落ち着いてから作り直す
     let timer = 0
     const onResize = () => {
       clearTimeout(timer)
       timer = window.setTimeout(() => {
         const next = viewSize()
-        if (!api || (next.width === size.width && next.height === size.height)) return
-        const active = document.querySelector('#impress .step.active')
-        api.tear()
-        size = layout()
-        start()
-        if (active) api!.goto(active, 0)
+        if (next.width !== size.width || next.height !== size.height) rebuildNow()
       }, 300)
     }
     addEventListener('resize', onResize)
     return () => {
+      cancelled = true
+      rebuild.current = null
       for (const name of events) document.removeEventListener(name, onChange)
       removeEventListener('resize', onResize)
       clearTimeout(timer)
@@ -97,6 +134,14 @@ export default function ImpressApp({ Slides, motion }: DeckSource) {
       stopViewSize()
     }
   }, [])
+
+  // 原稿が変わったら(開発時の HMR。React はスライドを描き直したが、impress は前の step を持っている)作り直す
+  const shown = useRef(Slides)
+  useEffect(() => {
+    if (shown.current === Slides) return
+    shown.current = Slides
+    rebuild.current?.()
+  }, [Slides])
 
   return (
     <div

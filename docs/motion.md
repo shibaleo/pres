@@ -55,9 +55,11 @@ impress の substep と Shower の `.next` は、要素を文書順に 1 つず�
   スライドは螺旋の進む向きに傾け、隣とも隣の周とも対角線より離す）、`positions` でラベルのスライドだけ置き直す（書いた項目だけ）。
   最後に全体を見渡す step（`#overview`）を、全スライドが収まる所に足す
 - 段階表示は段の印（substep）
+- 作り直し: impress は初期化のときの置き場所と step しか知らないので、窓の大きさが変わったときと原稿を直したとき（HMR）は、
+  置き直して作り直し、同じ番目の step に戻る。impress の `tear` は全体の中身を innerHTML で書き直す（React の要素が別物になり、図が動かなくなる）ので、
+  React の要素を先に外へ出して空の step だけで tear し、元の要素を戻して impress の付けた class と style を外す
 - まだ無いもの: 一覧、
-  PDF 出力（reveal モードで作る）、発表者ビュー（impress の impressConsole は CSS を URL で読むので単一 HTML では使えない）、
-  原稿を直したときの描き直し（impress は初期化のときの step しか知らない）
+  PDF 出力（reveal モードで作る）、発表者ビュー（impress の impressConsole は CSS を URL で読むので単一 HTML では使えない）
 
 ### Shower モード（試作）
 
@@ -95,8 +97,8 @@ impress の substep と Shower の `.next` は、要素を文書順に 1 つず�
   段の数は `Slide` が要素に付ける `data-steps` から読み、表示は段の印のモードと同じ `applyStep`
 - スワイプ・ドラッグはスライドを移る（段は飛ばす）。図（`.figure`）・入力・ボタン・リンクの上ではスワイプにしない
 - 全体は窓と同じ縦横比の大きさの容器を、窓に合わせる倍率で中央に置く（Swiper は倍率をかける前の大きさで組む）
-- まだ無いもの: 一覧、PDF 出力、発表者ビュー、原稿を直したときの描き直し（React が class を
-  描き直すと Swiper の付けた class が消える）
+- 原稿を直したとき（HMR）は、React が描き直したスライドで Swiper を作り直し、同じ番目のスライドから始める
+- まだ無いもの: 一覧、PDF 出力、発表者ビュー
 
 ### デッキの動きの設定（motion.ts）
 
