@@ -35,12 +35,17 @@ export type Options = {
   tex?: Record<string, unknown>
   /** MathJax の SVG 出力の設定(rehype-mathjax の svg と同じ) */
   svg?: Record<string, unknown>
+  /**
+   * 数式を入れる箱の幅(ex)。ビルド時に組むので MathJax は画面の幅を知らず、幅に依る組み方
+   * (multline の行の寄せ・\hfill など)はこの幅で決まる。既定は MathJax の convert() と同じ 80ex
+   */
+  containerWidthEx?: number
 }
 
-// MathJax の convert() の既定値と同じ(rehype-mathjax もこれで描いていた)
+// MathJax の convert() の既定値と同じ(rehype-mathjax もこれで描いていた)。SVG は ex 単位で出るので、
+// 画面での大きさは周りの書体の ex で決まる(EM と EX は MathJax の中の換算にだけ使う)
 const EM = 16
 const EX = 8
-const CONTAINER_WIDTH = 80 * EX
 const LINE_WIDTH = 1000000
 
 type Found = { scope: Element; parent: Parents; text: string; display: boolean }
@@ -79,7 +84,7 @@ export default function rehypeMathjaxDocument(options: Options = {}) {
       const items = found.map((f) => {
         const item = new doc.options.MathItem(f.text, input, f.display)
         item.start.node = adaptor.body(doc.document)
-        item.setMetrics(EM, EX, CONTAINER_WIDTH, LINE_WIDTH, 1)
+        item.setMetrics(EM, EX, (options.containerWidthEx ?? 80) * EX, LINE_WIDTH, 1)
         doc.math.push(item)
         return item
       })

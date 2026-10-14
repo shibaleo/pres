@@ -9,6 +9,7 @@ import type { Root as HastRoot } from 'hast'
 import type { VFile } from 'vfile'
 import type { Processor } from 'unified'
 import { relative } from 'node:path'
+import { MIN_WIDTH } from '../src/deck/slide-metrics.ts'
 import remarkMath from 'remark-math'
 import rehypeCitation from 'rehype-citation'
 import { AllPackages } from 'mathjax-full/js/input/tex/AllPackages.js'
@@ -20,6 +21,17 @@ import { rehypeMathPositions, rehypeMathErrors } from './remark-beamer/rehype-ma
 export type Bibliography = string | ((file: string) => string | undefined)
 
 const CSL = 'src/csl/nlm-citation-sequence-brackets.csl'
+
+/**
+ * 数式を入れる箱の幅(ex)。最小サイズのスライド(src/deck/slide-metrics.ts)の本文の幅を、本文の書体の 1ex で割ったもの。
+ * 本文の幅 = 最小の幅 − 左右のスライドの余白(tokens.css の --slide-pad = 1 行 = --text-base 28px × --leading 1.4)。
+ * 1ex は書体で違う(New Computer Modern は 0.431em、Noto Serif JP / Noto Sans JP は約 0.54em)ので、
+ * どの書体でもはみ出さないよう大きい方(0.55em)で見積もる。トークンを変えたデッキでは合わないことがあるが、
+ * はみ出しは e2e/overflow.spec.ts が捕まえる
+ */
+const TEXT_BASE = 28
+const SLIDE_PAD = TEXT_BASE * 1.4
+const CONTAINER_WIDTH_EX = (MIN_WIDTH - 2 * SLIDE_PAD) / (TEXT_BASE * 0.55)
 
 /**
  * rehype-citation を、変換する原稿ごとの文献ファイルで動かす。rehype-citation の設定は処理系に 1 つだけなので、
@@ -56,6 +68,7 @@ export function mdxOptions({ bibliography, strict }: { bibliography: Bibliograph
           tex: { tags: 'ams', packages: AllPackages.filter((p) => p !== 'noundefined') },
           // fontCache: 'global' = 字形の輪郭を文書全体で 1 回だけ持ち、各数式は参照する(出力が小さくなる)
           svg: { displayAlign: 'left', displayIndent: '0', fontCache: 'global' },
+          containerWidthEx: CONTAINER_WIDTH_EX,
         },
       ],
       rehypeMathErrors,

@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react'
+import { MIN_WIDTH, SLIDE_HEIGHT } from './slide-metrics'
 
 /**
  * スライドの論理サイズ。reveal はこの大きさで組んでからウィンドウに合わせて縮小する。
@@ -11,8 +12,7 @@ import { useSyncExternalStore } from 'react'
  * PDF 出力(?print-pdf)では、論理サイズを紙の大きさ(PRINT_PAPER)にする。reveal は論理サイズを
  * そのまま @page の大きさ(CSS の px)にするので、mm を px に直して渡せば PDF のページが紙と一致する。
  */
-export const SLIDE_HEIGHT = 700
-export const MIN_WIDTH = Math.round((SLIDE_HEIGHT * 4) / 3)
+export { MIN_WIDTH, SLIDE_HEIGHT }
 
 /** PDF 出力の紙の大きさ(mm)。既定は A4 横。B5 横なら { width: 257, height: 182 } など */
 export const PRINT_PAPER = { width: 297, height: 210 }
