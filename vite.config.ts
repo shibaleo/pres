@@ -8,6 +8,7 @@ import { basename, relative } from 'node:path'
 import mdx from '@mdx-js/rollup'
 import { mdxOptions } from './vite/mdx-options.ts'
 import { DECK_NAME, ROOT, bibliographyFor, deckDirOf, deckTitle, listDecks, resolveDeck } from './vite/decks.js'
+import { MODE_NAMES, MODE_VARIANTS } from './src/modes/names.ts'
 
 /** デッキのページの入口(仮想モジュール)の URL。/@deck/<名前> */
 const ENTRY_PREFIX = '/@deck/'
@@ -25,11 +26,31 @@ const rootUrl = (file: string) => '/' + relative(ROOT, file).split('\\').join('/
  */
 function decksPlugin(deck: string | undefined): Plugin {
   const escape = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;')
-  /** 開発時のデッキの一覧(/ で開くページ) */
+  /**
+   * 開発時のデッキの一覧(/ で開くページ)。デッキごとの行に、モードごとの列を並べる(モードは src/modes/names.ts)。
+   * モードはタブの中で覚えられる(main.tsx)ので、reveal も ?mode=reveal と明示して開く
+   */
   const indexPage = () => {
-    const items = listDecks().map((name) => `<li><a href="./${name}/">${escape(deckTitle(resolveDeck(name)))}</a> <code>${name}</code></li>`)
-    return `<!doctype html><html lang="ja"><head><meta charset="UTF-8" /><title>デッキの一覧</title></head>
-<body style="font-family: sans-serif; margin: 2em"><h1>デッキの一覧</h1><ul>${items.join('')}</ul>
+    const head = MODE_NAMES.map((mode) => `<th>${mode}</th>`).join('')
+    const rows = listDecks().map((name) => {
+      const cells = MODE_NAMES.map((mode) => {
+        const url = (extra = '') => `./${name}/?mode=${mode}${extra && `&${extra}`}`
+        const variants = MODE_VARIANTS[mode].map((v) => `<a href="${url(v.query)}">${escape(v.label)}</a>`).join(' ')
+        return `<td><a href="${url()}"><b>開く</b></a>${variants && `<br><small>${variants}</small>`}</td>`
+      })
+      return `<tr><th><a href="./${name}/?mode=reveal">${escape(deckTitle(resolveDeck(name)))}</a><br><code>${name}</code></th>${cells.join('')}</tr>`
+    })
+    return `<!doctype html><html lang="ja"><head><meta charset="UTF-8" /><title>デッキの一覧</title>
+<style>
+  body { font-family: sans-serif; margin: 2em; }
+  table { border-collapse: collapse; }
+  th, td { border: 1px solid #ccc; padding: 0.5em 0.8em; text-align: left; vertical-align: top; }
+  thead th { background: #f2f2f2; }
+  small a { margin-right: 0.4em; }
+</style></head>
+<body><h1>デッキの一覧</h1>
+<table><thead><tr><th>デッキ</th>${head}</tr></thead><tbody>${rows.join('')}</tbody></table>
+<p>モード(スライドを動かすライブラリ)は docs/motion.md。reveal 以外は試作。小さい字は開き方の変わり種(Swiper は切り替えの演出)。</p>
 <p>decks/&lt;名前&gt;/ に deck.mdx と style.css を置くと一覧に加わります(npm run new -- &lt;名前&gt;)。</p></body></html>`
   }
   return {

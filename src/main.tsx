@@ -4,12 +4,13 @@ import App, { type DeckSource } from './App'
 import DevDiagnostics from './deck/DevDiagnostics'
 import { setSlideSizeVariables } from './deck/mode'
 import { isPrint } from './deck/slide-size'
+import type { ModeName } from './modes/names'
 
 /**
- * モード(スライドを動かすライブラリ。docs/motion.md)。既定は reveal。ほかは試作で、URL の ?mode=<名前> で選ぶ(選び方は仮)。
- * reveal 以外は選んだときだけ読み込む
+ * モード(スライドを動かすライブラリ。docs/motion.md。名前の一覧は modes/names.ts)。既定は reveal。
+ * ほかは試作で、URL の ?mode=<名前> で選ぶ(選び方は仮)。reveal 以外は選んだときだけ読み込む
  */
-const MODES: Record<string, ComponentType<DeckSource>> = {
+const MODES: Record<ModeName, ComponentType<DeckSource>> = {
   reveal: App,
   impress: lazy(() => import('./modes/impress/ImpressApp')),
   shower: lazy(() => import('./modes/shower/ShowerApp')),
@@ -54,7 +55,7 @@ export function startDeck(deck: DeckSource): (next: DeckSource) => void {
   const check = (import.meta.env.DEV || new URLSearchParams(location.search).has('check-overflow')) && !isPrint
   const name = modeName()
   if (!(name in MODES)) console.warn(`[deck] モード「${name}」はありません(${Object.keys(MODES).join('・')})。reveal で開きます`)
-  const Mode = MODES[name] ?? App
+  const Mode = MODES[name as ModeName] ?? App
   const root = createRoot(document.getElementById('root')!)
   const render = (d: DeckSource) =>
     root.render(

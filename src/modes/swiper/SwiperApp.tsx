@@ -13,6 +13,7 @@ import type { DeckSource } from '../../App'
 import { documentComponents } from '../../deck/mdx-components'
 import { announcePresent, markReady, registerGoTo, watchFitScale } from '../../deck/mode'
 import { Overlay, applyStep } from '../marker-steps'
+import type { SwiperEffect } from '../names'
 import { FlatStack, slideAttributes, stepsOf, type SlideProps } from '../structure'
 import './swiper.css'
 
@@ -37,7 +38,7 @@ const slideSteps = (slide: HTMLElement) => Number(slide.dataset.steps ?? 1)
  * 切り替えの演出(Swiper の effect)。URL の &effect=<名前> で選ぶ(既定は slide。選び方は仮)。
  * 影(slideShadows など)は硬い見た目の方針に合わないので、どの演出でも切る
  */
-const EFFECTS: Record<string, SwiperOptions> = {
+const EFFECTS: Record<SwiperEffect, SwiperOptions> = {
   slide: {},
   fade: { effect: 'fade', fadeEffect: { crossFade: true } },
   cube: { effect: 'cube', cubeEffect: { shadow: false, slideShadows: false } },
@@ -72,7 +73,7 @@ export default function SwiperApp({ Slides }: DeckSource) {
     const step = new Map<number, number>()
     const swiper = new Swiper(el, {
       modules: [A11y, EffectCards, EffectCoverflow, EffectCreative, EffectCube, EffectFade, EffectFlip],
-      ...(EFFECTS[effect] ?? {}),
+      ...(EFFECTS[effect as SwiperEffect] ?? {}),
       speed: 600,
       // 図(ドラッグできる点・スライダー・ボタン)の上ではスワイプにしない
       noSwipingSelector: '.figure, input, button, a',

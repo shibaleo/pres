@@ -15,5 +15,5 @@
     "allowJs": true,
     "checkJs": true
   },
-  "include": ["vite", "vite.config.ts", "vitest.config.ts", "playwright.config.ts"]
+  "include": ["vite", "vite.config.ts", "vitest.config.ts", "playwright.config.ts", "src/modes/names.ts"]
 }
