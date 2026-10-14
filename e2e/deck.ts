@@ -1,6 +1,18 @@
 import { pathToFileURL } from 'node:url'
-import { resolve } from 'node:path'
+import { existsSync, readdirSync } from 'node:fs'
+import { join, resolve } from 'node:path'
 import type { Locator, Page } from '@playwright/test'
+
+/**
+ * 全デッキの名前(decks/<名前>/deck.mdx を持つフォルダ)。デッキに依らない規則(はみ出し・書体)のテストは全デッキで回す。
+ * ビルドしていないデッキがあれば、そのテストが dist/<名前>/index.html が無いと報告する
+ */
+export const allDecks = readdirSync(resolve('decks'), { withFileTypes: true })
+  .filter((d) => d.isDirectory() && existsSync(join('decks', d.name, 'deck.mdx')))
+  .map((d) => d.name)
+
+/** デッキがビルドされているか(dist/<名前>/index.html) */
+export const isBuilt = (deck: string) => existsSync(join('dist', deck, 'index.html'))
 
 /** ビルドしたデッキの単一 HTML(dist/<デッキ>/index.html)の URL(hash でスライドを指定する。例: '#/7/2') */
 export const deckUrl = (deck: string, hash = '', query = '') =>

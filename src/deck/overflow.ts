@@ -5,7 +5,7 @@ import { MIN_WIDTH, SLIDE_HEIGHT } from './slide-size'
 type RevealApi = NonNullable<ReturnType<typeof useReveal>>
 
 /**
- * 開発時だけ: スライドの最小サイズ(MIN_WIDTH × SLIDE_HEIGHT)からはみ出したスライドを検出する。
+ * 開発時(と、ビルドしたデッキを ?check-overflow で開いたとき。e2e/overflow.spec.ts): スライドの最小サイズ(MIN_WIDTH × SLIDE_HEIGHT)からはみ出したスライドを検出する。
  *
  * スライドはウィンドウ全体を覆うので、いま見えている大きさで測ると見落とす
  * (縦長のウィンドウなら縦に、横長なら横に広がって収まって見え、横長では行の折り返しも減って低くなる)。
@@ -25,10 +25,11 @@ export function watchOverflow(deck: RevealApi): () => void {
 
   const check = () => {
     for (const slide of deck.getSlides() as HTMLElement[]) {
-      const { width, height } = measureAtMinimum(slide)
+      const { width, height, code } = measureAtMinimum(slide)
       const excess = [
         height - SLIDE_HEIGHT > 1 && `縦 ${height - SLIDE_HEIGHT}px`,
         width - MIN_WIDTH > 1 && `横 ${width - MIN_WIDTH}px`,
+        code > 1 && `コードの行が枠を ${code}px`,
       ].filter(Boolean)
       const message = excess.length
         ? `最小サイズ ${MIN_WIDTH}×${SLIDE_HEIGHT} を ${excess.join('・')} はみ出し`
@@ -61,18 +62,20 @@ export function watchOverflow(deck: RevealApi): () => void {
 }
 
 /**
- * スライドを最小の幅で組んだときの中身の縦横(はみ出しを含む)。
- * reveal は今のスライドから遠いものを描かない(display:none。縦のスライドは束ごと)ので、
+ * スライドを最小の幅で組んだときの中身の縦横(はみ出しを含む)と、コード(pre)の枠の中の横のはみ出しの最大。
+ * コードの枠は reveal が overflow: auto にするので、長い行は枠の中でスクロールになり、スライドの大きさには出ない
+ * (発表では行の続きが見えない)。reveal は今のスライドから遠いものを描かない(display:none。縦のスライドは束ごと)ので、
  * 測る間だけ表示状態にする
  */
-function measureAtMinimum(slide: HTMLElement): { width: number; height: number } {
+function measureAtMinimum(slide: HTMLElement): { width: number; height: number; code: number } {
   const stack = slide.parentElement?.closest('section')
   const shown = stack ? [slide, stack] : [slide]
   const prevDisplay = shown.map((el) => el.style.display)
   const prevWidth = slide.style.width
   for (const el of shown) el.style.display = 'block'
   slide.style.width = `${MIN_WIDTH}px`
-  const size = { width: slide.scrollWidth, height: slide.scrollHeight }
+  const code = Math.max(0, ...[...slide.querySelectorAll('pre')].map((p) => p.scrollWidth - p.clientWidth))
+  const size = { width: slide.scrollWidth, height: slide.scrollHeight, code }
   slide.style.width = prevWidth
   shown.forEach((el, i) => (el.style.display = prevDisplay[i]))
   return size

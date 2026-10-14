@@ -70,8 +70,10 @@ export default function App({ Slides, warnings }: DeckSource) {
           numberPages()
         }
         // 印刷用の表示(?print-pdf)はページの大きさが最小サイズと違うので、はみ出しの検査などはしない
-        if (!import.meta.env.DEV || isPrint) return
-        stopOverflow.current = watchOverflow(deck)
+        if (isPrint) return
+        // はみ出しの検査は開発時と、ビルドしたデッキを ?check-overflow で開いたとき(e2e/overflow.spec.ts)
+        if (import.meta.env.DEV || new URLSearchParams(location.search).has('check-overflow')) stopOverflow.current = watchOverflow(deck)
+        if (!import.meta.env.DEV) return
         const saved = sessionStorage.getItem(SLIDE_KEY)
         if (saved) {
           const [h, v] = saved.split(',').map(Number)
