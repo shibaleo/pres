@@ -24,10 +24,5 @@ function Stack({ children }: { children?: ReactNode }) {
   return <>{children}</>
 }
 
-/** reveal の Fragment に当たるもの。impress モードではまだ段に数えず、常に表示する */
-function Fragment({ children }: { children?: ReactNode }) {
-  return <div>{children}</div>
-}
-
 /** 段の印は impress の substep(文書順に 1 つずつ substep-visible が付く) */
-export const impressComponents = { ...mdxComponents, Slide, Stack, Overlay, OverlaySteps: markerSteps('substep'), Fragment }
+export const impressComponents = { ...mdxComponents, Slide, Stack, Overlay, OverlaySteps: markerSteps('substep') }

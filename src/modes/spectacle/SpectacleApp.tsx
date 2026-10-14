@@ -101,12 +101,7 @@ function Overlay({
   return <Tag className={cls}>{children}</Tag>
 }
 
-/** reveal の Fragment に当たるもの。Spectacle モードではまだ段に数えず、常に表示する */
-function Fragment({ children }: { children?: ReactNode }) {
-  return <div>{children}</div>
-}
-
-const spectacleComponents = { ...mdxComponents, Slide, Stack, Overlay, OverlaySteps, Fragment }
+const spectacleComponents = { ...mdxComponents, Slide, Stack, Overlay, OverlaySteps }
 
 /**
  * Spectacle のテーマ: スライドの大きさは最小サイズ(deck/slide-metrics.ts)。色と書体は本文の範囲(.deck)の規則が決める。

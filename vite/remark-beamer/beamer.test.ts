@@ -225,6 +225,27 @@ describe('段階表示', () => {
     expect(attr(jsx(tree, 'OverlaySteps')[0], 'max')).toBe('3')
   })
 
+  it('<Fragment> は \\pause と同じく段を 1 つ進めて中身を見せ、後ろの本文は隠さない(Overlay にする)', async () => {
+    const { tree } = await run('a\n\n<Fragment>\n\nb\n\n</Fragment>\n\nc\n\n<Fragment>\n\nd\n\n</Fragment>')
+    const overlays = jsx(tree, 'Overlay')
+    expect(overlays.map((o) => attr(o, 'from'))).toEqual(['2', '3'])
+    expect(jsx(tree, 'Fragment')).toHaveLength(0)
+    expect(attr(jsx(tree, 'OverlaySteps')[0], 'max')).toBe('3')
+    // c は Overlay の外(最初から見える)
+    expect(overlays.some((o) => textOf(o).includes('c'))).toBe(false)
+  })
+
+  it('<Fragment> は \\pause・<+-> と続けて数える(guide の見本と同じ並び)', async () => {
+    const src = 'a\n\n\\pause\n\nb\n\n- \\uncover<+->{x}\n- \\uncover<+->{y}\n\n\\uncover<4->{z}\n\n<Fragment>\n\nf\n\n</Fragment>'
+    const { tree } = await run(src)
+    expect(jsx(tree, 'Overlay').map((o) => attr(o, 'from'))).toEqual(['2', '2', '3', '4', '5'])
+    expect(attr(jsx(tree, 'OverlaySteps')[0], 'max')).toBe('5')
+  })
+
+  it('<Fragment> に as 以外の属性はエラー', async () => {
+    expect((await fails('<Fragment index={2}>\n\na\n\n</Fragment>')).message).toContain('<Fragment> に書けるのは as だけ')
+  })
+
   it('箇条書きの先頭の <2-> は独自記法なので受け付けない(MDX の構文エラー)', async () => {
     await expect(run('- <2-> a')).rejects.toThrow()
   })

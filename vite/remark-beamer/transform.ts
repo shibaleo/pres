@@ -504,6 +504,19 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
         else applySpec(node, b.spec!, steps, node)
         overlays.push(node)
       }
+      // <Fragment>(JSX の段階表示): \pause と同じく段を 1 つ進め、その段から中身を見せる(\pause と違い、後ろの本文は隠さない)。
+      // どのモードでも同じに出るよう、\pause などと同じ <Overlay> にする
+      // (isJsx は型の判定なので、ここで使うと後ろの判定で JSX が除かれてしまう。type と name で直に見る)
+      if ((node.type === 'mdxJsxFlowElement' || node.type === 'mdxJsxTextElement') && node.name === 'Fragment') {
+        const extra = node.attributes.filter((a) => a.type !== 'mdxJsxAttribute' || a.name !== 'as')
+        if (extra.length) error('<Fragment> に書けるのは as だけです(現れる段は書いた順に決まります)', node)
+        node.name = 'Overlay'
+        if (node.type === 'mdxJsxTextElement' && getAttr(node, 'as') === undefined) setAttr(node, 'as', 'span')
+        setAttr(node, 'from', steps.pause())
+        overlays.push(node)
+        transformChildren(node as Parent, steps, overlays)
+        return [node]
+      }
       // <Bibliography /> → rehype-citation が文献リストを差し込む印
       if (isJsx(node, 'Bibliography')) {
         return [{ type: 'paragraph', children: [text('[^ref]')], position: node.position }]

@@ -42,5 +42,5 @@ test('配布用の PDF(?print-pdf&handout): 段階表示はステップに分け
   // 段階表示のスライドも、どのステップで現れる中身も表示されている
   const overlay = page.locator('.pdf-page', { hasText: '段階表示（Beamer の overlay）' })
   await expect(overlay).toHaveCount(1)
-  await expect(overlay.getByText('reveal の Fragment も使える').last()).toBeVisible()
+  await expect(overlay.getByText('JSX の Fragment でも書ける').last()).toBeVisible()
 })

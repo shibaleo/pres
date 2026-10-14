@@ -1,5 +1,5 @@
 import type { ComponentProps } from 'react'
-import { Fragment as RevealFragment, Slide as RevealSlide, Stack } from '@revealjs/react'
+import { Slide as RevealSlide, Stack } from '@revealjs/react'
 import Frame from '../components/Frame'
 import Notes from '../components/Notes'
 import { Theorem, Lemma, Proposition, Corollary, Definition, Proof, ThmTitle } from '../components/Theorem'
@@ -15,14 +15,6 @@ function Slide({ h: _h, v: _v, ...props }: ComponentProps<typeof RevealSlide> & 
 }
 
 /**
- * 段階表示。reveal の既定は <span> だが、スライドでは段落や定理を囲む使い方が主なので
- * <div> を既定にする(文中で使うときは as="span")。
- */
-function Fragment(props: ComponentProps<typeof RevealFragment>) {
-  return <RevealFragment as="div" {...(props as object)} />
-}
-
-/**
  * スライド原稿(decks/<名前>/deck.mdx)から import なしで使える部品。
  * MDX は「スコープに無い大文字タグ」をこの components から引く。
  *
@@ -34,7 +26,6 @@ export const mdxComponents = {
   Slide,
   Stack,
   // reveal の機能
-  Fragment, // 段階表示: <Fragment>…</Fragment>
   Notes, //    スピーカーノート
   // 囲み・定理環境(\begin{theorem} などの変換先。JSX で直接書いてもよい)
   Frame,

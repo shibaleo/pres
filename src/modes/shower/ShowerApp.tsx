@@ -22,13 +22,8 @@ function Stack({ children }: { children?: ReactNode }) {
   return <>{children}</>
 }
 
-/** reveal の Fragment に当たるもの。Shower モードではまだ段に数えず、常に表示する */
-function Fragment({ children }: { children?: ReactNode }) {
-  return <div>{children}</div>
-}
-
 /** 段の印は Shower の .next(文書順に 1 つずつ、今の印に active、過ぎた印に visited が付く) */
-const showerComponents = { ...mdxComponents, Slide, Stack, Overlay, OverlaySteps: markerSteps('next'), Fragment }
+const showerComponents = { ...mdxComponents, Slide, Stack, Overlay, OverlaySteps: markerSteps('next') }
 
 /** React の StrictMode は効果を 2 回走らせるので、Shower は 1 度だけ始める */
 let shower: Shower | null = null

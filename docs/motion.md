@@ -45,7 +45,7 @@ impress の substep と Shower の `.next` は、要素を文書順に 1 つず�
 - スライドは impress の step。最小サイズ（933×700）の固定の大きさで、横の並び（h）は右へ、縦の続き（v）は下へ置く。
   最後に全体を見渡す step（`#overview`）を足す
 - 段階表示は段の印（substep）
-- まだ無いもの: `<Fragment>` を段に数えること（今は常に表示）、一覧・ページ番号・はみ出しの検査・開発時の警告の表示、
+- まだ無いもの: 一覧・ページ番号・はみ出しの検査・開発時の警告の表示、
   PDF 出力（reveal モードで作る）、発表者ビュー（impress の impressConsole は CSS を URL で読むので単一 HTML では使えない）、
   原稿の中のリンク `#/4`（impress の hash は step の id）、原稿を直したときの描き直し（impress は初期化のときの step しか知らない）
 
@@ -57,7 +57,7 @@ impress の substep と Shower の `.next` は、要素を文書順に 1 つず�
   全画面に入るキーは Shift+F5（Mac は Cmd+Enter）。見た目のテーマ（ribbon など）は使わず、配置だけを `shower.css` で決める
 - 段階表示は段の印（`.next`）。一覧ではどのスライドも最後の段の状態
 - 読み上げ用の領域（Shower が置く `section.region`。今のスライドの複製）は、見た目だけ隠す
-- まだ無いもの: `<Fragment>` を段に数えること、ページ番号、PDF 出力、発表者ビュー、原稿の中のリンク `#/4`。
+- まだ無いもの: ページ番号、PDF 出力、発表者ビュー、原稿の中のリンク `#/4`。
   Shower は URL を `?full#番号` に書き換えるので `?mode=shower` は消える（モードはタブの中で覚えているので、読み直しても Shower のまま）
 
 ### Spectacle モード（試作）
@@ -70,20 +70,19 @@ impress の substep と Shower の `.next` は、要素を文書順に 1 つず�
   PDF 用の表示（`?exportMode=true`）。キーは矢印（Space は使わない）
 - 注意: テーマの `backdropStyle` は Spectacle の既定（ウィンドウいっぱいに固定）を丸ごと置き換えるので、既定の値も書く
   （無いと拡大と中央寄せが効かない）。Slide の `padding` はテーマの間隔の段階の番号として読まれるので、値（`"0px"`）で渡す
-- まだ無いもの: `<Fragment>` を段に数えること、ページ番号、原稿の中のリンク `#/4`。縦の続き（`--`）は横一列に並べる
+- まだ無いもの: ページ番号、原稿の中のリンク `#/4`。縦の続き（`--`）は横一列に並べる
 
 ### 次にやること
 
 1. reveal モードを `src/modes/reveal/` にまとめる（今の `App.tsx`・`mdx-components.tsx`・reveal に固有の CSS）
-2. デッキがモードを選べるようにする（`decks/<名前>/` の設定のファイル。impress の座標の決め方もそこに）。
-3. `<Fragment>` を変換で段に数える（`\uncover<+->{…}` と同じ数え方の `Overlay` にする。どのモードでも同じに出る）
-4. 各モードの足りないもの（上）を埋める。モードに共通の書き方（今は Slide・Stack・Overlay・OverlaySteps・Notes）を見直す
+2. デッキがモードを選べるようにする（`decks/<名前>/` の設定のファイル。impress の座標の決め方もそこに）
+3. 各モードの足りないもの（上）を埋める。モードに共通の書き方（今は Slide・Stack・Overlay・OverlaySteps・Notes）を見直す
 
 ### 決めたこと
 
 - 発表者ビューは各ライブラリのものを使う（reveal はノートのプラグイン、impress は impressConsole）
 - 縦のスライド（`--`）は内容の層では「節の中の続き」。表し方はモードが決める（reveal は縦、impress は下に置く）
-- 段階表示は `\pause` などの Beamer の書き方でも `<Fragment>` でも書ける
+- 段階表示は `\pause` などの Beamer の書き方でも `<Fragment>` でも書ける。`<Fragment>` は変換が `\pause` と同じく段を 1 つ進める `Overlay` にする（後ろの本文は隠さない）ので、どのモードでも同じに出る
 
 ## モードの候補の実現可能性（2026 年 10 月）
 
