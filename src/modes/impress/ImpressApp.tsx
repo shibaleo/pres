@@ -114,6 +114,28 @@ export default function ImpressApp({ Slides, motion }: DeckSource) {
     }
     rebuild.current = rebuildNow
 
+    /**
+     * 一覧: O キーで全体を見渡す step(#overview)と、その前のスライドを行き来する(impress の Esc は全画面の解除に使われている)。
+     * 見渡しでスライドを押すと、そのスライドへ移る(impress の動き)
+     */
+    let beforeOverview: Element | null = null
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'o' && e.key !== 'O') return
+      if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey) return
+      if ((e.target as Element).closest('input, textarea, [contenteditable], .figure')) return
+      if (!api) return
+      const overview = document.getElementById('overview')!
+      const active = document.querySelector('#impress .step.active')
+      e.preventDefault()
+      // 作り直した後は前のスライドの要素が無くなっていることがある(そのときは最初のスライドへ)
+      if (active === overview) api.goto(beforeOverview?.isConnected ? beforeOverview : allSteps()[0])
+      else {
+        beforeOverview = active
+        api.goto(overview)
+      }
+    }
+    document.addEventListener('keydown', onKey)
+
     // 窓の大きさが変わったら、落ち着いてから作り直す
     let timer = 0
     const onResize = () => {
@@ -129,6 +151,7 @@ export default function ImpressApp({ Slides, motion }: DeckSource) {
       rebuild.current = null
       for (const name of events) document.removeEventListener(name, onChange)
       removeEventListener('resize', onResize)
+      document.removeEventListener('keydown', onKey)
       clearTimeout(timer)
       stopPageNumbers()
       stopViewSize()

@@ -18,3 +18,42 @@ body:has(> #root > .swiper) {
   overflow: hidden;
   background: var(--color-canvas);
 }
+
+/* 一覧(Esc・O で切り替え。SwiperApp.tsx が容器に overview を付ける): Shower の一覧と同じく、縮小したスライドを左上から並べ、
+   今のスライドはアクセントの枠。Swiper が付けた配置(束のずらし・スライドの幅・演出の transform と不透明度、cube の隠し方)は、
+   一覧の間だけ打ち消す */
+.deck.swiper.overview {
+  inset: 0;
+  width: auto;
+  height: auto;
+  overflow: auto;
+  translate: none;
+  scale: none;
+}
+.deck.swiper.overview .swiper-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(2 * var(--ui-space));
+  box-sizing: border-box;
+  height: auto;
+  padding: calc(4 * var(--ui-space));
+  transform: none !important;
+  transform-style: flat !important;
+  transition: none !important;
+}
+.deck.swiper.overview .slide {
+  position: relative;
+  width: var(--deck-view-width) !important;
+  height: var(--deck-view-height);
+  zoom: 0.3;
+  cursor: pointer;
+  transform: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  z-index: auto !important;
+  transition: none !important;
+}
+.deck.swiper.overview .slide.swiper-slide-active {
+  outline: calc(var(--rule) / 0.3) solid var(--color-brand);
+}

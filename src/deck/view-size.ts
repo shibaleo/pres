@@ -14,9 +14,12 @@ let last: ViewSize = { width: MIN_WIDTH, height: SLIDE_HEIGHT, scale: 1 }
 
 /** 今の窓での表示の大きさ(同じ値なら同じオブジェクト。useSyncExternalStore のため) */
 export function viewSize(): ViewSize {
-  const scale = Math.min(innerWidth / MIN_WIDTH, innerHeight / SLIDE_HEIGHT)
-  const width = Math.round(innerWidth / scale)
-  const height = Math.round(innerHeight / scale)
+  const fit = Math.min(innerWidth / MIN_WIDTH, innerHeight / SLIDE_HEIGHT)
+  const width = Math.round(innerWidth / fit)
+  const height = Math.round(innerHeight / fit)
+  // 倍率は丸めた大きさから求め直し、窓を必ず覆うようにする(丸める前の倍率だと、端に 1px 未満の隙間ができて隣のスライドの縁が見える。
+  // 覆いすぎる分は 1px 未満で、窓の外で切れる)
+  const scale = Math.max(innerWidth / width, innerHeight / height)
   if (width !== last.width || height !== last.height || scale !== last.scale) last = { width, height, scale }
   return last
 }

@@ -62,6 +62,7 @@ const EFFECTS: Record<SwiperEffect, SwiperOptions> = {
  * Swiper には段階表示もプレゼン向けのキー操作も無いので、どちらもこのモードが持つ:
  * キー(→ ↓ Space PageDown で次、← ↑ PageUp で前、Home / End)は、段が残っていれば段を進め、無ければスライドを移る。
  * 前のスライドへ戻ると最後の段、先へ進むと 1 段目から(reveal・Beamer と同じ)。スワイプ・ドラッグはスライドを移る。
+ * 一覧(Esc・O で切り替え)も Swiper には無いので、このモードが持つ: 縮小したスライドを並べ、押したスライドへ移る。
  */
 export default function SwiperApp({ Slides, motion }: DeckSource) {
   const container = useRef<HTMLDivElement>(null)
@@ -118,10 +119,47 @@ export default function SwiperApp({ Slides, motion }: DeckSource) {
       if (k > 1) show(i, k - 1)
       else swiper.slidePrev()
     }
+
+    /**
+     * 一覧: 容器に overview を付け(配置は swiper.css)、Swiper の操作(スワイプ)を止める。どのスライドも最後の段の状態で見せ
+     * (Shower の一覧と同じ)、閉じるときに今の段へ戻す
+     */
+    const isOverview = () => el.classList.contains('overview')
+    const setOverview = (on: boolean) => {
+      el.classList.toggle('overview', on)
+      if (on) {
+        swiper.disable()
+        slides().forEach((slide) => applyStep(slide, Infinity))
+        slides()[swiper.activeIndex]?.scrollIntoView({ block: 'nearest' })
+      } else {
+        swiper.enable()
+        swiper.update()
+        slides().forEach((slide, i) => applyStep(slide, step.get(i) ?? 1))
+      }
+    }
+    // 一覧でスライドを押したら、一覧を閉じてそのスライドへ(1 段目から)
+    const onClick = (e: MouseEvent) => {
+      if (!isOverview()) return
+      const i = slides().indexOf((e.target as Element).closest<HTMLElement>('.slide')!)
+      if (i < 0) return
+      e.preventDefault()
+      e.stopPropagation()
+      setOverview(false)
+      swiper.slideTo(i, 0)
+      show(i, 1) // 前のスライドへ移ったときも(slideChange は最後の段にする)1 段目から
+    }
+    el.addEventListener('click', onClick, true)
+
     const onKey = (e: KeyboardEvent) => {
       // 図の中の操作(矢印キーで点を動かすなど)や、修飾キー付きはスライドの操作にしない
       if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey) return
       if ((e.target as Element).closest('input, textarea, [contenteditable], .figure')) return
+      if (e.key === 'Escape' || e.key === 'o' || e.key === 'O') {
+        e.preventDefault()
+        setOverview(!isOverview())
+        return
+      }
+      if (isOverview()) return // 一覧ではスライドを送らない
       const action: Record<string, () => void> = {
         ArrowRight: next,
         ArrowDown: next,
@@ -141,11 +179,15 @@ export default function SwiperApp({ Slides, motion }: DeckSource) {
     document.addEventListener('keydown', onKey)
     registerGoTo((slide) => {
       const i = slides().indexOf(slide)
-      if (i >= 0) swiper.slideTo(i)
+      if (i < 0) return
+      if (isOverview()) setOverview(false)
+      swiper.slideTo(i)
     })
     markReady()
     return () => {
       document.removeEventListener('keydown', onKey)
+      el.removeEventListener('click', onClick, true)
+      el.classList.remove('overview')
       stopFit()
       stopPageNumbers()
       swiper.destroy(true, false)
