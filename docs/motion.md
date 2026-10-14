@@ -52,6 +52,69 @@ PDF・操作ボタン・タッチ操作）を作り直すことになり、壊�
 - 縦のスライド（`--`）は内容の層では「節の中の続き」。表し方はモードが決める（reveal は縦、impress は下に置く）
 - 段階表示は `\pause` などの Beamer の書き方でも `<Fragment>` でも書ける
 
+## モードの候補の実現可能性（2026 年 10 月）
+
+モードが受け取るもの（変換の出力）: `Slide`（並び `h`・`v`）、`Stack`（縦の続き）、`Overlay`（`from`・`to`・`only`。Beamer の段の番号）、
+`OverlaySteps`（段の数）、`Notes`、本文の範囲 `.deck` とスライド 1 枚 `.slide`。
+「段の印」は impress モードと同じ手: ライブラリの段（文書順に 1 つずつ現れるもの）を段の数だけ空で置き、今の段 = 進んだ印の数 + 1 として
+`Overlay` の表示を決める。これでライブラリに番号の指定や「消える」が無くても Beamer どおりに出る。
+
+版と日付は npm の最終公開と GitHub の最終更新（2026-10-14 に確認）。ソースはパッケージを取ってきて読んだ。
+
+| モード | 最新・更新 | 段階表示の対応 | DOM の扱い | 持っているもの | 見込み |
+|---|---|---|---|---|---|
+| **Spectacle** | 10.2.3（npm 2025-10）。GitHub は 2026-10 も更新。MIT | ◎ ネイティブ。`SlideContext` が今の段（`activeStepIndex`）を配り、`useSteps(n)` で段の数を登録する。`Overlay` はこれを読むだけ、`OverlaySteps` は `useSteps` を呼ぶだけで済む | React の部品そのもの（`<Deck>`・`<Slide>`）。原稿の部品をそのまま中に置ける | 発表者ビュー（別窓を `broadcast-channel` で同期）、一覧、PDF 用の表示（`?exportMode=true`）、遷移（react-spring） | **高い**。ただし依存が styled-components 5・react-spring 9・`react-is@18` で、React 19 の下で動くかを最初に試す必要がある。縦のスライドは無いので `Stack` は平らにする。スライドの大きさは `theme.size` |
+| **Shower** | `@shower/core` 3.6.0（npm 2026-07）。開発中。MIT | ○ `.next` が文書順に 1 つずつ（`active`・`visited` の class）。段の印で対応 | 書いてある DOM をそのまま使い、動かさない（React と相性がよい）。`.shower` の中の `.slide` | 一覧モード（`list`。全スライドを格子に並べる）と全画面モード、キー・タッチ・hash（`#1`）、タイマー | **高い**。注意: パッケージの入口 `lib/index.js` は `document.currentScript` を読むので、まとめて読み込むと壊れる。`lib/shower.js` を直に読み、自分で `start()` する。遷移の演出はほぼ無い（一覧 ⇄ 全画面の切り替えが持ち味）。PDF は CSS で 1 枚 1 ページにする |
+| **Bespoke** | `bespoke` 1.1.0（npm 2015-09）。GitHub 2020-09 が最後。MIT | ○ `bespoke-bullets`（2014）の `[data-bespoke-bullet]` が文書順。段の印で対応 | 親の要素の子をスライドとして使い、動かさない | 本体は最小（プラグインで足す。キー・タッチ・hash・拡大縮小・遷移のテーマは別パッケージで、どれも 2014〜2016 年で止まっている） | 中。作れるが、遷移もテーマ頼みで、得られるものが少ない。CommonJS |
+| **deck.js** | npm に無い。GitHub 2019-01 が最後。MIT | ○ スライドの中の入れ子の `.slide` が段。段の印で対応 | `.deck-container` の中の `.slide` をそのまま使う | 拡張（一覧・目次・hash・ページ番号） | 低い。jQuery と Modernizr が要り、npm に無いので取り込み方から作る |
+| **remark**（gnab/remark） | `remark-slide` 0.14.0（npm 2017-06）。GitHub 2024-06。MIT | △ `--` で「前のスライドに足した複製」を作る形 | Markdown の文字列を自分の解析器（marked 0.3.1）で読み、DOM を自分で作る | 発表者ビュー、複製の窓 | 低い。入力が Markdown の文字列なので、ビルドした HTML を流し込むことになり、React の図（ドラッグ・アニメーション）が動かない。`--` の意味も原稿と衝突する |
+| **GitPitch** | サービスは 2021-03-01 に終了。npm に無い | — | — | GitPitch 4.0 はデスクトップのアプリ（ライブラリではない） | ×。部品として組み込めるものが無い |
+
+勧める順（モード）: 1. **Spectacle**（React 19 で動くかの試作から。React に深く入った構成にいちばん近い）、2. **Shower**（一覧モードという
+違う見せ方を持ち、開発が続いている）、3. Bespoke・deck.js（作れるが得るものが少ない）。remark と GitPitch は見送る。
+
+## 動きの素材を持つライブラリ（2026 年 10 月）
+
+スライドの切り替えの演出や、要素・図の動きを部品や素材として持つもの。版と日付は npm の最終公開（2026-10-14 に確認）。
+
+### スライドの切り替えの演出（モードの候補）
+
+| 候補 | 版・更新 | 持っている動き | 相性 |
+|---|---|---|---|
+| Swiper | 14.3.0（2026-09）MIT | fade・cube・coverflow・flip・cards、前後のスライドの移動・回転・拡大を数値で決める creative | ○ 演出の種類がいちばん多い。本来はカルーセルなので、段階表示とキー操作はモードの側で作る |
+| Slidev | 53.0.0（2026-09）MIT | スライドの切り替え、`v-motion`（要素の動き。`@vueuse/motion`）、Magic Move（コードの変形） | × Vue と Markdown の製品。部品として借りるなら shiki-magic-move だけ |
+| reveal.js-appearance | 1.4.4（2026-10）MIT | PowerPoint のように要素が順に現れる演出（Animate.css を使う） | ○ reveal モードにそのまま足せる |
+
+### 要素や図を動かす部品（どのモードでも使える）
+
+| 候補 | 版・更新 | 中身 | 相性 |
+|---|---|---|---|
+| Motion（旧 Framer Motion） | 14.2.0（2026-10）MIT | React の要素の登場・退場、配置が変わるときに滑らかに移る動き（layout） | ◎ React 19 の部品にそのまま使える。段階表示に合わせた登場の演出に |
+| GSAP | 3.15.0（2026-04）独自の無料ライセンス | タイムライン、図形の変形（MorphSVG）、文字を分けて動かす（SplitText）ほか | ○ 3.13 から全プラグインが無料（商用も可）。MIT ではない |
+| anime.js | 4.5.0（2026-08）MIT | タイムライン、SVG の線を描く動き、図形の変形 | ○ 軽い |
+| AutoAnimate（`@formkit/auto-animate`） | 0.10.0（2026-07）MIT | 要素の追加・削除・並べ替えを自動で滑らかにする | ○ 箇条書きが段で増えるところに |
+| shiki-magic-move | 1.4.0（2026-06）MIT | コードの変更を滑らかに変形して見せる（Keynote の Magic Move） | ○ README の「コードの行の強調を段階にする」と組める |
+
+### 数学の図のアニメーション
+
+| 候補 | 版・更新 | 中身 | 相性 |
+|---|---|---|---|
+| Manim-Web（`manim-web`） | 0.37.0（2026-10）MIT | 3Blue1Brown の Manim の TypeScript への移植。ブラウザだけで動き、数式は MathJax か KaTeX | ◎ 数学のデッキの図に。作者 1 人の新しい移植 |
+| Motion Canvas（`@motion-canvas/core`） | 3.17.2（2025-02）MIT | TypeScript で書くアニメーション。それ自体に発表モードがある | △ 自前のエディタで作る仕組みで、スライドの一部に組み込むものではない |
+
+### デザイナーが作った動きの素材を再生するもの
+
+| 候補 | 版・更新 | 中身 | 相性 |
+|---|---|---|---|
+| dotLottie（`@lottiefiles/dotlottie-web`） | 0.81.0（2026-10）MIT | Lottie 形式の素材（アイコン・イラストの動き）を再生する。素材は LottieFiles で多く公開されている | ○ 素材を単一 HTML に埋め込める |
+| Rive（`@rive-app/canvas`） | 2.44.2（2026-10）MIT | 操作に反応する動き（状態の切り替え）を持つ素材を再生する | ○ 素材は Rive の専用エディタで作る |
+
+見送るもの: Remotion（動画を書き出す道具。独自のライセンス）、Theatre.js（2024 年で止まっている）、
+Animate.css（2020）・mo.js（2023）・Vivus（2021）（止まっている。Animate.css の演出は reveal.js-appearance の中で使える）。
+
+勧めるもの: Swiper（モード）、Motion（図や要素の動き。React に深く入れる方向にいちばん合う）、Manim-Web（数学の図）。
+cube・flip のような派手な演出は硬い見た目の方針と合わないかもしれないので、採るならデッキごとに選べる形にする。
+
 ## 調査（2026 年 10 月）
 
 版と日付は npm のレジストリ（`npm view <パッケージ> time`）で確かめた。「開発中」は 2025 年以降に新しい版が出ているもの。
@@ -112,3 +175,17 @@ PDF・操作ボタン・タッチ操作）を作り直すことになり、壊�
 - [dizzy.js（Open Hub）](https://openhub.net/p/dizzyjs)
 - [What's new in view transitions (2025 update)（Chrome for Developers）](https://developer.chrome.com/blog/view-transitions-in-2025)
 - [CSS View Transitions: The Complete Guide for 2026](https://devtoolbox.dedyn.io/blog/css-view-transitions-complete-guide)
+- モードの候補: [GitPitch の README（2021-03-01 のサービス終了）](https://cdn.jsdelivr.net/gh/gitpitch/gitpitch@master/README.md)・
+  [Spectacle の API Reference](https://commerce.nearform.com/open-source/spectacle/docs/api-reference)・
+  [deck.js（GitHub）](https://github.com/imakewebthings/deck.js)・[Shower（GitHub）](https://github.com/shower/shower)・
+  [Bespoke（GitHub）](https://github.com/bespokejs/bespoke)・[remark（GitHub）](https://github.com/gnab/remark)
+- 動きの素材: [10 Best HTML Presentation Frameworks In JavaScript (2026 Update)](https://www.jqueryscript.net/blog/best-html-presentation-framework.html)・
+  [reveal.js-appearance](https://github.com/Martinomagnifico/reveal.js-appearance)・[Slidev Animations](https://sli.dev/guide/animations)・
+  [Slidev: Shiki Magic Move](https://sli.dev/features/shiki-magic-move)・[GSAP 3.13（全プラグインの無料化）](https://gsap.com/blog/3-13/)・
+  [Swiper の効果の一覧（llms.txt）](https://swiperjs.com/llms.txt)・[Swiper Creative Effect](https://studio.swiperjs.com/templates/creative-effect)・
+  [Motion Canvas: Presentation](https://motioncanvas.io/docs/presentation)・
+  [Manim-Web（SitePoint）](https://www.sitepoint.com/manim-web-3blue1brown-mathematical-animations-react/)・
+  [Show HN: Manim を TypeScript に移植](https://hn.svelte.dev/item/47155375)・
+  [LottieFiles: How the web player works](https://docs.lottiefiles.com/en/runtimes/distributions/js/v0.x/core-concepts)・
+  [Lottie vs Rive vs CSS animations (2026)](https://www.pkgpulse.com/guides/lottie-vs-rive-vs-css-animations-web-animation-formats-2026)・
+  [Animate.css Alternatives](https://www.alternativeto.net/software/animate-css/)

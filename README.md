@@ -406,7 +406,6 @@ SVG なので拡大しても鮮明で、印刷・PDF にもそのまま残る。
 ## 次にやること
 
 - 表紙の双対のグラフ（3D の曲面）を visx の図にする。描く関数（$f = \tfrac12 x^2 + \tfrac13 y^3$ とその双対か）の確認待ち。
-- 可換図式（amscd の `\begin{CD}`）の行が崩れる（landau の「可換図式（amscd）」で 2 行が 1 行に並ぶ）。
 - 今は書けない LaTeX の標準の記法: `\footnote`、`description` 環境、`\ref` のリンク（hyperref の動き）、スライドごとの文献リスト、
   証明の見出しの語（`\renewcommand{\proofname}{証明}`。今は「Proof.」のまま）。
 - 開発用の依存の脆弱性警告（`braces`、`vite-plugin-singlefile` 経由）。修正版が出たら更新する。
