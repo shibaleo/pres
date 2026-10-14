@@ -5,7 +5,7 @@ import { expect, test } from '@playwright/test'
 import { deckUrl } from './deck'
 
 test('PDF 用の表示: 題の帯が切れず、ページ番号は「i/全体」、図のボタンは出ない', async ({ page }) => {
-  await page.goto(deckUrl('', '?print-pdf'))
+  await page.goto(deckUrl('landau', '', '?print-pdf'))
   await page.waitForFunction(() => document.querySelectorAll('.pdf-page .slide-number-pdf').length > 0)
   await page.waitForTimeout(500) // reveal がページを組み終え、番号を書き直すまで
 
@@ -31,7 +31,7 @@ test('PDF 用の表示: 題の帯が切れず、ページ番号は「i/全体」
 
 test('配布用の PDF(?print-pdf&handout): 段階表示はステップに分けず、最後の状態の 1 ページだけ', async ({ page }) => {
   const count = async (query: string) => {
-    await page.goto(deckUrl('', query))
+    await page.goto(deckUrl('landau', '', query))
     await page.waitForFunction(() => document.querySelectorAll('.pdf-page .slide-number-pdf').length > 0)
     await page.waitForTimeout(500)
     return page.locator('.pdf-page').count()

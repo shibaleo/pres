@@ -280,6 +280,17 @@ html.reveal-print .pdf-page:has(> section > h2:first-child) .slide-number {
 .reveal table thead th {
   border-bottom: thin solid var(--color-ink);
 }
+/* 合計の行(<tfoot>)の上にも細線(booktabs の \midrule と同じ) */
+.reveal table tfoot :is(th, td) {
+  border-top: thin solid var(--color-ink);
+}
+/* 表の題(<caption>)は表の上に、本文より 1 段小さく、従の色で */
+.reveal table caption {
+  caption-side: top;
+  padding-bottom: calc(var(--space) / 2);
+  font-size: calc(1em / var(--type-ratio));
+  color: var(--color-muted);
+}
 
 /* 文献(rehype-citation が出力する CSL の標準マークアップ) */
 .reveal .csl-entry {

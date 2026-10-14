@@ -1,0 +1,121 @@
+{/*
+  試算表の作成。表組の見本: 金額の列は右揃え(style.css の .num)・等幅数字(業務マニュアル向けのプリセット)、
+  合計の行は <tfoot>。表の数字はすべて見本のための架空の値(単位: 千円)で、残高試算表と月次の推移は互いに合う。
+*/}
+
+# 試算表の作成
+
+<Byline lines={['福田　誠', '2026-10-08']} />
+
+---
+
+## 試算表とは
+
+<Cols>
+<Col>
+
+仕訳を勘定科目ごとに集計し、借方と貸方の合計が一致することを確かめる表。
+
+科目ごとの残高を並べた**残高試算表**のほかに、借方・貸方の合計も並べる合計残高試算表がある。
+
+</Col>
+<Col>
+
+<div style={{ fontSize: '0.8em' }}>
+
+<table>
+<caption>残高試算表（6 月末。単位：千円）</caption>
+<thead>
+<tr><th className="num">借方残高</th><th>勘定科目</th><th className="num">貸方残高</th></tr>
+</thead>
+<tbody>
+<tr><td className="num">1,250</td><td>現金預金</td><td className="num"></td></tr>
+<tr><td className="num">880</td><td>売掛金</td><td className="num"></td></tr>
+<tr><td className="num"></td><td>買掛金</td><td className="num">420</td></tr>
+<tr><td className="num"></td><td>未払金</td><td className="num">130</td></tr>
+<tr><td className="num"></td><td>資本金</td><td className="num">1,000</td></tr>
+<tr><td className="num"></td><td>売上高</td><td className="num">2,400</td></tr>
+<tr><td className="num"></td><td>受取利息</td><td className="num">5</td></tr>
+<tr><td className="num">1,180</td><td>仕入高</td><td className="num"></td></tr>
+<tr><td className="num">420</td><td>給料手当</td><td className="num"></td></tr>
+<tr><td className="num">150</td><td>地代家賃</td><td className="num"></td></tr>
+<tr><td className="num">75</td><td>支払報酬</td><td className="num"></td></tr>
+</tbody>
+<tfoot>
+<tr><th className="num">3,955</th><th>合計</th><th className="num">3,955</th></tr>
+</tfoot>
+</table>
+
+</div>
+
+</Col>
+</Cols>
+
+--
+
+## 月次の推移
+
+<div style={{ fontSize: '0.8em' }}>
+
+<table>
+<caption>損益の月次推移（単位：千円）</caption>
+<thead>
+<tr><th>勘定科目</th><th className="num">4 月</th><th className="num">5 月</th><th className="num">6 月</th><th className="num">合計</th></tr>
+</thead>
+<tbody>
+<tr><td>売上高</td><td className="num">780</td><td className="num">800</td><td className="num">820</td><td className="num">2,400</td></tr>
+<tr><td>仕入高</td><td className="num">390</td><td className="num">400</td><td className="num">390</td><td className="num">1,180</td></tr>
+<tr><th>売上総利益</th><td className="num">390</td><td className="num">400</td><td className="num">430</td><td className="num">1,220</td></tr>
+<tr><td>給料手当</td><td className="num">140</td><td className="num">140</td><td className="num">140</td><td className="num">420</td></tr>
+<tr><td>地代家賃</td><td className="num">50</td><td className="num">50</td><td className="num">50</td><td className="num">150</td></tr>
+<tr><td>支払報酬</td><td className="num">25</td><td className="num">25</td><td className="num">25</td><td className="num">75</td></tr>
+</tbody>
+<tfoot>
+<tr><th>営業利益</th><th className="num">175</th><th className="num">185</th><th className="num">215</th><th className="num">575</th></tr>
+</tfoot>
+</table>
+
+</div>
+
+---
+
+## 定常状態を把握する
+
+### 顧客にほぼよらず発生するもの
+
+<div style={{ fontSize: '0.8em' }}>
+
+<table>
+<thead>
+<tr><th>項目</th><th>勘定科目</th><th className="num">月額（千円）</th><th>確かめること</th></tr>
+</thead>
+<tbody>
+<tr><td>顧問料</td><td>支払報酬</td><td className="num">25</td><td>毎月同じ額で計上されているか</td></tr>
+<tr><td>受取利息</td><td>受取利息</td><td className="num">5（6 月）</td><td>入金のあった月に計上されているか</td></tr>
+<tr><td>家賃</td><td>地代家賃</td><td className="num">50</td><td>毎月同じ額で計上されているか</td></tr>
+</tbody>
+</table>
+
+</div>
+
+これらが毎月そろっていれば、残りの増減は顧客との取引（売上・仕入）から来ている。
+
+--
+
+## 試算表の確かめ方
+
+<div style={{ fontSize: '0.8em' }}>
+
+<table>
+<thead>
+<tr><th>確認</th><th>見方</th></tr>
+</thead>
+<tbody>
+<tr><td>貸借の一致</td><td>借方残高の合計と貸方残高の合計が一致する</td></tr>
+<tr><td>現金預金</td><td>通帳・現金出納帳の残高と一致する</td></tr>
+<tr><td>定常的な費用</td><td>顧問料・家賃が毎月同じ額で計上されている</td></tr>
+<tr><td>売掛金・買掛金</td><td>請求書の残高と一致し、回収・支払の漏れがない</td></tr>
+</tbody>
+</table>
+
+</div>

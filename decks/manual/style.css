@@ -1,0 +1,8 @@
+/* このデッキの見た目の特化(書き方は src/theme/tokens.css と presets/ を参照)。
+   手順を追いながら読む文書なので、業務マニュアル向けのプリセット(本文もゴシック・太さで強調・手順の番号を太く)をデッキ全体にかける */
+
+@import '@/theme/presets/manual.css';
+
+:root {
+  --deck-preset: manual;
+}

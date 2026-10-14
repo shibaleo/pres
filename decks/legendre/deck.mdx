@@ -1,0 +1,310 @@
+{/*
+  ルジャンドル部分多様体の母関数(卒業研究の発表、2024 年 2 月 13 日)を MDX で組み直したもの。
+  画像と SVG の図の見本: 表紙の曲面・ルジャンドル曲線・波面・関係の図は元の資料の画像(img/。PDF から取り出して縮めたもの)、
+  カスプの法線と正規分布の族は操作できる SVG の図(visx)。付録に、ほかの SVG の図の部品を並べる。
+  定理・定義の番号はデッキの通し番号で振られる(元の資料の「定義 1.1」のような節ごとの番号ではない)。
+*/}
+
+import CuspNormal from '@/components/CuspNormal'
+import NormalFamily from '@/components/NormalFamily'
+import FourPoints from '@/components/FourPoints'
+import LogSpiral from '@/components/LogSpiral'
+import Globe from '@/components/Globe'
+import ConnectedScatterplot from '@/components/ConnectedScatterplot'
+import generatingFunction from './img/generating-function.png'
+import dual from './img/dual.png'
+import legendreCurve from './img/legendre-curve.png'
+import eWavefront from './img/e-wavefront.png'
+import lift from './img/lift.png'
+import mWavefront from './img/m-wavefront.png'
+import diagram from './img/diagram.png'
+import d3js from './img/d3js.png'
+
+# ルジャンドル部分多様体の母関数
+
+<Center>
+
+<img src={generatingFunction} height={300} alt="関数のグラフとして与えられる曲面" /> <img src={dual} height={300} alt="特異点を持つ曲面とその双対" />
+
+</Center>
+
+<Byline lines={['横浜国立大学 数物・電子情報系学科 数理科学教育プログラム 4 年', '2064227 福田誠　指導教員 本田淳史', '2024 年 2 月 13 日']} />
+
+---
+
+## 導入：ルジャンドル曲線
+
+\begin{definition}[ルジャンドル曲線]
+$\dot\gamma(t)\cdot\nu(t) = 0$ となる $\mathbf{0}$ でないベクトル $\nu(t)$ がいつでも存在するような曲線 $\gamma$．
+\end{definition}
+
+<Cols>
+<Col>
+
+**3/2-カスプ** $\gamma(t) = (t^2, t^3)$，$\dot\gamma(t) = (2t, 3t^2)$
+
+**法ベクトル場** $\nu(t) = (-3t, 2) \approx \left(\tfrac32 t, -1\right)$
+
+</Col>
+<Col>
+
+<CuspNormal width={240} height={240} />
+
+</Col>
+</Cols>
+
+法ベクトル場を定めるには**方向**さえわかればよい．$\nu(t)$ は $\tfrac32 t$ で与えられていると考えてよい<sup>*1)</sup>．
+
+<small>*1) $\approx$ は $0$ でないスカラー倍を同一視する同値関係．</small>
+
+--
+
+## 導入：母関数
+
+$(x, p, z)$ を $\mathbb{R}^3$ の座標系とし，法線方向も含めて $L = (\gamma, \nu) : (x, p, z) = \left(t^2, \tfrac32 t, t^3\right)$ とおく．
+
+$S(p) = -\frac12 \left(\frac23 p\right)^3$ とおくと，$L$ 上で $p = \frac32 t$ であることに注意して，次が成り立つ．
+$$
+-\frac{\partial S}{\partial p} = \left(\frac23 p\right)^2 = t^2 = x, \qquad
+p^* x + S = \frac32 t \cdot t^2 - \frac12 \left(\frac23 p\right)^3 = t^3 = z
+$$
+
+$S(p)$ の値と $S$ の微分係数を用いて $L$ をパラメタ表示する関数を**母関数**という．
+
+---
+
+## 主定理の主張と接触多様体
+
+<Center>
+
+<span style={{ color: 'var(--color-frame-red)' }}>**任意の**</span>ルジャンドル部分多様体に対して，**母関数**が存在する．
+
+</Center>
+
+ルジャンドル部分多様体を定義する前に，外の空間を定義する（以下，$n \in \mathbb{N}$）．
+
+\begin{definition}[接触多様体]
+$N$ を $(2n+1)$ 次元多様体，$K$ を $N$ 上の超平面場<sup>*1)</sup>とする．
+$\xi \wedge (d\xi)^n \neq 0$ を満たす局所的な 1 形式 $\xi$ が存在して $K = \ker \xi$ となるとき，$N = (N, K)$ を**接触多様体**という．
+\end{definition}
+
+<small>*1) $N$ の各点ごとに $2n$ 次元線型空間を定める写像．</small>
+
+--
+
+## 接触形式とダルブーの定理
+
+<dl>
+<dt>接触形式</dt>
+<dd>上の $\xi$．$K = \ker\xi$ を**接触平面場**という．</dd>
+</dl>
+
+任意の接触多様体の局所的な研究は，標準接触多様体の研究に帰着する．
+
+\begin{theorem}[ダルブーの定理 \cite{izumiya1998}]\label{thm:darboux}
+接触多様体は局所的に標準接触多様体と同一視できる．
+\end{theorem}
+
+---
+
+## 標準接触多様体のルジャンドル部分多様体
+
+<Cols>
+<Col>
+
+\begin{definition}[標準接触多様体]
+座標系 $(\boldsymbol{x}, \boldsymbol{p}, z)$ で $\alpha := dz - (p_1 dx_1 + \dots + p_n dx_n)$，$K := \ker\alpha$ とおくと，$(\mathbb{R}^{2n+1}, K)$ は接触多様体．
+\end{definition}
+
+</Col>
+<Col>
+
+<Center>
+
+<img src={legendreCurve} height={170} alt="ルジャンドル曲線 L = (γ, ν) = (t², 3t/2, t³)" />
+
+$L = (\gamma, \nu) = \left(t^2, \tfrac32 t, t^3\right)$
+
+</Center>
+
+</Col>
+</Cols>
+
+\begin{definition}[ルジャンドル部分多様体]\label{def:legendre}
+$(N, K)$ を $(2n+1)$ 次元接触多様体，$L$ を $N$ の $n$ 次元部分多様体とする．
+任意の $q \in L$ に対し $\colorbox{lightgray}{\(T_q L \subset K_q = \ker\xi_q\)}$（$\xi$ は $N$ の接触形式）となるとき，$L$ を**ルジャンドル部分多様体**という．
+\end{definition}
+
+--
+
+## ルジャンドル部分多様体の例
+
+$q(t) = (\gamma(t), \nu(t)) = \left(t^2, \tfrac32 t, t^3\right) \in L$ とおくと
+$$
+\xi_{q(t)} = (dz - p\,dx)\big|_{q(t)} = 3t^2\,dt - \frac32 t \cdot 2t\,dt = 0.
+$$
+
+\begin{proposition}
+可微分関数 $f : \mathbb{R}^n \to \mathbb{R}$ に対し，$(df, f)$ のグラフ
+$G = \left\{\left(x_1, \dots, x_n, \tfrac{\partial f}{\partial x_1}, \dots, \tfrac{\partial f}{\partial x_n}, f(\boldsymbol{x})\right) \;\middle|\; \boldsymbol{x} \in \mathbb{R}^n\right\}$
+は $\mathbb{R}^{2n+1}$ のルジャンドル部分多様体．
+\end{proposition}
+
+\begin{proof}
+$G$ の上で $\alpha = dz - \sum_{i=1}^n p_i\,dx_i = df - \sum_{i=1}^n \frac{\partial f}{\partial x_i}\,dx_i = 0$．
+\end{proof}
+
+**自然な疑問**：任意のルジャンドル部分多様体 $L$ に対し，$L$ が $(dS, S)$ のグラフで与えられるような関数 $S$ は存在するか？
+
+---
+
+## 主定理の紹介
+
+**ダルブーの定理**（定理 \ref{thm:darboux}）より，任意の接触多様体 $N$ の座標系は $(\boldsymbol{x}, \boldsymbol{p}, z)$ で与えられていると考えてよい．
+
+\begin{theorem}[ルジャンドル部分多様体の母関数の存在定理 \cite{arnold2012}]\label{thm:main}
+$N$ を $(2n+1)$ 次元接触多様体，$L$ を $N$ の<span style={{ color: 'var(--color-frame-red)' }}>任意の</span>ルジャンドル部分多様体とする．
+各点 $q \in L$ に対し，$\{1, \dots, n\}$ の分割 $I, J$ と点 $q$ の近傍 $U$ 上の関数 $S(\boldsymbol{x}_I, \boldsymbol{p}_J)$ が存在し，
+\begin{equation}\label{eq:generating}
+p_i = \frac{\partial S}{\partial x_i}, \quad x_j = -\frac{\partial S}{\partial p_j} \quad (i \in I,\ j \in J), \qquad z = -\sum_{j \in J} p_j \frac{\partial S}{\partial p_j} + S
+\end{equation}
+\end{theorem}
+
+- 分割 $I \sqcup J = \{1, \dots, n\}$ は，$2n$ 個の座標 $(x_1, \dots, x_n, p_1, \dots, p_n)$ から適切に $n$ 個の座標を選び出すことに対応する．
+
+--
+
+## 主定理の解釈
+
+$n = 3$，$I = \{\textcolor{red}{1}, \textcolor{green}{3}\}$，$J = \{\textcolor{blue}{2}\}$ とすると，任意のルジャンドル部分多様体 $L$ は局所的に
+$$
+L(x_1, x_3, p_2) = \Bigl(\underbrace{x_1, -\tfrac{\partial S}{\partial p_2}, x_3}_{3},\ \underbrace{\tfrac{\partial S}{\partial x_1}, p_2, \tfrac{\partial S}{\partial x_3}}_{3},\ \underbrace{-p_2 \tfrac{\partial S}{\partial p_2} + S}_{1}\Bigr)
+$$
+とパラメタ表示される（$\mathbb{R}^7$ に埋め込まれる）．
+
+<Frame color="green" title="解答">
+
+$J = \emptyset$ のとき，$L$ は $(dS, S)$ のグラフで与えられる．そうでないとき，式 \eqref{eq:generating} のように対応する：
+$df$ の部分は $\left(-\frac{\partial S}{\partial \boldsymbol{p}_J}, \frac{\partial S}{\partial \boldsymbol{x}_I}\right)$，$f$ の部分は $\boldsymbol{p}_J^* \boldsymbol{x}_J + S$．
+
+</Frame>
+
+---
+
+## 主定理の背景：波面
+
+ルジャンドル部分多様体 $L \subset \mathbb{R}^{2n+1}$ に対し，2 種類の射影を次で定める．
+$$
+\pi^e : (\boldsymbol{x}, \boldsymbol{p}, z) \mapsto (\boldsymbol{x}, z), \qquad
+\pi^m : (\boldsymbol{x}, \boldsymbol{p}, z) \mapsto (\boldsymbol{p}, \boldsymbol{p}^* \boldsymbol{x} - z)
+$$
+$\pi^e(L)$ を $e$-**波面**，$\pi^m(L)$ を $m$-**波面**という（$\gamma \xleftarrow{\ \pi^e\ } L \xrightarrow{\ \pi^m\ } \tilde\gamma$）．
+
+<Center>
+
+<img src={eWavefront} height={120} alt="e-波面 γ(t) = (t², t³)" /> <img src={lift} height={120} alt="ルジャンドル曲線 L" /> <img src={mWavefront} height={120} alt="m-波面 (3t/2, t³/2)" />
+
+</Center>
+
+\begin{definition}[正則モデル \cite{nakajima2020}]
+$e$-波面と $m$-波面がともに特異点をもたないようなルジャンドル部分多様体 $L$．
+\end{definition}
+
+--
+
+## 主定理の背景：情報幾何学
+
+パラメタをもつ確率密度関数の族を多様体と捉える．$H := \{(\mu, \sigma) \mid \sigma > 0\}$ とおき，
+$p(x; \mu, \sigma) := \frac{1}{\sqrt{2\pi\sigma^2}} \exp\left\{-\frac{(x - \mu)^2}{2\sigma^2}\right\}$ とすると，
+**正規分布**の族 $S = \{p(x; \mu, \sigma) \mid (\mu, \sigma) \in H\}$ は 2 次元多様体．
+
+<NormalFamily width={760} height={275} />
+
+$S$ は**双対平坦多様体** $(M, g, \nabla, \nabla^*)$ \cite{fujioka2021}：
+擬リーマン多様体 $(M, g)$ と，$g$ に関して双対的かつ平坦なアファイン接続 $\nabla, \nabla^*$ の組．
+
+--
+
+## 主定理の重要性
+
+<Cols>
+<Col>
+
+<Frame color="green" title="事実（中島–大本 2020）">
+
+$n$ 次元**双対平坦多様体**は，局所的に標準接触多様体 $\mathbb{R}^{2n+1}$ の**正則モデル**として与えられる \cite{nakajima2020}．
+
+</Frame>
+
+</Col>
+<Col>
+
+<img src={diagram} height={200} alt="計量・情報幾何・母関数の関係の図" />
+
+</Col>
+</Cols>
+
+<span style={{ color: 'var(--color-frame-red)' }}>任意の</span>ルジャンドル部分多様体 $L$ に母関数が存在するので（定理 \ref{thm:main}．[主定理の紹介](#/4)），**退化点を許容する双対平坦構造**を定義できる（次のスライド）．
+
+--
+
+## 退化点を許容する双対平坦構造
+
+母関数 $S$ を用いて
+$$
+h = \sum_{i,k \in I} \frac{\partial^2 \textcolor{red}{S}}{\partial x_i \partial x_k}\, dx_i\, dx_k - \sum_{j,l \in J} \frac{\partial^2 \textcolor{red}{S}}{\partial p_j \partial p_l}\, dp_j\, dp_l
+$$
+と定義すると，$h$ は $L$ 上で退化点を許容する計量を定める．
+
+<dl>
+<dt>概ヘッセ多様体</dt>
+<dd>退化点を許容する双対平坦構造を持つルジャンドル部分多様体を貼り合わせた多様体．</dd>
+</dl>
+
+---
+
+## 今後の課題
+
+- 双対平坦多様体について既に知られている結果で，概ヘッセ多様体に拡張できそうな定理はないか
+- 双対平坦多様体で成り立ち，概ヘッセ多様体で成り立たないような，非自明な命題はあるか（自明な例：計量がすべての点で非退化）
+- "平坦" 性を弱めるような一般化はあるか（Quasi-Codazzi 構造が提案されている \cite{kayo2023}）
+
+これらを，論文 \cite{nakajima2020} を読みながら調べていきたい．
+
+--
+
+## 参考文献
+
+<Bibliography />
+
+---
+
+## 付録：図の部品（一直線上の 4 点）
+
+線分の両端と線分そのもの、点 $a, b, c, d$ をそれぞれドラッグで動かせる。
+
+<FourPoints width={600} height={200} />
+
+--
+
+## 付録：図の部品（対数螺旋）
+
+スライダー $a, b$ を動かすと $r(\varphi)=a\,e^{b\varphi}$ の形が変わる。曲線の上の点をドラッグすると接線がついてくる。
+
+<LogSpiral width={520} height={320} />
+
+--
+
+## 付録：図の部品（地球儀）
+
+正射図法の SVG。ドラッグで向きを変えられる。右上のボタンで自転の再生・一時停止と、向きの戻し。
+
+<Globe size={400} />
+
+--
+
+## 付録：図の部品（<img src={d3js} height="28" className="inline align-middle" alt="d3.js" />）
+
+d3 の命令的な描画も、React の部品に閉じて使える。凡例を押すと系列の表示が切り替わる。
+
+<ConnectedScatterplot />

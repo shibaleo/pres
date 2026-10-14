@@ -135,10 +135,10 @@ describe('引用', () => {
 
 describe('警告', () => {
   it('参照先の無い \\ref・未登録の文献は警告。strict ではエラー', async () => {
-    const { file, tree } = await run('\\ref{nope} \\cite{nobody}', { bibliography: 'src/references.bib' })
+    const { file, tree } = await run('\\ref{nope} \\cite{nobody}', { bibliography: 'decks/legendre/references.bib' })
     expect(file.messages.map((m) => m.reason)).toEqual([
       '\\ref{nope} の参照先がありません',
-      '文献 "nobody" が src/references.bib に見つかりません',
+      '文献 "nobody" が decks/legendre/references.bib に見つかりません',
     ])
     expect(tree.children![0].value).toContain('deckWarnings')
     expect((await fails('\\ref{nope}', { strict: true })).message).toContain('警告が 1 件')

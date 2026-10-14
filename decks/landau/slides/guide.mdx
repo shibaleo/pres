@@ -1,5 +1,5 @@
 {/*
-  説明スライド(縦スライド 5 枚)。slides.mdx から \input{slides/guide} で取り込む。
+  付録「この資料の書き方」(縦スライド 6 枚)。deck.mdx から \input{slides/guide} で取り込む。
   取り込んだファイルも 1 つの文書として番号・参照・スライド区切りが通る。
 */}
 
@@ -216,3 +216,19 @@ reveal の Fragment も使える
 overlay の指定: `<2->` 2 枚目から、`<2>` 2 枚目だけ、`<2-3>` 範囲、`<-3>` 3 枚目まで、`<+->` 次のステップから。環境にも付けられる: `\begin{theorem}<2->`。
 
 </Notes>
+
+--
+
+## 可換図式（amscd）
+
+<Theorem title="自然変換">
+
+$$
+\begin{CD}
+F(X) @>{F(f)}>> F(Y) \
+@V{\alpha_X}VV @VV{\alpha_Y}V \
+G(X) @>>{G(f)}> G(Y)
+\end{CD}
+$$
+
+</Theorem>

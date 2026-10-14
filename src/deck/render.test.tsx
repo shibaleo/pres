@@ -1,34 +1,45 @@
 /**
- * デッキ(src/slides.mdx と \input で取り込むファイル)を実際に描いて、出来上がりを確かめる。
+ * 全デッキ(decks/<名前>/deck.mdx と \input で取り込むファイル)を実際に描いて、出来上がりを確かめる。
  * 開発時と同じ Vite の設定で原稿を読み込み、サーバー側の描画(renderToStaticMarkup)で HTML にする
  * (useEffect は走らないので、図の動き(自転など)には依存しない)。番号・参照・構造はすべて
  * ビルド時に決まるので、ここで描いた HTML がそのままブラウザに出るものと同じになる。
+ *
+ * 各デッキでは「あるものは正しい」ことを確かめ(数式の無いデッキもある)、最後に全デッキを通して
+ * 「どの機能もどこかのデッキで確かめられている」ことを確かめる(検査が空振りしていないことの保証)。
  */
+import type { ComponentType } from 'react'
 import { describe, expect, it } from 'vitest'
 import { renderToStaticMarkup } from 'react-dom/server'
-import Slides, { deckWarnings } from '../slides.mdx'
 import { mdxComponents } from './mdx-components'
 import { slideTitle } from './slide-title'
 
-const html = renderToStaticMarkup(<Slides components={mdxComponents} />)
-const root = document.createElement('div')
-root.innerHTML = html
+type DeckModule = { default: ComponentType<Record<string, unknown>>; deckWarnings: { file?: string; line?: number; message: string }[] }
+const modules = import.meta.glob<DeckModule>('../../decks/*/deck.mdx', { eager: true })
+const decks = Object.entries(modules).map(([path, mod]) => ({ name: path.split('/').at(-2)!, mod }))
 
-/** reveal と同じ並び: 横のスライド(h)と、縦のスライドの束の中の位置(v) */
-type Leaf = { h: number; v: number; el: Element }
-const top = [...root.children].filter((c) => c.tagName === 'SECTION')
-const isStack = (s: Element) => s.querySelector(':scope > section') !== null
-const leaves: Leaf[] = top.flatMap((s, h) =>
-  isStack(s) ? [...s.children].filter((c) => c.tagName === 'SECTION').map((el, v) => ({ h, v, el })) : [{ h, v: 0, el: s }],
-)
-const where = (l: Leaf) => `#/${l.h}/${l.v}(${l.el.getAttribute('data-slide-file') ?? 'slides.mdx'}:${l.el.getAttribute('data-slide-line')})`
-/** スライドの題の見出し(先頭の h2)。無ければ null */
-const titleHeading = (l: Leaf) => {
-  const first = l.el.firstElementChild
-  return first?.tagName === 'H2' ? first : null
-}
+/** 全デッキを通して、各機能を確かめた数(最後に 0 でないことを確かめる) */
+const seen = { theorem: 0, eqref: 0, cite: 0, math: 0, table: 0, image: 0, fragment: 0, frame: 0, slideLink: 0 }
 
-describe('デッキの描画', () => {
+describe.each(decks)('$name', ({ name, mod }) => {
+  const html = renderToStaticMarkup(<mod.default components={mdxComponents} />)
+  const root = document.createElement('div')
+  root.innerHTML = html
+  const deckWarnings = mod.deckWarnings
+
+  /** reveal と同じ並び: 横のスライド(h)と、縦のスライドの束の中の位置(v) */
+  type Leaf = { h: number; v: number; el: Element }
+  const top = [...root.children].filter((c) => c.tagName === 'SECTION')
+  const isStack = (s: Element) => s.querySelector(':scope > section') !== null
+  const leaves: Leaf[] = top.flatMap((s, h) =>
+    isStack(s) ? [...s.children].filter((c) => c.tagName === 'SECTION').map((el, v) => ({ h, v, el })) : [{ h, v: 0, el: s }],
+  )
+  const where = (l: Leaf) => `${name} #/${l.h}/${l.v}(${l.el.getAttribute('data-slide-file') ?? 'deck.mdx'}:${l.el.getAttribute('data-slide-line')})`
+  /** スライドの題の見出し(先頭の h2)。無ければ null */
+  const titleHeading = (l: Leaf) => {
+    const first = l.el.firstElementChild
+    return first?.tagName === 'H2' ? first : null
+  }
+
   it('原稿に警告が無い', () => {
     expect(deckWarnings).toEqual([])
   })
@@ -39,7 +50,8 @@ describe('デッキの描画', () => {
     // React 19 のサーバー側の描画は画像の先読み(<link rel="preload">)を先頭に足す。ブラウザでの描画には無いので数えない
     const preload = (c: Element) => c.tagName === 'LINK' && c.getAttribute('rel') === 'preload'
     for (const c of root.children) if (!preload(c)) expect(['SECTION', 'STYLE', 'GLYPHS'], c.outerHTML.slice(0, 80)).toContain(kind(c))
-    expect([...root.children].filter((c) => kind(c) === 'GLYPHS').length).toBe(1)
+    // 字形の定義は、数式のあるデッキにだけ 1 つ
+    expect([...root.children].filter((c) => kind(c) === 'GLYPHS').length).toBe(root.querySelector('mjx-container') ? 1 : 0)
     expect(leaves.length).toBeGreaterThan(1)
     // 縦の束の中にさらに束は無い(reveal は 2 段まで)
     for (const l of leaves) expect(isStack(l.el), where(l)).toBe(false)
@@ -65,7 +77,7 @@ describe('デッキの描画', () => {
         expect(h2.querySelector('.secnum')?.textContent?.trim(), where(l)).toBe(expected)
         checked++
       }
-      expect(checked).toBeGreaterThan(5)
+      expect(checked).toBeGreaterThan(0)
     })
 
     it('番号はスライドの題にだけ付く(1 枚に 1 つ)', () => {
@@ -105,7 +117,7 @@ describe('デッキの描画', () => {
   describe('定理環境', () => {
     it('定理・定義などの番号はデッキ全体の通し番号(1 から順に)', () => {
       const nums = [...root.querySelectorAll('.thm > .thm-head')].map((e) => Number(e.textContent!.match(/^\S+ (\d+)/)?.[1]))
-      expect(nums.length).toBeGreaterThan(0)
+      seen.theorem += nums.length
       expect(nums).toEqual(nums.map((_, i) => i + 1))
     })
 
@@ -117,6 +129,7 @@ describe('デッキの描画', () => {
     })
 
     it('Frame も見出し(あれば)と本文の 2 段', () => {
+      seen.frame += root.querySelectorAll('.frame').length
       for (const f of root.querySelectorAll('.frame')) {
         const kids = [...f.children].map((c) => c.className)
         expect(kids.at(-1), f.textContent!).toBe('frame-body')
@@ -132,7 +145,7 @@ describe('デッキの描画', () => {
 
     it('式の参照(\\eqref)はすべて存在する式の番号へリンクする', () => {
       const links = [...root.querySelectorAll('mjx-container a[href^="#mjx-eqn"]')]
-      expect(links.length).toBeGreaterThan(0)
+      seen.eqref += links.length
       for (const a of links) {
         const id = decodeURIComponent(a.getAttribute('href')!.slice(1))
         expect(root.querySelector(`[id="${id}"]`), id).not.toBeNull()
@@ -140,6 +153,7 @@ describe('デッキの描画', () => {
     })
 
     it('スライドへのリンク(#/h/v)は存在するスライドを指す', () => {
+      seen.slideLink += root.querySelectorAll('a[href^="#/"]').length
       for (const a of root.querySelectorAll('a[href^="#/"]')) {
         const [h, v = 0] = a.getAttribute('href')!.slice(2).split('/').map(Number)
         expect(leaves.some((l) => l.h === h && l.v === v), a.getAttribute('href')!).toBe(true)
@@ -149,18 +163,19 @@ describe('デッキの描画', () => {
 
   describe('数式', () => {
     it('数式の字形の参照(<use>)は、すべて字形の定義の中にある', () => {
-      const glyphs = root.querySelector('#MJX-SVG-global-cache')!
+      const glyphs = root.querySelector('#MJX-SVG-global-cache')
       const uses = [...root.querySelectorAll('mjx-container use')]
-      expect(uses.length).toBeGreaterThan(0)
+      if (uses.length) expect(glyphs).not.toBeNull()
       for (const u of uses) {
         const ref = (u.getAttribute('xlink:href') ?? u.getAttribute('href'))!.slice(1)
-        expect(glyphs.querySelector(`[id="${ref}"]`), ref).not.toBeNull()
+        expect(glyphs!.querySelector(`[id="${ref}"]`), ref).not.toBeNull()
       }
     })
 
     it('各数式に MathML(assistive MathML)が添えられ、それを画面から隠すスタイルがある', () => {
       const containers = [...root.querySelectorAll('mjx-container')]
-      expect(containers.length).toBeGreaterThan(0)
+      seen.math += containers.length
+      if (containers.length === 0) return
       for (const m of containers) {
         expect(m.querySelector(':scope > mjx-assistive-mml > math'), m.outerHTML.slice(0, 80)).not.toBeNull()
         expect(m.querySelector(':scope > svg')?.getAttribute('aria-hidden')).toBe('true')
@@ -188,7 +203,7 @@ describe('デッキの描画', () => {
       const entries = [...root.querySelectorAll('.csl-bib-body')][0]?.querySelectorAll('.csl-entry') ?? []
       const order = [...entries].map((e) => e.id)
       const cites = [...root.querySelectorAll('a[href^="#bib-"]')]
-      expect(cites.length).toBeGreaterThan(0)
+      seen.cite += cites.length
       for (const a of cites) {
         const id = a.getAttribute('href')!.slice(1)
         expect(order, id).toContain(id)
@@ -199,6 +214,7 @@ describe('デッキの描画', () => {
 
   describe('HTML の構造', () => {
     it('表の行は表の中にだけあり、段落に包まれていない', () => {
+      seen.table += root.querySelectorAll('table').length
       for (const tr of root.querySelectorAll('tr')) expect(['TABLE', 'THEAD', 'TBODY', 'TFOOT']).toContain(tr.parentElement!.tagName)
       for (const t of root.querySelectorAll('table, thead, tbody')) {
         for (const c of t.children) expect(['THEAD', 'TBODY', 'TFOOT', 'TR', 'CAPTION', 'COLGROUP'], c.outerHTML.slice(0, 60)).toContain(c.tagName)
@@ -212,6 +228,7 @@ describe('デッキの描画', () => {
     })
 
     it('画像には src がある', () => {
+      seen.image += root.querySelectorAll('img').length
       for (const img of root.querySelectorAll('img')) expect(img.getAttribute('src'), img.outerHTML).toBeTruthy()
     })
   })
@@ -221,9 +238,17 @@ describe('デッキの描画', () => {
       for (const l of leaves) {
         const idx = [...l.el.querySelectorAll('[data-fragment-index]')].map((e) => Number(e.getAttribute('data-fragment-index')))
         if (idx.length === 0) continue
+        seen.fragment++
         const steps = [...new Set(idx)].sort((a, b) => a - b)
         expect(steps, where(l)).toEqual(steps.map((_, i) => i))
       }
     })
+  })
+})
+
+describe('全デッキを通して', () => {
+  it('どの機能も、どこかのデッキで確かめられている(検査が空振りしていない)', () => {
+    expect(decks.length).toBeGreaterThan(0)
+    for (const [feature, n] of Object.entries(seen)) expect(n, feature).toBeGreaterThan(0)
   })
 })

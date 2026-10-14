@@ -8,7 +8,7 @@ import { mdxOptions } from './mdx-options.ts'
 
 // 実際のビルドと同じ設定でコンパイルする(MathJax・rehype-citation を含む)
 const build = (src: string, strict = false) =>
-  compile(new VFile({ path: 'slides.mdx', value: src }), mdxOptions({ bibliography: 'src/references.bib', strict }))
+  compile(new VFile({ path: 'slides.mdx', value: src }), mdxOptions({ bibliography: 'decks/legendre/references.bib', strict }))
 
 async function failure(src: string) {
   try {
@@ -73,7 +73,7 @@ describe('ビルド設定(結合)', () => {
     writeFileSync(join(dir, 'part.mdx'), table)
     const compileAt = async (value: string) => {
       const out = String(
-        await compile(new VFile({ path: join(dir, 'main.mdx'), value }), mdxOptions({ bibliography: 'src/references.bib', strict: false })),
+        await compile(new VFile({ path: join(dir, 'main.mdx'), value }), mdxOptions({ bibliography: 'decks/legendre/references.bib', strict: false })),
       )
       return out.slice(out.indexOf('function _createMdxContent'))
     }

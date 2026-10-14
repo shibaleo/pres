@@ -5,6 +5,9 @@
 import { expect, test } from '@playwright/test'
 import { center, drag, gotoSlide, present } from './deck'
 
+/** 図の部品のあるデッキ(本文のカスプ・正規分布と、付録の 4 点・対数螺旋・地球儀) */
+const DECK = 'legendre'
+
 test.describe('一直線上の 4 点', () => {
   for (const viewport of [
     { width: 1900, height: 1080 }, // reveal がスライドを拡大する
@@ -12,7 +15,7 @@ test.describe('一直線上の 4 点', () => {
   ]) {
     test(`点と線分の端はポインタにぴったりついてくる(${viewport.width}×${viewport.height})`, async ({ page }) => {
       await page.setViewportSize(viewport)
-      await gotoSlide(page, '一直線上の 4 点')
+      await gotoSlide(page, DECK, '一直線上の 4 点')
       for (const target of [present(page).locator('.figure-point').nth(1), present(page).locator('.figure-handle').nth(0)]) {
         const from = await center(target)
         await drag(page, { x: from.x + 3, y: from.y - 2 }, 60, 40) // 中心から少しずれた所をつかむ
@@ -24,7 +27,7 @@ test.describe('一直線上の 4 点', () => {
   }
 
   test('点は線分とは独立に動き、リセットで元に戻る', async ({ page }) => {
-    await gotoSlide(page, '一直線上の 4 点')
+    await gotoSlide(page, DECK, '一直線上の 4 点')
     const slide = present(page)
     const points = () => slide.locator('.figure-point').evaluateAll((els) => els.map((e) => `${e.getAttribute('cx')},${e.getAttribute('cy')}`))
     const initial = await points()
@@ -42,7 +45,7 @@ test.describe('一直線上の 4 点', () => {
   })
 
   test('点は Tab で選び、矢印キーで動かせる(スライドは移らない)', async ({ page }) => {
-    await gotoSlide(page, '一直線上の 4 点')
+    await gotoSlide(page, DECK, '一直線上の 4 点')
     const hash = await page.evaluate(() => location.hash)
     const point = present(page).getByRole('button', { name: '点 b' })
     const before = Number(await point.locator('circle').getAttribute('cx'))
@@ -54,7 +57,7 @@ test.describe('一直線上の 4 点', () => {
 })
 
 test('対数螺旋: スライダーで形が変わり、曲線の上の点はキーボードでも曲線に沿って動く', async ({ page }) => {
-  await gotoSlide(page, '対数螺旋')
+  await gotoSlide(page, DECK, '対数螺旋')
   const slide = present(page)
   const a = slide.locator('input[type=range]').first()
   await a.fill('1')
@@ -68,7 +71,7 @@ test('対数螺旋: スライダーで形が変わり、曲線の上の点はキ
 
 test.describe('カスプの速度と法線', () => {
   test('再生中は動き、一時停止中は曲線に沿ってドラッグでき、原点では速度ベクトルだけが消える', async ({ page }) => {
-    await gotoSlide(page, 'カスプの速度と法線')
+    await gotoSlide(page, DECK, '導入：ルジャンドル曲線')
     const slide = present(page)
     const point = slide.locator('.figure-point')
     const a = await center(point)
@@ -95,7 +98,7 @@ test.describe('カスプの速度と法線', () => {
 })
 
 test('正規分布の族: 点を動かすと値と曲線が変わる', async ({ page }) => {
-  await gotoSlide(page, '正規分布の族')
+  await gotoSlide(page, DECK, '情報幾何学')
   const slide = present(page)
   const before = await slide.locator('.figure-series').nth(1).getAttribute('d')
   await drag(page, await center(slide.locator('.figure-series-point').nth(1)), 60, 50)
@@ -105,12 +108,12 @@ test('正規分布の族: 点を動かすと値と曲線が変わる', async ({ 
 
 test('地球儀: 表示中のスライドのときだけ自転し、一時停止できる', async ({ page }) => {
   const land = () => page.locator('.figure-globe-land').evaluateAll((els) => els.map((e) => e.getAttribute('d')).join('|'))
-  await gotoSlide(page, 'INTRODUCTION') // 地球儀のスライドは隠れている
+  await gotoSlide(page, DECK, '主定理の紹介') // 地球儀のスライド(付録)は隠れている
   const hidden = await land()
   await page.waitForTimeout(500)
   expect(await land()).toBe(hidden)
 
-  await gotoSlide(page, '地球儀')
+  await gotoSlide(page, DECK, '地球儀')
   const a = await land()
   await page.waitForTimeout(500)
   expect(await land()).not.toBe(a)

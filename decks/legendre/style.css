@@ -1,0 +1,7 @@
+/* このデッキの見た目の特化(書き方は src/theme/tokens.css と presets/ を参照)。数式の多い資料なので数学向け */
+
+@import '@/theme/presets/math.css';
+
+:root {
+  --deck-preset: math;
+}
