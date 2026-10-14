@@ -7,11 +7,15 @@ import type { ModeName, TransitionName } from './names'
  *   export default {
  *     mode: 'spectacle',
  *     transition: 'slide',
- *     transitions: { 主定理の紹介: 'cube' },
+ *     section: 'cube',
+ *     transitions: { 'sec:main': 'zoom' },
  *   } satisfies MotionConfig
  *
- * ビルドのときに原稿の変換(vite/remark-beamer)が読み、題で指したスライドに遷移の名前を付ける。
- * 見つからない題・2 枚に当たる題・そのモードで使えない遷移は原稿の警告になる(開発時は一覧に出て、本番のビルドは失敗する)。
+ * どのスライドへ入るときの遷移かは、文書の構造(新しい節・節の中の続き)か、スライドの題のラベル(\label)で指す。
+ * 本文の文字(題)では指さない(題は内容の都合で直すので)。優先は ラベル → 構造の規則 → 既定。
+ * ビルドのときに原稿の変換(vite/remark-beamer)が読み、各スライドに遷移の名前を付ける。
+ * 無いラベル・スライドの題のものではないラベル・そのモードで使えない遷移は原稿の警告になる
+ * (開発時は一覧に出て、本番のビルドは失敗する)。
  * Node がそのまま読む(型の注釈を外して読む)ので、import は型だけ(import type)にする。
  */
 export type MotionConfig = {
@@ -19,9 +23,13 @@ export type MotionConfig = {
   mode?: ModeName
   /** 既定の遷移(そのモードの既定の動きのままなら省略) */
   transition?: TransitionName
+  /** 新しい節(原稿の ---)のスライドへ入るときの遷移 */
+  section?: TransitionName
+  /** 節の中の続き(原稿の --)のスライドへ入るときの遷移 */
+  continuation?: TransitionName
   /**
-   * そのスライドへ入るときの遷移(出るときもそのスライドの遷移で動く)。スライドは題で指す: スライドの先頭の見出しの文字
-   * (節番号は除く。数式は原稿と同じ $…$ の形)。題の無いスライドは、その中の最初の見出し
+   * 個別のスライドへ入るときの遷移(出るときもそのスライドの遷移で動く)。スライドは、題に書いた \label の名前で指す:
+   *   ## 主定理の紹介 \label{sec:main}   →   transitions: { 'sec:main': 'cube' }
    */
   transitions?: Record<string, TransitionName>
 }

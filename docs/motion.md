@@ -98,15 +98,19 @@ impress の substep と Shower の `.next` は、要素を文書順に 1 つず�
 動きの指定は本文に書かない（本文は意味だけ。命令で動きを書かない）。デッキのフォルダの `motion.ts` に、既定のモード・既定の遷移・
 スライドごとの遷移を書く（型は `src/modes/motion.ts`。書き方は README の「動きの設定」）。
 
-- スライドは題で指す（先頭の見出しの文字。節番号は除く）。番号で指すと原稿を足し引きしたときにずれ、原稿にラベルを足すと
-  本文に動きのための印が入るため
-- 照合はビルドのときに原稿の変換（vite/remark-beamer）が行い、指したスライドに `<Slide transition>` を付ける。モードはその名前を
-  自分の演出に対応させるだけ。見つからない題・2 枚に当たる題・そのモードで使えない遷移は原稿の警告と同じ扱い（本番のビルドは失敗）
+- スライドの指し方は CSS と同じ考え方: 本文の文字ではなく、本文が自分の意味のために持っている印で指す。
+  - 構造の規則（`section`: 新しい節 `---` へ入るとき、`continuation`: 節の中の続き `--` へ入るとき）。本文に何も足さない
+  - スライドの題の `\label`（`## 主定理の紹介 \label{sec:main}`）。動きの命令ではなく、そのスライドの名前で、`\ref`・`#名前` のリンクにも使う
+  - 題の文字で指す案は採らなかった（題は内容の都合で直すので、直すたびに設定もずれる。同じ題のスライドを区別できない）。
+    題から作る slug も、元が題なので同じ
+- 優先は ラベル → 構造の規則 → 既定。照合はビルドのときに原稿の変換（vite/remark-beamer）が行い、各スライドに `<Slide transition>` を付ける。
+  モードはその名前を自分の演出に対応させるだけ。無いラベル・スライドのものではないラベル・そのモードで使えない遷移は原稿の警告と同じ扱い
+  （本番のビルドは失敗）
 - 遷移の語彙は `src/modes/names.ts` の `TRANSITIONS`（none・slide・fade・zoom・cube・cards・flip）、モードごとに使えるものは
   `MODE_TRANSITIONS`。Spectacle はすべて（`src/modes/spectacle/transitions.ts`。from・enter・leave の 3 つの形を transform で書く）、
   reveal は reveal の名前と同じもの（data-transition）、Swiper はデッキの既定だけ（演出を作るときに 1 つだけ決める作り）
 - Spectacle では、そのスライドの遷移で入り、出るときもそのスライドの遷移で出る（前のスライドの leave と、次のスライドの from・enter が同時に動く）
-- 見本: `decks/legendre/motion.ts`（Spectacle で zoom・cube・cards・flip）
+- 見本: `decks/legendre/motion.ts`（Spectacle。新しい節は cube、節の中の続きは cards、主定理 `sec:main` は zoom）
 
 ### 次にやること
 

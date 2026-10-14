@@ -379,6 +379,35 @@ describe('変換しない場所', () => {
   })
 })
 
+describe('スライドの題のラベル(\\label)と参照', () => {
+  const src = ['# 表紙', '', '---', '', '## 導入 \\label{sec:intro}', '', '\\begin{theorem}\\label{thm:a}', 'x', '\\end{theorem}', '', '--', '', '## 続き \\label{sec:more}', '', '\\ref{sec:intro} 節と \\ref{sec:more} 節、定理 \\ref{thm:a}。[導入](#sec:intro)'].join('\n')
+
+  it('題の \\label はスライドの id になり、題の文字からは外れる', async () => {
+    const { tree } = await run(src)
+    const slides = jsx(tree, 'Slide')
+    expect(slides.map((s) => attr(s, 'id'))).toEqual([undefined, 'sec:intro', 'sec:more'])
+    expect(textOf(all(slides[1], (n) => n.type === 'heading')[0])).toBe('1. 導入')
+  })
+
+  it('\\ref は節番号・定理番号を出し、ラベルの付いた要素(id)へのリンクにする', async () => {
+    const { tree } = await run(src)
+    const links = jsx(tree, 'a').map((a) => [attr(a, 'href'), textOf(a)])
+    expect(links).toEqual([
+      ['#sec:intro', '1'],
+      ['#sec:more', '1.1'],
+      ['#thm:a', '1'],
+    ])
+    // 定理型の環境のラベルも id になる(リンクの飛び先)
+    expect(attr(jsx(tree, 'Theorem')[0], 'id')).toBe('thm:a')
+  })
+
+  it('スライドの題以外の見出しの \\label はエラー、番号の無いスライドへの \\ref は警告', async () => {
+    expect((await fails('## 題\n\n### 小見出し \\label{x}')).message).toContain('スライドの題の外')
+    const { file } = await run('# 表紙 \\label{sec:title}\n\n---\n\n## 本文\n\n\\ref{sec:title}')
+    expect(file.messages.map((m) => m.reason)).toEqual([expect.stringContaining('番号の無いスライド')])
+  })
+})
+
 describe('動きの設定(motion.ts)', () => {
   // 一時ディレクトリに motion.ts を置く(Node が型の注釈を外して読む)
   const dir = mkdtempSync(join(tmpdir(), 'beamer-motion-'))
@@ -387,25 +416,26 @@ describe('動きの設定(motion.ts)', () => {
     writeFileSync(path, `export default ${body}\n`)
     return path
   }
-  const src = ['# 表紙', '', '---', '', '## 導入', '', 'a', '', '---', '', '## 主定理と $\alpha$', '', 'b', '', '--', '', '## 導入', '', 'c'].join('\n')
+  // 表紙・節 1(続き 1.1)・節 2
+  const src = ['# 表紙', '', '---', '', '## 導入 \\label{sec:intro}', '', 'a', '', '--', '', '## 続き', '', 'b', '', '---', '', '## 主定理 \\label{sec:main}', '', '\\begin{theorem}\\label{thm:x}', 'c', '\\end{theorem}'].join('\n')
+  const transitions = (tree: N) => jsx(tree, 'Slide').map((s) => attr(s, 'transition'))
 
-  it('題で指したスライドに遷移の名前を付ける(節番号は除き、数式は $…$ の形で指す)', async () => {
-    const motion = motionFile('ok', `{ mode: 'spectacle', transitions: { '表紙': 'fade', '主定理と $\\alpha$': 'cube' } }`)
-    const { tree, file } = await run(src.replace('## 導入\n\nc', '## 補足\n\nc'), { motion })
-    const slides = jsx(tree, 'Slide')
-    expect(slides.map((s) => attr(s, 'transition'))).toEqual(['fade', undefined, 'cube', undefined])
+  it('構造の規則(新しい節・節の中の続き)とラベルで、各スライドに遷移の名前を付ける(ラベルが優先)', async () => {
+    const motion = motionFile('ok', `{ mode: 'spectacle', section: 'cube', continuation: 'fade', transitions: { 'sec:main': 'zoom' } }`)
+    const { tree, file } = await run(src, { motion })
+    expect(transitions(tree)).toEqual([undefined, 'cube', 'fade', 'zoom'])
     expect(file.messages).toEqual([])
   })
 
-  it('見つからない題・2 枚に当たる題・そのモードで使えない遷移は警告(位置は motion.ts の行)', async () => {
-    const motion = motionFile('bad', `{\n  mode: 'reveal',\n  transitions: {\n    '無い題': 'fade',\n    '導入': 'fade',\n    '表紙': 'cube',\n  },\n}`)
+  it('無いラベル・スライドのものではないラベル・そのモードで使えない遷移は警告(位置は motion.ts の行)', async () => {
+    const motion = motionFile('bad', `{\n  mode: 'reveal',\n  transitions: {\n    'sec:none': 'fade',\n    'thm:x': 'fade',\n    'sec:intro': 'cube',\n  },\n}`)
     const { tree, file } = await run(src, { motion })
     const reasons = file.messages.map((m) => m.reason)
-    expect(reasons[0]).toMatch(/bad\.ts:4: 題が「無い題」のスライドがありません/)
-    expect(reasons[1]).toMatch(/bad\.ts:5: 題が「導入」のスライドが 2 枚あります/)
+    expect(reasons[0]).toMatch(/bad\.ts:4: ラベル sec:none のスライドがありません/)
+    expect(reasons[1]).toMatch(/bad\.ts:5: ラベル thm:x はスライドの題のラベルではありません/)
     expect(reasons[2]).toMatch(/bad\.ts:6: モード reveal ではスライドごとの遷移に cube を使えません/)
     // 使えない遷移でも名前は付ける(別のモードで開いたときに使う)
-    expect(attr(jsx(tree, 'Slide')[0], 'transition')).toBe('cube')
+    expect(transitions(tree)[1]).toBe('cube')
     expect((await fails(src, { motion, strict: true })).message).toContain('警告が 3 件')
   })
 

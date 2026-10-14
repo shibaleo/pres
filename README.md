@@ -242,9 +242,15 @@ $f$ が凸なら …
 | `\begin{align}` / `\begin{gather}` | 行ごとに番号。`\nonumber` / `\notag` / `\tag{…}` の行は自動番号なし |
 | `\begin{equation*}` / `\begin{align*}` … | 番号なし |
 | 定理環境や式の中に `\label{key}` | 参照先として登録 |
-| `\ref{key}` / `\eqref{key}` | 番号 / `(番号)` |
+| スライドの題に `\label{key}`（`## 主定理の紹介 \label{sec:main}`） | そのスライド（節）を参照先として登録（LaTeX の `\section{…}\label{…}` と同じ） |
+| `\ref{key}` / `\eqref{key}` | 番号 / `(番号)`。参照先へのリンクになる（LaTeX の hyperref と同じ） |
+| `[文字](#key)`（CommonMark）・`<a href="#key">`（JSX） | 参照先へのリンク（文字は自分で書く） |
 
 - 定理の番号はビルド時にデッキ全体の出現順で振ります。**式の番号と式の参照は MathJax**（AMS と同じ規則）が処理します。
+- `\label` は HTML の `id` になります（スライドの題なら `<section id="…">`、定理なら定理の要素）。リンクを押すと、
+  どのモードでもその飛び先を含むスライドへ移ります（`src/deck/links.ts`）。ラベルの名前は LaTeX の慣習どおり
+  `sec:`・`thm:`・`eq:` などの接頭辞で分けると、ほかの id と衝突しません。重複は警告です。
+- スライドへのリンクに、ライブラリの形の hash（reveal の `#/4` など）は書きません（スライドを足し引きするとずれる）。
 - 可換図式は `\begin{CD}…\end{CD}`（`$$` の中）。
 
 ### 段階表示（Beamer の overlay → reveal の fragment）
@@ -299,7 +305,6 @@ $f$ が凸なら …
 |---|---|
 | `\footnote` | LaTeX の命令として未対応（エラーになる）。上の手書きの脚注で代える |
 | `\begin{description}` / `\begin{itemize}` / `\emph` / `\textbf` | 未対応（エラーになる）。CommonMark と JSX（`<dl>`・リスト・`**`）で書く |
-| `\ref` をクリックして参照先のスライドへ移る（hyperref の動き） | `\ref` は番号の文字になるだけでリンクにならない |
 | スライドごとの文献リスト（使った文献だけ） | `<Bibliography />` はどこに置いても全文献を出す（rehype-citation の動き） |
 | `\definecolor{…}{HTML}{EBEBEB}` | MathJax が HTML 形式に未対応。`RGB` か `gray` 形式で書く |
 
@@ -349,17 +354,20 @@ import type { MotionConfig } from '@/modes/motion'
 export default {
   mode: 'spectacle', // このデッキの既定のモード(reveal・impress・shower・spectacle・swiper。docs/motion.md)
   transition: 'slide', // 既定の遷移
+  section: 'cube', // 新しい節(---)へ入るとき
+  continuation: 'cards', // 節の中の続き(--)へ入るとき
   transitions: {
-    // そのスライドへ入るときの遷移。スライドは題で指す(先頭の見出しの文字。節番号は除き、数式は $…$ の形)
-    '主定理の紹介': 'cube',
-    '主定理の解釈': 'cards',
+    // 個別のスライドへ入るとき。スライドは題に書いた \label の名前で指す(## 主定理の紹介 \label{sec:main})
+    'sec:main': 'zoom',
   },
 } satisfies MotionConfig
 ```
 
 - 遷移の名前は none・slide・fade・zoom・cube・cards・flip。モードごとに使えるものが違います
   （Spectacle はすべて、reveal は none・slide・fade・zoom、Swiper はデッキの既定だけ。`src/modes/names.ts` の `MODE_TRANSITIONS`）。
-- 見つからない題・2 枚に当たる題・そのモードで使えない遷移は、原稿の警告と同じく `motion.ts` の行付きで報告されます
+- 優先は ラベル → 構造の規則（`section`・`continuation`）→ 既定（`transition`）。ほとんどのデッキは構造の規則だけで足ります。
+  本文の文字（題）では指しません（題は内容の都合で直すので）。`\label` は動きの命令ではなく、そのスライドの名前（`\ref` やリンクにも使う）です。
+- 無いラベル・スライドの題のものではないラベル・そのモードで使えない遷移は、原稿の警告と同じく `motion.ts` の行付きで報告されます
   （開発時は画面右上の一覧、本番のビルドは失敗）。名前の書き間違いは型検査でも分かります。
 - モードは URL の `?mode=<名前>` で一時的に替えられます（そのタブの中で覚える。開発サーバーの一覧ページから選べる）。
   `motion.ts` を直すと、開発サーバーはページを読み直します。
@@ -442,7 +450,7 @@ export default {
 ## 次にやること
 
 - 表紙の双対のグラフ（3D の曲面）を visx の図にする。描く関数（$f = \tfrac12 x^2 + \tfrac13 y^3$ とその双対か）の確認待ち。
-- 今は書けない LaTeX の標準の記法: `\footnote`、`description` 環境、`\ref` のリンク（hyperref の動き）、スライドごとの文献リスト、
+- 今は書けない LaTeX の標準の記法: `\footnote`、`description` 環境、スライドごとの文献リスト、
   証明の見出しの語（`\renewcommand{\proofname}{証明}`。今は「Proof.」のまま）。
 - 開発用の依存の脆弱性警告（`braces`、`vite-plugin-singlefile` 経由）。修正版が出たら更新する。
 

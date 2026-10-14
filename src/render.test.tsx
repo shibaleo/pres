@@ -168,12 +168,16 @@ describe.each(decks)('$name', ({ name, mod }) => {
       }
     })
 
-    it('スライドへのリンク(#/h/v)は存在するスライドを指す', () => {
-      seen.slideLink += root.querySelectorAll('a[href^="#/"]').length
-      for (const a of root.querySelectorAll('a[href^="#/"]')) {
-        const [h, v = 0] = a.getAttribute('href')!.slice(2).split('/').map(Number)
-        expect(leaves.some((l) => l.h === h && l.v === v), a.getAttribute('href')!).toBe(true)
+    it('文書の中のリンク(#名前。\\ref・[文字](#名前))はどれも存在する飛び先を指し、スライドへのリンクもある', () => {
+      const links = [...root.querySelectorAll('a[href^="#"]')].filter((a) => !a.getAttribute('href')!.startsWith('#/'))
+      for (const a of links) {
+        const id = decodeURIComponent(a.getAttribute('href')!.slice(1))
+        expect(root.querySelector(`[id="${id}"]`), id).not.toBeNull()
       }
+      // スライドの題の \label(スライドの id)へのリンク
+      seen.slideLink += links.filter((a) => leaves.some((l) => l.el.id === decodeURIComponent(a.getAttribute('href')!.slice(1)))).length
+      // ライブラリの形の hash(#/4 など)は原稿に書かない(スライドを足し引きするとずれる。ラベルで書く)
+      expect(root.querySelectorAll('a[href^="#/"]').length).toBe(0)
     })
   })
 

@@ -5,6 +5,7 @@ import 'reveal.js/reveal.css'
 import './theme/index.css'
 import React, { lazy, Suspense, type ComponentType } from 'react'
 import { createRoot } from 'react-dom/client'
+import { watchInternalLinks } from './deck/links'
 import { setSlideSizeVariables } from './deck/mode'
 import type { DeckSource } from './deck/source'
 import DevDiagnostics from './devtools/DevDiagnostics'
@@ -53,6 +54,8 @@ export function startDeck(deck: DeckSource): (next: DeckSource) => void {
   if (preset) document.documentElement.dataset.preset = preset
 
   setSlideSizeVariables()
+  // 文書の中のリンク(#名前。\ref・[文字](#名前))でそのスライドへ移る(どのモードでも同じ)
+  watchInternalLinks()
   // はみ出しの検査は開発時と、ビルドしたデッキを ?check-overflow で開いたとき(e2e/overflow.spec.ts)。
   // 印刷用の表示(?print-pdf)はページの大きさが最小サイズと違うので検査しない
   const check = (import.meta.env.DEV || new URLSearchParams(location.search).has('check-overflow')) && !isPrint

@@ -23,19 +23,19 @@ type EnvProps = {
   heading?: string
   /** 番号(変換時に付く。「3」や節ごとの「2.1」。空文字なら番号なし = \newtheorem*) */
   n?: string
-  /** \label と同じ参照用の key(JSX で書くとき) */
+  /** \label と同じ参照用の key(JSX で書くとき)。要素の id になり、\ref と #名前 のリンクの飛び先になる */
   id?: string
   children?: ReactNode
 }
 
 function env(defaultHeading: string, variant: 'thm' | 'def') {
-  return function Env({ title, heading = defaultHeading, n, children }: EnvProps) {
+  return function Env({ title, heading = defaultHeading, n, id, children }: EnvProps) {
     const items = Children.toArray(children)
     const titleEl = items.find((c) => isValidElement(c) && c.type === ThmTitle)
     const body = items.filter((c) => c !== titleEl)
     const name = titleEl ?? title
     return (
-      <div className={`thm thm-${variant}`}>
+      <div className={`thm thm-${variant}`} id={id}>
         <div className="thm-head">
           {heading}
           {n !== '' && <> {n ?? '?'}</>}

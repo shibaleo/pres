@@ -420,20 +420,24 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
     // その小節(4.1.)。LaTeX の \section / \subsection と同じく番号を見出しの文字に含める
     // (ビルド時に決まるので、ブラウザで全スライドを描いて数える必要がない。メニューも同じ番号を出せる)
     let sec = 0
-    /** 各スライドの節と小節の番号(定理型の環境の節ごとの番号に使う。題の無いスライドは直前の番号のまま) */
+    /**
+     * 各スライドの節と小節の番号(定理型の環境の節ごとの番号に使う。題の無いスライドは直前の番号のまま)と、
+     * そのスライドの題に振った番号(\ref で出す「4」「4.1」。題に番号が無ければ undefined)
+     */
     const sectionOf = built.map((stack) => {
       let sub = 0
       return stack.map((nodes, v) => {
         const first = nodes.find((n) => n.type !== 'mdxFlowExpression') // 先頭の {/* コメント */} は飛ばす
+        let number: string | undefined
         if (first?.type === 'heading' && first.depth === 2) {
-          const number = v === 0 ? `${++sec}.` : `${sec}.${++sub}.`
-          first.children.unshift(jsxText('span', { className: 'secnum' }, [text(`${number} `)], first.position))
+          number = v === 0 ? `${++sec}` : `${sec}.${++sub}`
+          first.children.unshift(jsxText('span', { className: 'secnum' }, [text(`${number}. `)], first.position))
         }
-        return { sec, sub }
+        return { sec, sub, number }
       })
     })
 
-    type Label = { kind: 'thm' | 'eq'; n?: string }
+    type Label = { kind: 'thm' | 'eq' | 'sec'; n?: string }
     /** 文献 key の初出順(\cite を文書順に処理しながら記録する) */
     const citeOrder = new Map<string, number>()
     const labels = new Map<string, Label>()
@@ -441,6 +445,28 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
       if (labels.has(key)) warn(`\\label{${key}} が重複しています`, node)
       labels.set(key, value)
     }
+    /**
+     * スライドの題の \label(LaTeX の \section{…}\label{…} と同じく、節(スライド)に名前を付ける)。題の見出しの中の
+     * \label を外して登録し、スライドの要素の id にする(\ref と、文書の中の #名前 のリンクと、動きの設定 motion.ts が指す)
+     */
+    const slideLabel = built.map((stack, h) =>
+      stack.map((nodes, v) => {
+        const first = nodes.find((n) => n.type !== 'mdxFlowExpression')
+        if (first?.type !== 'heading') return undefined
+        const cmds = first.children.filter(
+          (c) => (c as AnyNode).type === 'latexCommand' && parseCommand((c as unknown as LatexCommand).value).name === 'label',
+        ) as unknown as LatexCommand[]
+        if (cmds.length === 0) return undefined
+        first.children = first.children.filter((c) => !cmds.includes(c as unknown as LatexCommand))
+        // \label の前の空白を題に残さない
+        const last = first.children[first.children.length - 1]
+        if (last?.type === 'text') last.value = last.value.replace(/\s+$/, '')
+        if (cmds.length > 1) error('スライドの題に \\label が 2 つあります', cmds[1])
+        const key = parseCommand(cmds[0].value).body.trim()
+        addLabel(key, { kind: 'sec', n: sectionOf[h][v].number }, cmds[0])
+        return key
+      }),
+    )
     /** 番号の並び(counter の環境の名前)ごとの、今の区切り(節ごとの番号の節)と番号 */
     const counters = new Map<string, { scope: string; n: number }>()
     let place = { sec: 0, sub: 0 }
@@ -468,14 +494,18 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
         if (label) {
           if (n) addLabel(label, { kind: 'thm', n }, node)
           else warn(`番号の無い環境(${envName})に \\label{${label}} が付いています`, node)
+          // id にして、\ref と #名前 のリンクの飛び先にする(LaTeX の hyperref と同じ)
+          setAttr(node, 'id', label)
         }
         inner = [...envs, node]
       }
       if (node.type === 'latexCommand' && parseCommand((node as LatexCommand).value).name === 'label') {
         const key = parseCommand((node as LatexCommand).value).body.trim()
         const env = inner[inner.length - 1]
-        if (env) addLabel(key, { kind: 'thm', n: getAttr(env, 'n') }, node)
-        else error(`\\label{${key}} が定理環境・数式の外にあります`, node)
+        if (env) {
+          addLabel(key, { kind: 'thm', n: getAttr(env, 'n') }, node)
+          if (getAttr(env, 'id') === undefined) setAttr(env, 'id', key)
+        } else error(`\\label{${key}} が定理環境・数式・スライドの題の外にあります`, node)
       }
       if (node.type === 'math' || node.type === 'inlineMath') {
         for (const m of node.value.matchAll(/\\label\{([^}]+)\}/g)) addLabel(m[1].trim(), { kind: 'eq' }, node)
@@ -495,8 +525,8 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
     )
 
     // (4)(5) 文中の命令と段階表示(スライドごと・文書順)
-    /** 各スライドの題と要素(動きの設定で題からスライドを指すため) */
-    const slideList: { title: string; el: MdxJsxFlowElement }[] = []
+    /** 各スライドの並びと要素(動きの設定で、構造とラベルからスライドを指すため) */
+    const slideList: { h: number; v: number; el: MdxJsxFlowElement }[] = []
     const slideElements: RootContent[] = built.map((stack, h) => {
       const els = stack.map((nodes, v) => {
         const steps = new Steps()
@@ -514,11 +544,11 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
         // data-slide-line / data-slide-file は開発時のはみ出し警告で原稿の位置を示すため(\input で取り込んだスライドはそのファイル)
         const el = jsxFlow(
           'Slide',
-          { h, v, steps: steps.max, 'data-slide-line': line, 'data-slide-file': sourceOf(nodes[0])?.file },
+          { h, v, steps: steps.max, id: slideLabel[h][v], 'data-slide-line': line, 'data-slide-file': sourceOf(nodes[0])?.file },
           root.children,
           nodes[0]?.position,
         )
-        slideList.push({ title: slideTitleOf(root.children as AnyNode[]), el })
+        slideList.push({ h, v, el })
         return el
       })
       return els.length === 1 ? els[0] : jsxFlow('Stack', {}, els)
@@ -606,6 +636,15 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
       return inlineMath(`\\${name}{${key}}`, node.position)
     }
 
+    /**
+     * 節(スライド)と定理への参照: 番号を、ラベルの付いた要素(id)へのリンクにする(LaTeX の hyperref と同じ)。
+     * 参照先が無ければリンクにしない
+     */
+    function refLink(key: string, label: string, node: LatexCommand): PhrasingContent {
+      if (!labels.has(key)) return text(label, node.position)
+      return jsxText('a', { href: `#${key}` }, [text(label, node.position)], node.position)
+    }
+
     function replaceCommand(node: LatexCommand, steps: Steps, overlays: Jsx[]): AnyNode[] {
       const cmd = parseCommand(node.value)
       const key = cmd.body.trim()
@@ -616,13 +655,14 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
           const l = labels.get(key)
           if (!l) warn(`\\ref{${key}} の参照先がありません`, node)
           if (l?.kind === 'eq') return [eqRef('ref', key, node)]
-          return [text(l ? String(l.n) : '??', node.position)]
+          if (l && l.n === undefined) warn(`\\ref{${key}} は番号の無いスライドを指しています(題に番号の無いスライド)`, node)
+          return [refLink(key, l?.n ?? '??', node)]
         }
         case 'eqref': {
           const l = labels.get(key)
           if (!l) warn(`\\eqref{${key}} の参照先がありません`, node)
           if (l?.kind === 'eq') return [eqRef('eqref', key, node)]
-          return [text(l ? `(${l.n})` : '(??)', node.position)]
+          return [refLink(key, `(${l?.n ?? '??'})`, node)]
         }
         case 'cite': {
           const keys = cmd.body.split(',').map((k) => k.trim()).filter(Boolean)
@@ -676,27 +716,47 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
           motionWarn(`モード ${mode} では既定の遷移に ${config.transition} を使えません(使えるもの: ${allowed.deck.join('・') || 'なし'})`, 'transition')
         }
       }
-      const normalize = (t: string) => t.replace(/\s+/g, ' ').trim()
-      for (const [title, transition] of Object.entries(config.transitions ?? {})) {
-        if (!known(transition)) {
-          motionWarn(`遷移 "${transition}" はありません(${TRANSITIONS.join('・')})`, title)
-          continue
-        }
-        const hits = slideList.filter((s) => normalize(s.title) === normalize(title))
-        if (hits.length === 0) {
-          motionWarn(`題が「${title}」のスライドがありません(スライドの先頭の見出しの文字。節番号は除く)`, title)
-          continue
-        }
-        if (hits.length > 1) {
-          const lines = hits.map((s) => getAttr(s.el, 'data-slide-line')).join('・')
-          motionWarn(`題が「${title}」のスライドが ${hits.length} 枚あります(原稿の ${lines} 行目)。題で 1 枚に決まりません`, title)
-          continue
-        }
+      /** スライドごとに使える遷移か(使えなければ警告。名前は付ける: 別のモードで開いたときに使う) */
+      const checkSlide = (transition: TransitionName, needle: string) => {
         if (!allowed.slide.includes(transition)) {
-          motionWarn(`モード ${mode} ではスライドごとの遷移に ${transition} を使えません(使えるもの: ${allowed.slide.join('・') || 'なし'})`, title)
+          motionWarn(`モード ${mode} ではスライドごとの遷移に ${transition} を使えません(使えるもの: ${allowed.slide.join('・') || 'なし'})`, needle)
         }
-        // 別のモードで開いたときに使えるよう、使えない遷移でも名前は付ける(警告は出る)
-        setAttr(hits[0].el, 'transition', transition)
+      }
+      // 構造の規則: 新しい節(---)へ入るとき・節の中の続き(--)へ入るとき
+      for (const [rule, transition] of [
+        ['section', config.section],
+        ['continuation', config.continuation],
+      ] as const) {
+        if (transition === undefined) continue
+        if (!known(transition)) {
+          motionWarn(`遷移 "${transition}" はありません(${TRANSITIONS.join('・')})`, rule)
+          continue
+        }
+        checkSlide(transition, rule)
+        for (const s of slideList) {
+          const isSection = s.v === 0 && s.h > 0
+          if ((rule === 'section' && isSection) || (rule === 'continuation' && s.v > 0)) setAttr(s.el, 'transition', transition)
+        }
+      }
+      // ラベルで指したスライド(構造の規則より優先)
+      for (const [key, transition] of Object.entries(config.transitions ?? {})) {
+        if (!known(transition)) {
+          motionWarn(`遷移 "${transition}" はありません(${TRANSITIONS.join('・')})`, key)
+          continue
+        }
+        const target = slideList.find((s) => getAttr(s.el, 'id') === key)
+        if (!target) {
+          const other = labels.get(key)
+          motionWarn(
+            other
+              ? `ラベル ${key} はスライドの題のラベルではありません(スライドは題に \\label を書いて指す)`
+              : `ラベル ${key} のスライドがありません(スライドの題に \\label{${key}} を書いて指す)`,
+            key,
+          )
+          continue
+        }
+        checkSlide(transition, key)
+        setAttr(target.el, 'transition', transition)
       }
     }
 
@@ -736,27 +796,3 @@ function setPosition(nodes: AnyNode[], position?: Position) {
   }
 }
 
-/**
- * スライドの題: スライドの中の最初の見出しの文字(節番号 <span class="secnum"> は除く。数式は原稿と同じ $…$ の形)
- */
-function slideTitleOf(nodes: AnyNode[]): string {
-  const heading = findHeading(nodes)
-  return heading ? plainText(heading).trim() : ''
-}
-function findHeading(nodes: AnyNode[]): AnyNode | undefined {
-  for (const n of nodes) {
-    if (n.type === 'heading') return n
-    if ('children' in n) {
-      const found = findHeading(n.children as AnyNode[])
-      if (found) return found
-    }
-  }
-  return undefined
-}
-function plainText(node: AnyNode): string {
-  if (isJsx(node, 'span') && getAttr(node, 'className') === 'secnum') return ''
-  if (node.type === 'inlineMath') return `$${node.value}$`
-  if ('value' in node && typeof node.value === 'string' && (node.type === 'text' || node.type === 'inlineCode')) return node.value
-  if ('children' in node) return (node.children as AnyNode[]).map(plainText).join('')
-  return ''
-}

@@ -17,6 +17,8 @@ export type SlideProps = {
   v?: number | string
   steps?: number | string
   transition?: TransitionName
+  /** 題の \label(スライドの要素の id。\ref と #名前 のリンクと motion.ts が指す) */
+  id?: string
   children?: ReactNode
   'data-slide-line'?: number | string
   'data-slide-file'?: string
