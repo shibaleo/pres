@@ -47,6 +47,8 @@ describe('スライド分割', () => {
     expect(attr(top[0], 'data-slide-line')).toBe('3')
     // スライドの並び(横の位置 h と縦の続きの中の位置 v)。モードがスライドを置く場所を決めるのに使う
     expect([top[0], ...jsx(top[1], 'Slide')].map((s) => [attr(s, 'h'), attr(s, 'v')])).toEqual([['0', '0'], ['1', '0'], ['1', '1']])
+    // 段階表示の無いスライドの段の数は 1
+    expect(attr(top[0], 'steps')).toBe('1')
   })
 
   it('*** は区切りにしない(普通の横線)', async () => {
@@ -205,10 +207,10 @@ describe('警告', () => {
 })
 
 describe('段階表示', () => {
-  it('\\pause 以降を Overlay にし、ステップ数の分だけ見えない区切りを置く', async () => {
+  it('\\pause 以降を Overlay にし、スライドに段の数(steps)を付ける', async () => {
     const { tree } = await run('a\n\n\\pause\n\nb\n\n\\pause\n\nc')
     expect(jsx(tree, 'Overlay').map((o) => attr(o, 'from'))).toEqual(['2', '3'])
-    expect(attr(jsx(tree, 'OverlaySteps')[0], 'max')).toBe('3')
+    expect(attr(jsx(tree, 'Slide')[0], 'steps')).toBe('3')
   })
 
   it('環境・JSX ブロックの中の \\pause はそのブロックの中で閉じる', async () => {
@@ -222,7 +224,7 @@ describe('段階表示', () => {
   it('\\uncover<+->{…} は 1 つずつ次のステップに(Beamer の + 指定)', async () => {
     const { tree } = await run('- \\uncover<+->{a}\n- \\uncover<+->{b}\n- \\uncover<+->{c}')
     expect(jsx(tree, 'Overlay').map((o) => attr(o, 'from'))).toEqual(['1', '2', '3'])
-    expect(attr(jsx(tree, 'OverlaySteps')[0], 'max')).toBe('3')
+    expect(attr(jsx(tree, 'Slide')[0], 'steps')).toBe('3')
   })
 
   it('<Fragment> は \\pause と同じく段を 1 つ進めて中身を見せ、後ろの本文は隠さない(Overlay にする)', async () => {
@@ -230,7 +232,7 @@ describe('段階表示', () => {
     const overlays = jsx(tree, 'Overlay')
     expect(overlays.map((o) => attr(o, 'from'))).toEqual(['2', '3'])
     expect(jsx(tree, 'Fragment')).toHaveLength(0)
-    expect(attr(jsx(tree, 'OverlaySteps')[0], 'max')).toBe('3')
+    expect(attr(jsx(tree, 'Slide')[0], 'steps')).toBe('3')
     // c は Overlay の外(最初から見える)
     expect(overlays.some((o) => textOf(o).includes('c'))).toBe(false)
   })
@@ -239,7 +241,7 @@ describe('段階表示', () => {
     const src = 'a\n\n\\pause\n\nb\n\n- \\uncover<+->{x}\n- \\uncover<+->{y}\n\n\\uncover<4->{z}\n\n<Fragment>\n\nf\n\n</Fragment>'
     const { tree } = await run(src)
     expect(jsx(tree, 'Overlay').map((o) => attr(o, 'from'))).toEqual(['2', '2', '3', '4', '5'])
-    expect(attr(jsx(tree, 'OverlaySteps')[0], 'max')).toBe('5')
+    expect(attr(jsx(tree, 'Slide')[0], 'steps')).toBe('5')
   })
 
   it('<Fragment> に as 以外の属性はエラー', async () => {

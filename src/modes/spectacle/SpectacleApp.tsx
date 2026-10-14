@@ -1,9 +1,10 @@
-import { Children, createContext, isValidElement, useContext, useEffect, useRef, type ReactNode } from 'react'
-import { Deck, Slide as SpectacleSlide, SlideContext, useSteps } from 'spectacle'
+import { createContext, useContext, useEffect, useRef, type ReactNode } from 'react'
+import { Deck, DeckContext, Notes, Slide as SpectacleSlide, SlideContext, useSteps } from 'spectacle'
 import type { DeckSource } from '../../App'
-import { announcePresent } from '../../components/figure/motion'
-import { mdxComponents } from '../../deck/mdx-components'
+import { documentComponents } from '../../deck/mdx-components'
+import { announcePresent, deckSlides, markReady, registerGoTo } from '../../deck/mode'
 import { MIN_WIDTH, SLIDE_HEIGHT } from '../../deck/slide-metrics'
+import { FlatStack, isShown, overlayClass, slideAttributes, stepsOf, type OverlayProps, type SlideProps } from '../structure'
 import './spectacle.css'
 
 /**
@@ -12,36 +13,18 @@ import './spectacle.css'
  */
 const StepContext = createContext(1)
 
-/** 段の数の印。Spectacle モードでは Slide が段の数として読む(下の stepsOf)だけで、何も描かない */
-function OverlaySteps(_: { max: number | string }) {
-  return null
-}
-
-/** スライドの段の数(変換は段が 2 つ以上あるスライドの末尾に <OverlaySteps max> を置く) */
-function stepsOf(children: ReactNode): number {
-  let max = 1
-  Children.forEach(children, (c) => {
-    if (isValidElement<{ max: number | string }>(c) && c.type === OverlaySteps) max = Number(c.props.max)
-  })
-  return max
-}
-
-type SlideProps = { h?: number | string; v?: number | string; children?: ReactNode }
-
 /** スライド 1 枚 = Spectacle の Slide。中身は本文の範囲(.deck)と 1 枚(.slide)で包む */
-function Slide({ h: _h, v: _v, children, ...rest }: SlideProps) {
-  const steps = stepsOf(children)
+function Slide(props: SlideProps) {
+  const steps = stepsOf(props)
+  const body = (step: number, placeholder?: ReactNode) => (
+    <Body step={step} attributes={slideAttributes(props)} placeholder={placeholder}>
+      {props.children}
+    </Body>
+  )
+  // padding は Spectacle のテーマの間隔の段階の番号として読まれるので、値で渡す
   return (
     <SpectacleSlide padding="0px" backgroundColor="var(--color-canvas)">
-      {steps >= 2 ? (
-        <SteppedBody steps={steps} rest={rest}>
-          {children}
-        </SteppedBody>
-      ) : (
-        <Body step={1} rest={rest}>
-          {children}
-        </Body>
-      )}
+      {steps >= 2 ? <SteppedBody steps={steps} body={body} /> : body(1)}
     </SpectacleSlide>
   )
 }
@@ -50,17 +33,13 @@ function Slide({ h: _h, v: _v, children, ...rest }: SlideProps) {
  * 段のあるスライド。段の数 - 1 個の段を Spectacle に登録する(useSteps)。useSteps が返す step は
  * -1(まだ)〜 段の数 - 2 なので、Beamer の段 = step + 2。一覧などで段が決まらないとき(activationThresholds が null)は最後の段
  */
-function SteppedBody({ steps, rest, children }: { steps: number; rest: object; children?: ReactNode }) {
+function SteppedBody({ steps, body }: { steps: number; body: (step: number, placeholder?: ReactNode) => ReactNode }) {
   const { activationThresholds } = useContext(SlideContext)
   const { step, placeholder } = useSteps(steps - 1)
-  return (
-    <Body step={activationThresholds === null ? steps : step + 2} rest={rest} placeholder={placeholder}>
-      {children}
-    </Body>
-  )
+  return <>{body(activationThresholds === null ? steps : step + 2, placeholder)}</>
 }
 
-function Body({ step, rest, placeholder, children }: { step: number; rest: object; placeholder?: ReactNode; children?: ReactNode }) {
+function Body({ step, attributes, placeholder, children }: { step: number; attributes: object; placeholder?: ReactNode; children?: ReactNode }) {
   const { isSlideActive } = useContext(SlideContext)
   const ref = useRef<HTMLElement>(null)
   useEffect(() => {
@@ -68,7 +47,7 @@ function Body({ step, rest, placeholder, children }: { step: number; rest: objec
   }, [isSlideActive])
   return (
     <div className="deck spectacle-body">
-      <section ref={ref} className="slide" {...rest}>
+      <section ref={ref} className="slide" {...attributes}>
         <StepContext.Provider value={step}>{children}</StepContext.Provider>
       </section>
       {placeholder}
@@ -76,37 +55,37 @@ function Body({ step, rest, placeholder, children }: { step: number; rest: objec
   )
 }
 
-/** 縦の続きの束。Spectacle のスライドは一列なので、包まずに並べる */
-function Stack({ children }: { children?: ReactNode }) {
-  return <>{children}</>
-}
-
-/** Beamer の overlay(\pause・<2->・\only<2>{…} など)。今の段(StepContext)で表示を決める。見た目は theme/base.css の .overlay */
-function Overlay({
-  from,
-  to,
-  as: Tag = 'div',
-  only = false,
-  children,
-}: {
-  from: number | string
-  to?: number | string
-  as?: 'div' | 'span'
-  only?: boolean
-  children?: ReactNode
-}) {
+/** Overlay: 今の段(StepContext)で表示を決める */
+function Overlay({ from, to, as: Tag = 'div', only = false, children }: OverlayProps) {
   const k = useContext(StepContext)
-  const shown = k >= Number(from) && (to === undefined || k <= Number(to))
-  const cls = ['overlay', only && 'only', !shown && 'overlay-hidden'].filter(Boolean).join(' ')
-  return <Tag className={cls}>{children}</Tag>
+  return <Tag className={overlayClass(isShown(k, from, to), only)}>{children}</Tag>
 }
 
-const spectacleComponents = { ...mdxComponents, Slide, Stack, Overlay, OverlaySteps }
+/** スピーカーノートは Spectacle の Notes(発表者ビュー ?presenterMode=true に出る) */
+function SpectacleNotes({ children }: { children?: ReactNode }) {
+  return <Notes>{children}</Notes>
+}
+
+/** 縦の続きの束は包まない(Spectacle のスライドは一列) */
+const spectacleComponents = { ...documentComponents, Notes: SpectacleNotes, Slide, Stack: FlatStack, Overlay }
+
+/** 「このスライドへ移る」を登録する(Spectacle の DeckContext の中で) */
+function RegisterGoTo() {
+  const { skipTo } = useContext(DeckContext)
+  useEffect(() => {
+    registerGoTo((slide) => {
+      const slideIndex = deckSlides().indexOf(slide)
+      if (slideIndex >= 0) skipTo({ slideIndex, stepIndex: 0 })
+    })
+    markReady()
+  }, [skipTo])
+  return null
+}
 
 /**
  * Spectacle のテーマ: スライドの大きさは最小サイズ(deck/slide-metrics.ts)。色と書体は本文の範囲(.deck)の規則が決める。
  * backdropStyle は Spectacle の既定(ウィンドウいっぱいに固定)を丸ごと置き換えるので、既定の値も書く
- * (無いと外枠が中身の大きさに縮み、拡大と中央寄せが効かない)。padding(Slide)はテーマの間隔の段階の番号として読まれるので、値で渡す
+ * (無いと外枠が中身の大きさに縮み、拡大と中央寄せが効かない)
  */
 const theme = {
   size: { width: MIN_WIDTH, height: SLIDE_HEIGHT },
@@ -116,15 +95,13 @@ const theme = {
 /**
  * Spectacle モード: React の部品でスライドを組むライブラリ(spectacle)。切り替えは横に滑る遷移。
  * Spectacle の機能はそのまま使える: 一覧(?overviewMode=true)、発表者ビュー(?presenterMode=true)、PDF 用の表示(?exportMode=true)。
- * 縦の続き(--)は横一列に並べる。
+ * 縦の続き(--)は横一列に並べる。まわりとの約束は deck/mode.ts。
  */
 export default function SpectacleApp({ Slides }: DeckSource) {
-  useEffect(() => {
-    document.documentElement.dataset.deckReady = ''
-  }, [])
   return (
     <Deck theme={theme} template={() => null}>
       <Slides components={spectacleComponents} />
+      <RegisterGoTo />
     </Deck>
   )
 }

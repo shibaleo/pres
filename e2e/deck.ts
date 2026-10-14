@@ -24,7 +24,7 @@ export const deckUrl = (deck: string, hash = '', query = '') =>
  */
 export async function gotoSlide(page: Page, deck: string, text: string, query = '') {
   await page.goto(deckUrl(deck, '', query))
-  await page.waitForSelector('.reveal.ready')
+  await page.waitForSelector('[data-deck-ready]')
   const hash = await page.evaluate((t) => {
     const top = [...document.querySelectorAll('.reveal .slides > section')]
     for (let h = 0; h < top.length; h++) {

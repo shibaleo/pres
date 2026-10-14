@@ -1,7 +1,7 @@
-import { useEffect, type CSSProperties } from 'react'
+import { useEffect } from 'react'
 import type { DeckSource } from '../../App'
 import { MIN_WIDTH, SLIDE_HEIGHT } from '../../deck/slide-metrics'
-import { announcePresent } from '../../components/figure/motion'
+import { announcePresent, markReady, registerGoTo } from '../../deck/mode'
 import { applyStep, currentStep } from '../marker-steps'
 import { impressComponents } from './components'
 import './impress.css'
@@ -18,8 +18,7 @@ const syncOverlays = (step: Element) => applyStep(step, currentStep(step, '.subs
 /**
  * impress モード: スライドを平面に並べ、カメラが移って拡大・縮小する(impress.js)。
  * 横の並びは右へ、縦の続き(--)は下へ置き、最後に全体を見渡す step を足す。
- * 段階表示は impress の substep で進める(components.tsx の OverlaySteps)。
- * reveal モードにある一覧・ページ番号・はみ出しの検査・PDF 出力・開発時の警告の表示は、まだ無い。
+ * 段階表示は段の印(impress の substep。components.tsx)で進める。まわりとの約束は deck/mode.ts。
  */
 export default function ImpressApp({ Slides }: DeckSource) {
   useEffect(() => {
@@ -45,8 +44,10 @@ export default function ImpressApp({ Slides }: DeckSource) {
     slides.forEach(syncOverlays)
     // impress.js は読み込むとグローバルの impress を作る(このモードのときだけ読み込む)
     import('impress.js').then(() => {
-      window.impress!('impress').init()
-      document.documentElement.dataset.deckReady = ''
+      const api = window.impress!('impress')
+      api.init()
+      registerGoTo((slide) => api.goto(slide))
+      markReady()
     })
     return () => {
       for (const name of events) document.removeEventListener(name, onChange)
@@ -61,7 +62,6 @@ export default function ImpressApp({ Slides }: DeckSource) {
       data-height={SLIDE_HEIGHT}
       data-max-scale="3"
       data-transition-duration="1000"
-      style={{ '--impress-slide-width': `${MIN_WIDTH}px`, '--impress-slide-height': `${SLIDE_HEIGHT}px` } as CSSProperties}
     >
       {/* impress は #impress の子を自分の canvas に移す。React の描く範囲をこの div の中に閉じて、移されても壊れないようにする */}
       <div className="impress-slides">

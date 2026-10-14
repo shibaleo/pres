@@ -3,6 +3,7 @@ declare module '@shower/core/lib/shower.js' {
   export default class Shower extends EventTarget {
     constructor(options?: Record<string, unknown>)
     start(): void
+    goTo(index: number): void
     readonly slides: { element: HTMLElement }[]
     readonly activeSlide: { element: HTMLElement } | undefined
     readonly isFullMode: boolean

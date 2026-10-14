@@ -586,7 +586,7 @@ html.reveal-print .reveal .figure-buttons {
   font-variant-numeric: tabular-nums;
 }
 
-/* 段階表示(components/Overlay.tsx。Beamer の \pause / <2-> / \only など) */
+/* 段階表示(reveal モードの modes/reveal/Overlay.tsx。Beamer の \pause / <2-> / \only など) */
 /* ステップ数を揃えるための見えない fragment */
 .deck .overlay-step {
   display: none !important;
@@ -596,7 +596,7 @@ html.reveal-print .reveal .figure-buttons {
 .deck .fragment.only.fade-out.visible {
   display: none;
 }
-/* 段の印で段階表示をするモード(modes/marker-steps.tsx。impress・Shower)と Spectacle モード。
+/* reveal 以外のモードの段階表示(modes/structure.tsx の overlayClass。impress・Shower・Spectacle・Swiper)。
    非表示の間も場所は残し、\only は場所も取らない。段を進める印(空の要素)は見せない */
 .deck .overlay {
   transition:
@@ -728,7 +728,7 @@ body {
 }
 
 /* スライドの最小サイズからのはみ出し(deck/overflow.ts。開発時だけ付く)。
-   最小サイズの範囲(--deck-min-width × --deck-min-height)を破線の枠で示し、その右上に超過量を出す。
+   最小サイズの範囲(--deck-slide-width × --deck-slide-height。deck/mode.ts)を破線の枠で示し、その右上に超過量を出す。
    枠もバッジも最小サイズの内側に置き、はみ出しの測定(scrollWidth / scrollHeight)を増やさない
    (増やすと、原稿を直しても警告が消えない) */
 .deck .slide.deck-overflow::before,
@@ -742,13 +742,13 @@ body {
   content: '';
   left: 0;
   box-sizing: border-box;
-  width: var(--deck-min-width);
-  height: var(--deck-min-height);
+  width: var(--deck-slide-width);
+  height: var(--deck-slide-height);
   border: calc(var(--rule) / 2) dashed red;
 }
 .deck .slide.deck-overflow::after {
   content: attr(data-deck-overflow);
-  left: var(--deck-min-width);
+  left: var(--deck-slide-width);
   translate: -100% 0;
   padding: 0 var(--space);
   font: calc(1em / var(--type-ratio) / var(--type-ratio)) / var(--leading) var(--font-ui);

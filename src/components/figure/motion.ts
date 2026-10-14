@@ -1,15 +1,5 @@
 import { useEffect, useState, type RefObject } from 'react'
-import { useReveal } from '@revealjs/react'
-
-/**
- * reveal 以外のモード(modes/)が、今のスライドが変わったときに document に送る出来事の名前。detail は今のスライドの要素
- */
-export const PRESENT_EVENT = 'deck:present'
-
-/** モードが今のスライドを知らせる(PRESENT_EVENT) */
-export function announcePresent(slide: Element) {
-  document.dispatchEvent(new CustomEvent<Element>(PRESENT_EVENT, { detail: slide }))
-}
+import { PRESENT_EVENT, presentSlide } from '../../deck/mode'
 
 /** OS で動きを控える設定(prefers-reduced-motion)になっているか。動く図はこのとき一時停止の状態で始める */
 export function prefersReducedMotion(): boolean {
@@ -18,30 +8,19 @@ export function prefersReducedMotion(): boolean {
 
 /**
  * 図が、いま表示しているスライドの中にあるか。動く図は、表示中のスライドのときだけ動きの処理を回す
- * (reveal は隠したスライドも DOM に残すので、そのままだと見えない図を毎フレーム描き直してしまう)。
+ * (ライブラリは隠したスライドも DOM に残すので、そのままだと見えない図を毎フレーム描き直してしまう)。
+ * 今のスライドは、どのモードも deck/mode.ts の announcePresent で知らせる。
  * デッキの外(テストのサーバー側の描画など)では false。
  */
 export function useOnPresentSlide(ref: RefObject<Element | null>): boolean {
-  const deck = useReveal()
   const [present, setPresent] = useState(false)
   useEffect(() => {
-    if (!deck) {
-      // reveal 以外のモード(modes/)は、今のスライドが変わると PRESENT_EVENT を送る
-      const onPresent = (e: Event) => setPresent(!!ref.current && (e as CustomEvent<Element>).detail.contains(ref.current))
-      document.addEventListener(PRESENT_EVENT, onPresent)
-      return () => document.removeEventListener(PRESENT_EVENT, onPresent)
-    }
-    const update = () => {
-      const slide = deck.getCurrentSlide() as Element | undefined
-      setPresent(!!(slide && ref.current && slide.contains(ref.current)))
-    }
-    update()
-    deck.on('ready', update)
-    deck.on('slidechanged', update)
-    return () => {
-      deck.off('ready', update)
-      deck.off('slidechanged', update)
-    }
-  }, [deck, ref])
+    const update = (slide: Element | null) => setPresent(!!slide && !!ref.current && slide.contains(ref.current))
+    // 後から描かれた図(開発時の描き直しなど)は、最後に知らされたスライドから始める
+    update(presentSlide())
+    const onPresent = (e: Event) => update((e as CustomEvent<Element>).detail)
+    document.addEventListener(PRESENT_EVENT, onPresent)
+    return () => document.removeEventListener(PRESENT_EVENT, onPresent)
+  }, [ref])
   return present
 }

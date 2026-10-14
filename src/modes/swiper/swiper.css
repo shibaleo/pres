@@ -8,10 +8,10 @@ body:has(> #root > .swiper) {
   position: fixed;
   top: 50%;
   left: 50%;
-  width: var(--swiper-slide-width);
-  height: var(--swiper-slide-height);
+  width: var(--deck-slide-width);
+  height: var(--deck-slide-height);
   translate: -50% -50%;
-  scale: var(--swiper-scale);
+  scale: var(--deck-scale);
 }
 .deck.swiper .slide {
   height: 100%;

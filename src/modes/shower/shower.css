@@ -6,8 +6,8 @@ body.shower {
 }
 /* スライド 1 枚は最小サイズ(deck/slide-metrics.ts。原稿が当てにしてよい大きさ)の固定の大きさ */
 .shower .slide {
-  width: var(--shower-slide-width);
-  height: var(--shower-slide-height);
+  width: var(--deck-slide-width);
+  height: var(--deck-slide-height);
   overflow: hidden;
   background: var(--color-canvas);
 }
@@ -31,6 +31,7 @@ body.shower {
   padding: calc(4 * var(--ui-space));
 }
 .shower.list .slide {
+  position: relative; /* はみ出しの枠(theme/base.css の .deck-overflow)の基準 */
   zoom: 0.3;
   cursor: pointer;
 }
@@ -38,7 +39,7 @@ body.shower {
   outline: calc(var(--rule) / 0.3) solid var(--color-brand);
 }
 
-/* 全画面: 今のスライドだけを、ウィンドウの中央に収まる大きさで(--shower-scale は ShowerApp.tsx が決める) */
+/* 全画面: 今のスライドだけを、ウィンドウの中央に収まる大きさで(--deck-scale は deck/mode.ts の watchFitScale が決める) */
 .shower.full {
   overflow: hidden;
 }
@@ -50,5 +51,5 @@ body.shower {
   top: 50%;
   left: 50%;
   translate: -50% -50%;
-  scale: var(--shower-scale);
+  scale: var(--deck-scale);
 }

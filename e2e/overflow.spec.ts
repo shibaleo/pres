@@ -10,16 +10,16 @@ for (const deck of allDecks) {
   test(`${deck}: どのスライドも最小サイズからはみ出さない`, async ({ page }) => {
     expect(isBuilt(deck), `dist/${deck}/index.html が無い(npm run build:single)`).toBe(true)
     await page.goto(deckUrl(deck, '', '?check-overflow'))
-    await page.waitForSelector('.reveal.ready')
+    await page.waitForSelector('[data-deck-ready]')
     await page.evaluate(() => document.fonts.ready)
     // 検査は DOM の変化とフォントの読み込みの後に走る(150ms 待って測る)。全スライドに結果が付き、落ち着くまで待つ
     await page.waitForFunction(() => {
-      const slides = [...document.querySelectorAll<HTMLElement>('.reveal .slides section:not(.stack)')]
+      const slides = [...document.querySelectorAll<HTMLElement>('.deck .slide[data-slide-line]')]
       return slides.length > 0 && slides.every((s) => s.dataset.deckOverflow !== undefined)
     })
     await page.waitForTimeout(500)
     const overflows = await page.evaluate(() =>
-      [...document.querySelectorAll<HTMLElement>('.reveal .slides section:not(.stack)')]
+      [...document.querySelectorAll<HTMLElement>('.deck .slide[data-slide-line]')]
         .filter((s) => s.dataset.deckOverflow)
         .map((s) => `${s.dataset.slideFile ?? 'deck.mdx'}:${s.dataset.slideLine} ${s.dataset.deckOverflow}`),
     )

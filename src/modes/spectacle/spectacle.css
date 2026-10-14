@@ -8,3 +8,6 @@
 .spectacle-body > .slide {
   overflow: hidden;
 }
+.spectacle-body > .slide {
+  position: relative; /* はみ出しの枠(theme/base.css の .deck-overflow)の基準 */
+}

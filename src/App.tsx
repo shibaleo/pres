@@ -1,11 +1,10 @@
-import { useEffect, useRef, useState, type ComponentType } from 'react'
+import { useRef, type ComponentType } from 'react'
 import { Deck, useReveal } from '@revealjs/react'
 import RevealNotes from 'reveal.js/plugin/notes'
 import Menu from './components/Menu'
-import { mdxComponents } from './deck/mdx-components'
-import { watchOverflow, type Overflow } from './deck/overflow'
-import DevDiagnostics from './deck/DevDiagnostics'
+import { announcePresent, markReady, registerGoTo } from './deck/mode'
 import { isHandout, isPrint, useSlideSize } from './deck/slide-size'
+import { revealComponents } from './modes/reveal/components'
 
 type RevealApi = NonNullable<ReturnType<typeof useReveal>>
 
@@ -21,17 +20,13 @@ export type DeckSource = {
 const SLIDE_KEY = `deck-slide-index:${location.pathname}`
 
 /**
- * デッキ本体。スライド機構 (ナビ・番号・hash・PDF出力) は reveal.js が担当し、
+ * reveal モード(既定のモード)。スライド機構 (ナビ・番号・hash・PDF出力) は reveal.js が担当し、
  * スライドの中身はデッキの decks/<名前>/deck.mdx(--- / -- で区切った原稿。<Slide> / <Stack> への変換は
- * vite/remark-beamer が行う)。
+ * vite/remark-beamer が行い、その実体は modes/reveal/components.tsx)。まわりとの約束は deck/mode.ts。
  */
-export default function App({ Slides, warnings }: DeckSource) {
+export default function App({ Slides }: DeckSource) {
   const deckRef = useRef<RevealApi | null>(null)
-  const stopOverflow = useRef<(() => void) | null>(null)
-  // はみ出したスライドの一覧(開発時の画面右上に出す)
-  const [overflows, setOverflows] = useState<Overflow[]>([])
   const { width, height } = useSlideSize()
-  useEffect(() => () => stopOverflow.current?.(), [])
 
   return (
     <Deck
@@ -59,6 +54,12 @@ export default function App({ Slides, warnings }: DeckSource) {
       plugins={[RevealNotes]}
       onReady={(deck) => {
         deckRef.current = deck
+        registerGoTo((slide) => {
+          const { h, v } = deck.getIndices(slide)
+          deck.slide(h, v)
+        })
+        announcePresent(deck.getCurrentSlide())
+        markReady()
         if (isPrint) {
           // 印刷用の表示では、reveal はページ番号を通し番号だけで書く。画面と同じ「i/全体」に書き直す。
           // i と全体は PDF のページで数える(段階表示のあるスライドはステップごとに 1 ページ、
@@ -73,11 +74,7 @@ export default function App({ Slides, warnings }: DeckSource) {
           deck.on('pdf-ready', numberPages)
           numberPages()
         }
-        // 印刷用の表示(?print-pdf)はページの大きさが最小サイズと違うので、はみ出しの検査などはしない
-        if (isPrint) return
-        // はみ出しの検査は開発時と、ビルドしたデッキを ?check-overflow で開いたとき(e2e/overflow.spec.ts)
-        if (import.meta.env.DEV || new URLSearchParams(location.search).has('check-overflow')) stopOverflow.current = watchOverflow(deck, setOverflows)
-        if (!import.meta.env.DEV) return
+        if (isPrint || !import.meta.env.DEV) return
         const saved = sessionStorage.getItem(SLIDE_KEY)
         if (saved) {
           const [h, v] = saved.split(',').map(Number)
@@ -85,15 +82,15 @@ export default function App({ Slides, warnings }: DeckSource) {
         }
       }}
       onSlideChange={() => {
+        if (deckRef.current) announcePresent(deckRef.current.getCurrentSlide())
         if (import.meta.env.DEV && deckRef.current) {
           const { h, v } = deckRef.current.getIndices()
           sessionStorage.setItem(SLIDE_KEY, `${h},${v ?? 0}`)
         }
       }}
     >
-      <Slides components={mdxComponents} />
+      <Slides components={revealComponents} />
       <Menu />
-      {import.meta.env.DEV && <DevDiagnostics warnings={warnings} overflows={overflows} onJump={(h, v) => deckRef.current?.slide(h, v)} />}
     </Deck>
   )
 }

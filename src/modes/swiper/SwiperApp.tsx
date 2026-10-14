@@ -1,4 +1,4 @@
-import { useEffect, useRef, type CSSProperties, type ReactNode } from 'react'
+import { useEffect, useRef } from 'react'
 import Swiper from 'swiper'
 import { A11y, EffectCards, EffectCoverflow, EffectCreative, EffectCube, EffectFade, EffectFlip } from 'swiper/modules'
 import type { SwiperOptions } from 'swiper/types'
@@ -10,34 +10,28 @@ import 'swiper/css/effect-cube'
 import 'swiper/css/effect-fade'
 import 'swiper/css/effect-flip'
 import type { DeckSource } from '../../App'
-import { announcePresent } from '../../components/figure/motion'
-import { mdxComponents } from '../../deck/mdx-components'
-import { MIN_WIDTH, SLIDE_HEIGHT } from '../../deck/slide-metrics'
+import { documentComponents } from '../../deck/mdx-components'
+import { announcePresent, markReady, registerGoTo, watchFitScale } from '../../deck/mode'
 import { Overlay, applyStep } from '../marker-steps'
+import { FlatStack, slideAttributes, stepsOf, type SlideProps } from '../structure'
 import './swiper.css'
 
-/** スライド 1 枚 = Swiper の .swiper-slide(Swiper は、ループを使わなければスライドの DOM を動かさない) */
-function Slide({ h: _h, v: _v, children, ...rest }: { h?: number | string; v?: number | string; children?: ReactNode }) {
+/**
+ * スライド 1 枚 = Swiper の .swiper-slide(Swiper は、ループを使わなければスライドの DOM を動かさない)。
+ * Swiper には段階表示が無いので、段はこのモードが持つ。段の数は data-steps に置いて読む(slideSteps)
+ */
+function Slide(props: SlideProps) {
   return (
-    <section className="swiper-slide slide" {...rest}>
-      {children}
+    <section className="swiper-slide slide" data-steps={stepsOf(props)} {...slideAttributes(props)}>
+      {props.children}
     </section>
   )
 }
 
-/** 縦の続きの束。Swiper のスライドは一列なので、包まずに並べる */
-function Stack({ children }: { children?: ReactNode }) {
-  return <>{children}</>
-}
+/** 縦の続きの束は包まない(Swiper のスライドは一列) */
+const swiperComponents = { ...documentComponents, Slide, Stack: FlatStack, Overlay }
 
-/** スライドの段の数。Swiper には段階表示が無いので、段はこのモードが持つ(下の stepsOf で読む) */
-function OverlaySteps({ max }: { max: number | string }) {
-  return <span className="overlay-step" data-steps={max} />
-}
-
-const swiperComponents = { ...mdxComponents, Slide, Stack, Overlay, OverlaySteps }
-
-const stepsOf = (slide: Element) => Number(slide.querySelector<HTMLElement>('[data-steps]')?.dataset.steps ?? 1)
+const slideSteps = (slide: HTMLElement) => Number(slide.dataset.steps ?? 1)
 
 /**
  * 切り替えの演出(Swiper の effect)。URL の &effect=<名前> で選ぶ(既定は slide。選び方は仮)。
@@ -71,9 +65,7 @@ export default function SwiperApp({ Slides }: DeckSource) {
   useEffect(() => {
     const el = container.current!
     // 全体の倍率: 最小サイズのスライドがウィンドウに収まる最大(Swiper は倍率をかける前の大きさで組む)
-    const resize = () => el.style.setProperty('--swiper-scale', String(Math.min(innerWidth / MIN_WIDTH, innerHeight / SLIDE_HEIGHT)))
-    resize()
-    addEventListener('resize', resize)
+    const stopFit = watchFitScale()
 
     const effect = new URLSearchParams(location.search).get('effect') ?? 'slide'
     if (!(effect in EFFECTS)) console.warn(`[deck] 演出「${effect}」はありません(${Object.keys(EFFECTS).join('・')})`)
@@ -96,7 +88,7 @@ export default function SwiperApp({ Slides }: DeckSource) {
     swiper.on('slideChange', () => {
       const i = swiper.activeIndex
       const slide = slides()[i]
-      show(i, i < previous ? stepsOf(slide) : 1)
+      show(i, i < previous ? slideSteps(slide) : 1)
       previous = i
       announcePresent(slide)
     })
@@ -105,7 +97,7 @@ export default function SwiperApp({ Slides }: DeckSource) {
     const next = () => {
       const i = swiper.activeIndex
       const k = step.get(i) ?? 1
-      if (k < stepsOf(slides()[i])) show(i, k + 1)
+      if (k < slideSteps(slides()[i])) show(i, k + 1)
       else swiper.slideNext()
     }
     const prev = () => {
@@ -135,20 +127,20 @@ export default function SwiperApp({ Slides }: DeckSource) {
       run()
     }
     document.addEventListener('keydown', onKey)
-    document.documentElement.dataset.deckReady = ''
+    registerGoTo((slide) => {
+      const i = slides().indexOf(slide)
+      if (i >= 0) swiper.slideTo(i)
+    })
+    markReady()
     return () => {
       document.removeEventListener('keydown', onKey)
-      removeEventListener('resize', resize)
+      stopFit()
       swiper.destroy(true, false)
     }
   }, [])
 
   return (
-    <div
-      ref={container}
-      className="swiper deck"
-      style={{ '--swiper-slide-width': `${MIN_WIDTH}px`, '--swiper-slide-height': `${SLIDE_HEIGHT}px` } as CSSProperties}
-    >
+    <div ref={container} className="swiper deck">
       <div className="swiper-wrapper">
         <Slides components={swiperComponents} />
       </div>

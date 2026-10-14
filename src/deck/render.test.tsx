@@ -10,7 +10,7 @@
 import type { ComponentType } from 'react'
 import { describe, expect, it } from 'vitest'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { mdxComponents } from './mdx-components'
+import { revealComponents } from '../modes/reveal/components'
 import { slideTitle } from './slide-title'
 
 type DeckModule = { default: ComponentType<Record<string, unknown>>; deckWarnings: { file?: string; line?: number; message: string }[] }
@@ -21,7 +21,7 @@ const decks = Object.entries(modules).map(([path, mod]) => ({ name: path.split('
 const seen = { theorem: 0, eqref: 0, cite: 0, math: 0, table: 0, image: 0, fragment: 0, frame: 0, slideLink: 0 }
 
 describe.each(decks)('$name', ({ name, mod }) => {
-  const html = renderToStaticMarkup(<mod.default components={mdxComponents} />)
+  const html = renderToStaticMarkup(<mod.default components={revealComponents} />)
   const root = document.createElement('div')
   root.innerHTML = html
   const deckWarnings = mod.deckWarnings

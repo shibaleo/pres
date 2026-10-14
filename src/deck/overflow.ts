@@ -1,37 +1,29 @@
-import type { useReveal } from '@revealjs/react'
+import { deckSlides } from './mode'
 import { MIN_WIDTH, SLIDE_HEIGHT } from './slide-size'
 
-// デッキの API の型は、App と同じく @revealjs/react の useReveal の戻り値から取る
-type RevealApi = NonNullable<ReturnType<typeof useReveal>>
-
-/** はみ出したスライド(原稿の位置・超過の内容・reveal の並びでの位置) */
-export type Overflow = { file: string; line: string; message: string; h: number; v: number }
+/** はみ出したスライド(原稿の位置・超過の内容・文書の順での番号(deckSlides の何番目か)) */
+export type Overflow = { file: string; line: string; message: string; index: number }
 
 /**
  * 開発時(と、ビルドしたデッキを ?check-overflow で開いたとき。e2e/overflow.spec.ts): スライドの最小サイズ(MIN_WIDTH × SLIDE_HEIGHT)からはみ出したスライドを検出する。
+ * どのモードでも同じ(スライドは deckSlides。モードとの約束は deck/mode.ts)。
  *
- * スライドはウィンドウ全体を覆うので、いま見えている大きさで測ると見落とす
- * (縦長のウィンドウなら縦に、横長なら横に広がって収まって見え、横長では行の折り返しも減って低くなる)。
+ * スライドは窓に合わせて広がったり(reveal)、縮小して並べられたり(Shower の一覧)するので、いま見えている大きさで測ると見落とす。
  * そこで検査のときだけスライドを最小の幅で組み直して縦横を測り、すぐ戻す(描画の前に戻るので画面には出ない)。
  *
- * reveal ははみ出し部分を黙って切るので、気づけるように
+ * ライブラリははみ出し部分を黙って切るので、気づけるように
  *   - 最小サイズの範囲に赤い破線の枠と超過量のバッジ(theme/base.css の .deck-overflow)
  *   - 開発時の画面右上の一覧(deck/DevDiagnostics.tsx。押すとそのスライドへ)と、開発サーバーの端末
  *   - 開発サーバーにつながっていないとき(ビルドしたデッキを ?check-overflow で開いたとき)はコンソールに警告
  * を出す。本文の変更(HMR)やフォント読み込みで大きさが変わるので、DOM 変化のたびに測り直す。
  */
-
-export function watchOverflow(deck: RevealApi, onChange?: (overflows: Overflow[]) => void): () => void {
+export function watchOverflow(onChange?: (overflows: Overflow[]) => void): () => void {
   const reported = new Map<string, string>()
   let last = ''
-  // 枠の大きさを CSS に渡す
-  const slides = deck.getSlidesElement()!
-  slides.style.setProperty('--deck-min-width', `${MIN_WIDTH}px`)
-  slides.style.setProperty('--deck-min-height', `${SLIDE_HEIGHT}px`)
 
   const check = () => {
     const overflows: Overflow[] = []
-    for (const slide of deck.getSlides() as HTMLElement[]) {
+    deckSlides().forEach((slide, index) => {
       const { width, height, code } = measureAtMinimum(slide)
       const excess = [
         height - SLIDE_HEIGHT > 1 && `縦 ${height - SLIDE_HEIGHT}px`,
@@ -50,11 +42,8 @@ export function watchOverflow(deck: RevealApi, onChange?: (overflows: Overflow[]
       if (!import.meta.hot && message && reported.get(path) !== message) console.warn(`[deck] ${path} が${message}ています`)
       if (message) reported.set(path, message)
       else reported.delete(path)
-      if (message) {
-        const { h, v } = deck.getIndices(slide)
-        overflows.push({ file: slide.dataset.slideFile ?? 'deck.mdx', line: slide.dataset.slideLine ?? '?', message, h, v: v ?? 0 })
-      }
-    }
+      if (message) overflows.push({ file: slide.dataset.slideFile ?? 'deck.mdx', line: slide.dataset.slideLine ?? '?', message, index })
+    })
     // 変わったときだけ知らせる(開発時の一覧と、開発サーバーの端末。vite.config.ts の decksPlugin が受け取る)
     const now = JSON.stringify(overflows)
     if (now === last) return
@@ -69,8 +58,8 @@ export function watchOverflow(deck: RevealApi, onChange?: (overflows: Overflow[]
     timer = window.setTimeout(check, 150)
   }
   const observer = new MutationObserver(schedule)
-  // 属性の変化(reveal の present/past 切替や、ここで付ける class・style)には反応しない
-  observer.observe(slides, { childList: true, subtree: true, characterData: true })
+  // 属性の変化(ライブラリが付ける今のスライドの class や、ここで付ける class・style)には反応しない
+  observer.observe(document.getElementById('root')!, { childList: true, subtree: true, characterData: true })
   document.fonts.ready.then(schedule)
   schedule()
 
@@ -82,20 +71,23 @@ export function watchOverflow(deck: RevealApi, onChange?: (overflows: Overflow[]
 
 /**
  * スライドを最小の幅で組んだときの中身の縦横(はみ出しを含む)と、コード(pre)の枠の中の横のはみ出しの最大。
- * コードの枠は reveal が overflow: auto にするので、長い行は枠の中でスクロールになり、スライドの大きさには出ない
- * (発表では行の続きが見えない)。reveal は今のスライドから遠いものを描かない(display:none。縦のスライドは束ごと)ので、
- * 測る間だけ表示状態にする
+ * コードの枠は overflow: auto なので、長い行は枠の中でスクロールになり、スライドの大きさには出ない(発表では行の続きが見えない)。
+ * ライブラリは今のスライドから遠いものを描かないことがある(display: none。スライドにも、それを包む要素にも付く)ので、
+ * 測る間だけ表示し、縮小(zoom。Shower の一覧)も外す
  */
 function measureAtMinimum(slide: HTMLElement): { width: number; height: number; code: number } {
-  const stack = slide.parentElement?.closest('section')
-  const shown = stack ? [slide, stack] : [slide]
-  const prevDisplay = shown.map((el) => el.style.display)
-  const prevWidth = slide.style.width
-  for (const el of shown) el.style.display = 'block'
+  const hidden: HTMLElement[] = []
+  for (let el: HTMLElement | null = slide; el && el !== document.body; el = el.parentElement) {
+    if (getComputedStyle(el).display === 'none') hidden.push(el)
+  }
+  const prev = { display: hidden.map((el) => el.style.display), width: slide.style.width, zoom: slide.style.zoom }
+  for (const el of hidden) el.style.display = 'block'
   slide.style.width = `${MIN_WIDTH}px`
+  slide.style.zoom = '1'
   const code = Math.max(0, ...[...slide.querySelectorAll('pre')].map((p) => p.scrollWidth - p.clientWidth))
   const size = { width: slide.scrollWidth, height: slide.scrollHeight, code }
-  slide.style.width = prevWidth
-  shown.forEach((el, i) => (el.style.display = prevDisplay[i]))
+  slide.style.width = prev.width
+  slide.style.zoom = prev.zoom
+  hidden.forEach((el, i) => (el.style.display = prev.display[i]))
   return size
 }

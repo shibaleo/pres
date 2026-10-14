@@ -62,16 +62,16 @@ export async function checkOverflow(html) {
   try {
     const page = await browser.newPage()
     await page.goto(pathToFileURL(html).href + '?check-overflow')
-    await page.waitForSelector('.reveal.ready')
+    await page.waitForSelector('[data-deck-ready]')
     await page.evaluate(() => document.fonts.ready)
     await page.waitForFunction(() => {
-      const slides = [...document.querySelectorAll('.reveal .slides section:not(.stack)')]
+      const slides = [...document.querySelectorAll('.deck .slide[data-slide-line]')]
       return slides.length > 0 && slides.every((s) => s.dataset.deckOverflow !== undefined)
     })
     await page.waitForTimeout(500) // フォントの読み込みの後の測り直しが落ち着くまで
     // await してから返す(finally でブラウザを閉じる前に結果を受け取る)
     return await page.evaluate(() =>
-      [...document.querySelectorAll('.reveal .slides section:not(.stack)')]
+      [...document.querySelectorAll('.deck .slide[data-slide-line]')]
         .filter((s) => s.dataset.deckOverflow)
         .map((s) => ({ file: s.dataset.slideFile ?? 'deck.mdx', line: s.dataset.slideLine ?? '?', message: s.dataset.deckOverflow })),
     )

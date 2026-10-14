@@ -10,8 +10,8 @@ body.impress-enabled {
 }
 /* スライド 1 枚は最小サイズ(deck/slide-metrics.ts。原稿が当てにしてよい大きさ)の固定の大きさ */
 #impress .slide {
-  width: var(--impress-slide-width);
-  height: var(--impress-slide-height);
+  width: var(--deck-slide-width);
+  height: var(--deck-slide-height);
   overflow: hidden;
   background: var(--color-canvas);
 }

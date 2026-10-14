@@ -1,6 +1,9 @@
 import React, { lazy, Suspense, type ComponentType } from 'react'
 import { createRoot } from 'react-dom/client'
 import App, { type DeckSource } from './App'
+import DevDiagnostics from './deck/DevDiagnostics'
+import { setSlideSizeVariables } from './deck/mode'
+import { isPrint } from './deck/slide-size'
 
 /**
  * モード(スライドを動かすライブラリ。docs/motion.md)。既定は reveal。ほかは試作で、URL の ?mode=<名前> で選ぶ(選び方は仮)。
@@ -45,6 +48,10 @@ export function startDeck(deck: DeckSource): (next: DeckSource) => void {
   const preset = getComputedStyle(document.documentElement).getPropertyValue('--deck-preset').trim()
   if (preset) document.documentElement.dataset.preset = preset
 
+  setSlideSizeVariables()
+  // はみ出しの検査は開発時と、ビルドしたデッキを ?check-overflow で開いたとき(e2e/overflow.spec.ts)。
+  // 印刷用の表示(?print-pdf)はページの大きさが最小サイズと違うので検査しない
+  const check = (import.meta.env.DEV || new URLSearchParams(location.search).has('check-overflow')) && !isPrint
   const name = modeName()
   if (!(name in MODES)) console.warn(`[deck] モード「${name}」はありません(${Object.keys(MODES).join('・')})。reveal で開きます`)
   const Mode = MODES[name] ?? App
@@ -55,6 +62,7 @@ export function startDeck(deck: DeckSource): (next: DeckSource) => void {
         <Suspense>
           <Mode {...d} />
         </Suspense>
+        <DevDiagnostics warnings={d.warnings} check={check} />
       </React.StrictMode>,
     )
   render(deck)

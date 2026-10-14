@@ -5,7 +5,7 @@
  *  2. 環境           \begin{theorem}[名前] … \end{theorem} を <Theorem> に、\pause 以降を <Overlay> に
  *  3. 番号付け       スライドの題に節番号、定理型の環境にデッキ全体の通し番号。式の番号は MathJax(tags: 'ams')に任せる
  *  4. 文中の命令     \ref \eqref \label \cite \only \uncover …
- *  5. 段階表示       Beamer の overlay 指定を reveal の fragment(<Overlay>)に。ステップ数は Beamer と揃える
+ *  5. 段階表示       Beamer の overlay 指定と <Fragment> を <Overlay from to> に。スライドの段の数(<Slide steps>)は Beamer と揃える
  *
  * 引用は rehype-citation の入力形式([@a; @b])に変換して、番号付け・整形はそちらに任せる。
  * エラーは file.fail、警告は file.message(unified の標準)。位置は構文解析器が付けた元の行。
@@ -481,11 +481,16 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
           const to = getAttr(o, 'to')
           if (to !== undefined && Number(to) >= steps.max) setAttr(o, 'to', undefined)
         }
-        if (steps.max >= 2) root.children.push(jsxFlow('OverlaySteps', { max: steps.max }, []))
         const line = nodes[0]?.position?.start.line
-        // h・v はスライドの並び(横の位置と、縦の続き(--)の中の位置。モードがスライドを置く場所を決めるのに使う)。
+        // h・v はスライドの並び(横の位置と、縦の続き(--)の中の位置。モードがスライドを置く場所を決めるのに使う)、
+        // steps は段の数(Beamer と同じ数え方。段階表示の無いスライドは 1)。
         // data-slide-line / data-slide-file は開発時のはみ出し警告で原稿の位置を示すため(\input で取り込んだスライドはそのファイル)
-        return jsxFlow('Slide', { h, v, 'data-slide-line': line, 'data-slide-file': sourceOf(nodes[0])?.file }, root.children, nodes[0]?.position)
+        return jsxFlow(
+          'Slide',
+          { h, v, steps: steps.max, 'data-slide-line': line, 'data-slide-file': sourceOf(nodes[0])?.file },
+          root.children,
+          nodes[0]?.position,
+        )
       })
       return els.length === 1 ? els[0] : jsxFlow('Stack', {}, els)
     })
