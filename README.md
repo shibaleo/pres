@@ -2,6 +2,7 @@
 
 reveal.js プレゼンテーション。**MDX + TSX** で執筆し、可視化はすべて React コンポーネント。
 ビルドすると **単一 HTML ファイル**（CDN依存ゼロ・ダブルクリックで起動）になります。
+1 つのリポジトリに**複数のデッキ**（`decks/<名前>/`）を置き、部品・見た目の土台・記法の処理を共有します。
 
 > 旧版は AsciiDoc + Asciidoctor で書かれていました。可視化コードのグローバルスコープ問題を解消するため、
 > コンポーネント指向の MDX/React スタックへ全面移行しました。旧構成は git 履歴に残っています。
@@ -15,19 +16,20 @@ reveal.js プレゼンテーション。**MDX + TSX** で執筆し、可視化�
   unified の標準の作り方（micromark の構文拡張 + 構文木の変換）で行い、数式の番号は MathJax、
   引用は rehype-citation、MDX のコンパイルは `@mdx-js/rollup` が担う。
 - **不完全な原稿から成果物を作らない**。エラーは補わずに原稿の位置付きで報告する。
-- **土台は用途に特化しない**。このリポジトリはテンプレートで、数学の資料にも業務マニュアルにも使える汎用の
-  見た目と機能だけを持つ。用途への特化は各クローンの `src/custom.css`（とプリセット）で行う。
+- **土台は用途に特化しない**。部品（`src/components`）・見た目の土台（`src/theme`）・記法の処理（`vite/`）は
+  数学の資料にも業務マニュアルにも使える汎用のものだけを持ち、すべてのデッキで共有する。
+  用途への特化は各デッキの `decks/<名前>/style.css`（とプリセット）で行う。
 
 ## 技術スタック
 
 | 領域 | 採用 |
 |---|---|
-| 執筆 | MDX (`src/slides.mdx` と `\input` で取り込むファイル) + TSX |
+| 執筆 | MDX (`decks/<名前>/deck.mdx` と `\input` で取り込むファイル) + TSX |
 | ビルド | Vite 8 + `@mdx-js/rollup`（React 19・TypeScript 7・Vitest 5） |
 | スライド | reveal.js 6 (`@revealjs/react`) |
 | 記法 | `vite/remark-beamer/`（LaTeX / Beamer 風記法の remark プラグイン） |
 | 数式 | `remark-math` + MathJax 3（SVG。式番号・`\label`・`\eqref` は AMS の規則。後ろにある式への参照も解決する。字形は文書全体で 1 回だけ持ち、各数式には画面に見えない MathML（assistive MathML）を添える） |
-| 文献 | BibTeX (`src/references.bib`) + `rehype-citation`（CSL: NLM/Vancouver 角括弧版。公式リポジトリの `src/csl/nlm-citation-sequence-brackets.csl`） |
+| 文献 | BibTeX (`decks/<名前>/references.bib`) + `rehype-citation`（CSL: NLM/Vancouver 角括弧版。公式リポジトリの `src/csl/nlm-citation-sequence-brackets.csl`） |
 | その他 | Tailwind CSS v4 |
 | 図 | visx（React + D3 の SVG の部品）で React コンポーネント化。点や線のドラッグ・スライダーで操作できる |
 | 配布 | `vite-plugin-singlefile` で単一 HTML 化、フォントは subset woff2 |
@@ -39,47 +41,62 @@ reveal.js プレゼンテーション。**MDX + TSX** で執筆し、可視化�
 ## セットアップ / コマンド
 
 ```bash
-npm install          # 依存インストール
-npm run dev          # 開発サーバー(HMR)
-npm run build        # 通常ビルド → dist/ (静的ファイル群、ホスティング向け)
-npm run build:single # 単一ファイルビルド → dist/index.html 1枚に全インライン
-npm run preview      # ビルド結果をプレビュー
-npm run subset       # フォントを使用文字だけに再サブセット(下記)
-npm run typecheck    # 型チェック(ブラウザ側 tsconfig.json + ビルド側 tsconfig.node.json)
-npm run test         # テスト(Vitest)。transform: 記法の変換とビルド設定 / render: デッキを実際に描いて番号・参照・構造を確かめる
-npm run test:e2e     # e2e テスト(Playwright)。ビルドした dist/index.html を Chrome で開き、図の操作と PDF 用の表示を確かめる
-npm run check        # typecheck + test + build:single + test:e2e。コミット前に実行する
-npm run shots        # build:single のあと、PDF 用の表示の全ページを screenshots/NN.png に、一覧を screenshots/all.png に撮る(見た目の確認用。git には入れない)
-                     # node scripts/screenshots.mjs --handout で配布用の表示を screenshots/handout/ に撮る
-npm run pdf          # build:single のあと、PDF を pdf/slides.pdf(段階表示はステップごと)と pdf/handout.pdf(配布用)に書き出す
+npm install                    # 依存インストール
+npm run decks                  # デッキの一覧
+npm run new -- <名前>          # デッキを作る(decks/<名前>/ に deck.mdx と style.css。名前は英小文字・数字・ハイフン)
+npm run dev                    # 開発サーバー(HMR)。全デッキを 1 つのサーバーで配信し、/<名前>/ がそのデッキ、/ が一覧
+npm run build [-- <名前>...]   # ビルド → dist/<名前>/(静的ファイル群、ホスティング向け)。名前を省くと全デッキ
+npm run build:single [-- <名前>...]  # 単一ファイルビルド → dist/<名前>/index.html 1 枚に全インライン
+npm run shots [-- <名前>...]   # 単一ファイルをビルドし、PDF 用の表示の全ページを screenshots/<名前>/NN.png に、一覧を all.png に撮る
+                               # (見た目の確認用。git には入れない。--handout で配布用の表示を screenshots/<名前>/handout/ に)
+npm run pdf [-- <名前>...]     # 単一ファイルをビルドし、pdf/<名前>.pdf(段階表示はステップごと)と pdf/<名前>-handout.pdf(配布用)を書き出す
+npm run preview                # ビルド結果をプレビュー(/<名前>/ でデッキ)
+npm run subset                 # フォントを全デッキで使う文字だけに再サブセット(下記)
+npm run typecheck              # 型チェック(ブラウザ側 tsconfig.json + ビルド側 tsconfig.node.json + e2e)
+npm run test                   # テスト(Vitest)。transform: 記法の変換とビルド設定 / render: 全デッキを実際に描いて番号・参照・構造を確かめる
+npm run test:e2e               # e2e テスト(Playwright)。ビルドしたデッキを Chrome で開き、全デッキのはみ出しと書体、legendre の図の操作、landau の PDF 用の表示を確かめる
+npm run check                  # typecheck + test + build:single(全デッキ) + test:e2e。コミット前に実行する
 ```
 
-`build` / `build:single` は先頭で自動的に `subset` を実行します。
+- デッキの名前はコマンドの引数で渡します（`npm run build -- landau`）。環境変数は使いません。
+  中身は `scripts/deck.mjs` で、Vite を JS の API で呼び、`vite.config.ts` の `deckConfig` にデッキの名前を引数として渡します
+  （Vite のコマンドは任意の引数を設定に渡せないので、`vite build` を直接は使いません）。
+- `build` / `build:single` / `shots` / `pdf` は先頭で自動的に `subset` を実行します。
+- ビルドでは原稿の警告も失敗扱いです。警告があってもビルドするときは `npm run build -- <名前> --allow-warnings`。
 
 ## ディレクトリ構成
 
 ```
-src/
-  slides.mdx           スライド原稿の主ファイル(--- で横、-- で縦に区切る)
-  slides/              \input{…} で取り込む原稿(guide.mdx: 記法の一覧、typography.mdx: 書き方の見本、manual.mdx: 業務マニュアルの見本)
-  references.bib       BibTeX 文献データ
+decks/                 デッキ(1 フォルダ = 1 デッキ。vite/decks.js)。どれも具体的な資料で、それぞれ別の見本を兼ねる
+  <名前>/
+    deck.mdx           原稿の主ファイル(--- で横、-- で縦に区切る。必須)
+    style.css          このデッキの見た目の特化(プリセットの読み込み・トークンの上書き。必須)
+    references.bib     BibTeX 文献データ(\cite を使うデッキだけ)
+    slides/ img/       \input{…} で取り込む原稿 / このデッキの画像(原稿から ./img/… で import する)
+  landau/              複雑な数式の見本。Landau 減衰の線形計算(C. Villani『Birth of a Theorem』第 4 章の草稿の導出)と、
+                       付録「この資料の書き方」(slides/guide.mdx: 記法の一覧・定理環境・align・段階表示・可換図式)
+  legendre/            画像と SVG の見本。ルジャンドル部分多様体の母関数(卒業研究の発表を組み直したもの)。
+                       元の資料の画像(img/)と操作できる SVG の図、付録に図の部品(4 点・対数螺旋・地球儀・d3)
+  trial-balance/       表組の見本。試算表の作成(右揃えの金額・合計の行・表の題)
+  manual/              形式的な文書の見本。記帳業務の手順書(目的・手順・注意・用語・枠の使い分け)
+index.html             全デッキで共通の器(題と入口のスクリプトは vite.config.ts がデッキごとに入れる)
+src/                   全デッキで共有する部品・見た目・デッキ本体
   csl/                 引用スタイル(CSL。公式リポジトリのものをそのまま置く)
   App.tsx              デッキ本体(<Deck> に原稿と <Menu> を合成)
-  main.tsx             エントリ。reveal とテーマの CSS を読み込む
-  theme/               見た目(テンプレート側)。詳しくは「見た目のカスタマイズ」
-    index.css          入口(tokens → base → custom の順に読み込む)
+  main.tsx             起動(reveal と土台の CSS を読み込み、デッキの入口から原稿を受け取って描く)
+  theme/               見た目の土台。詳しくは「見た目のカスタマイズ」
+    index.css          入口(tokens → base の順に読み込む。この後にデッキの style.css が入る)
     tokens.css         トークンの既定値(色・書体・文字の段階・間隔)
     base.css           汎用の規則(トークンから導いた値だけを使う)
     fonts.css          土台の書体(本文の明朝 Noto Serif JP・見出しと強調のゴシック Noto Sans JP・等幅・図のラベルの数式用 New Computer Modern Math)
     presets/math.css   数学向けのプリセット(欧文と数字を New Computer Modern に)
     presets/manual.css 業務マニュアル向けのプリセット(本文もゴシック・太さで強調・等幅数字・手順の番号を太く)
-  custom.css           クローンごとの特化(テンプレートは中身を書かない)
   deck/
     mdx-components.tsx 原稿から import なしで使える部品の一覧
-    slide-size.ts      スライドの論理サイズ(ウィンドウ全体を覆う。原稿が当てにできるのは最小 933×700)
-    overflow.ts        開発時のはみ出し検出
+    slide-size.ts      スライドの論理サイズ(ウィンドウ全体を覆う。原稿が当てにできるのは最小 933×700。slide-metrics.ts)
+    overflow.ts        はみ出しの検出(開発時と、ビルドしたデッキを ?check-overflow で開いたとき)
     slide-title.ts     スライドの題(メニューに出す文字。見出しの文字そのもの)
-    render.test.tsx    デッキを実際に描いて確かめるテスト(節番号・メニュー・参照・数式・文献・構造)
+    render.test.tsx    全デッキを実際に描いて確かめるテスト(節番号・メニュー・参照・数式・文献・構造)
     DevDiagnostics.tsx 開発時の原稿警告の一覧
   components/          可視化・UI コンポーネント
     BarChart / ConnectedScatterplot / Globe / FourPoints / LogSpiral
@@ -88,9 +105,11 @@ src/
     Overlay            Beamer の段階表示(\pause, <2-> …)の変換先
     Notes              スピーカーノート
     Menu               左下ハンバーガー → スライド一覧サイドバー
-  data/ fonts/ img/    図表データ / subset 済み woff2 / 画像
+  data/ fonts/         図表データ / subset 済み woff2(全デッキの文字の和)
+vite.config.ts         Vite の設定(deckConfig: デッキの名前を受け取ってビルドの設定にする。引数なしは全デッキの開発サーバー)
 vite/
-  mdx-options.ts       MDX のコンパイル設定(remark / rehype プラグインの構成)
+  decks.js             デッキの一覧と場所(vite.config.ts と scripts/ が共有)
+  mdx-options.ts       MDX のコンパイル設定(remark / rehype プラグインの構成。文献は原稿の属するデッキのもの)
   rehype-mathjax-document.ts  数式を 1 つの MathJax 文書として描く(後ろにある式への参照も解決)
   remark-beamer/       LaTeX / Beamer 風記法の remark プラグイン
     syntax.ts          micromark の構文拡張(どこからどこまでが記法か)
@@ -99,7 +118,10 @@ vite/
     rehype-math-errors.ts  MathJax の数式エラーを原稿の位置で報告
 e2e/                   e2e テスト(Playwright。入っている Chrome を使う)
 fonts-src/             サブセット元のフルフォント(.ttf / .otf)とライセンス。ビルド成果物には含めない
-scripts/subset-fonts.mjs  フォントサブセット化スクリプト
+scripts/
+  deck.mjs             デッキのコマンド(list / new / dev / build / shots / pdf。npm run の各コマンドが呼ぶ)
+  capture.mjs          撮影と PDF の書き出し(ビルドした単一 HTML を Chrome で開く)
+  subset-fonts.mjs     フォントサブセット化スクリプト
 ```
 
 ## 執筆方法
@@ -107,8 +129,18 @@ scripts/subset-fonts.mjs  フォントサブセット化スクリプト
 記法は 3 層です。**本文は Markdown、構造と数学は LaTeX / Beamer、図や自由なレイアウトは MDX(JSX)**。
 LaTeX / Beamer 風の記法はすべて JSX の部品に変換されるので、同じことを JSX でも書けます。
 
+### デッキ
+1 つのデッキは `decks/<名前>/` の 1 フォルダです。`npm run new -- <名前>` で、原稿の主ファイル `deck.mdx` と
+見た目の特化 `style.css` の雛形を作ります。`npm run dev` を起動しておけば、`http://localhost:5173/<名前>/` で開けます
+（一覧は `/`）。開発サーバーは 1 つで全デッキを配信しますが、変換するのは開いたデッキの原稿だけです。
+
+- 定理・式・節の番号と文献リストは、デッキごとに 1 から振られます。
+- 文献を使うデッキは、フォルダに `references.bib` を置きます。無いデッキで `\cite` を書くとエラーになります。
+- 部品（`@/components/…`）と見た目の土台はすべてのデッキで共有します。デッキだけで使う画像や部品は、
+  デッキのフォルダに置いて相対パスで import します（`import d3js from './img/d3js.png'`）。
+
 ### スライドの区切り
-原稿の主ファイルは `src/slides.mdx` です。分けたい部分は LaTeX と同じ `\input` で取り込みます（下記）。
+原稿の主ファイルは `decks/<名前>/deck.mdx` です。分けたい部分は LaTeX と同じ `\input` で取り込みます（下記）。
 
 ```mdx
 import Globe from '@/components/Globe'
@@ -128,21 +160,21 @@ import Globe from '@/components/Globe'
 - `---`（行単独）で横のスライド、`--`（行単独）で縦のスライド（直前のスライドの下）に区切ります。
 - 区切りの前後には空行を入れます（直前が文章だと Markdown の見出しと解釈されるため）。横線が要るときは `***`。
 - 縦スライドの進め方は `App.tsx` の `navigationMode`（`'linear'` にすると ←→ だけで縦も順に進む）。
-- 自分の部品や画像は原稿の先頭で `@/components/...`、`@/img/...` から import します。
+- 共有の部品は原稿の先頭で `@/components/...` から、デッキの画像は `./img/...` から import します。
 
 ### ファイルの取り込み（`\input` と import パッケージ）
 LaTeX の `\input` と、標準の [import パッケージ](https://ctan.org/pkg/import) の `\import` / `\subimport` が使えます（行単独で書く）。
 
 | 書き方 | パスの基準 | 取り込んだファイルの中での `\input` |
 |---|---|---|
-| `\input{file}` | 主ファイル（`src/slides.mdx`）のディレクトリ | 変わらない |
+| `\input{file}` | 主ファイル（`decks/<名前>/deck.mdx`）のディレクトリ | 変わらない |
 | `\import{path/}{file}` | 絶対パス、または主ファイルのディレクトリ | **`path/` を先に探し、無ければ主ファイルのディレクトリ** |
 | `\subimport{path/}{file}` | **今いるファイルの基準ディレクトリ**からの相対（入れ子にできる） | 同上（基準が `…/path/` になる） |
 
 `\inputfrom` / `\subinputfrom` は `\import` / `\subimport` の別名、`*` 付きも同じです。
 
 ```latex
-% slides.mdx
+% deck.mdx
 \import{parts/}{a}          % parts/a.mdx
 
 % parts/a.mdx の中
@@ -154,7 +186,7 @@ LaTeX の `\input` と、標準の [import パッケージ](https://ctan.org/pkg
 - 「ファイルからの相対」と「主ファイル（ルート）からの相対」を混ぜたいときは、`\import` / `\subimport` で取り込みます。
   `\input` で取り込んだファイルの中は、LaTeX と同じく主ファイル基準のままです。
 - 探す順は LaTeX と同じで、まず `.mdx` を付けた名前、無ければ書いたままの名前（`chapter.v2` → `chapter.v2.mdx`、`notes.md` → `notes.md`）。
-  `..`・`src` の外・空白・日本語・絶対パスも使えます。区切りは `/` で書きます（`\` は Windows でしか通じません）。`@/` などのエイリアスは使えません。
+  `..`・デッキのフォルダの外・空白・日本語・絶対パスも使えます。区切りは `/` で書きます（`\` は Windows でしか通じません）。`@/` などのエイリアスは使えません。
 - 取り込んだ内容はその場に差し込まれ、**1 つの文書として扱われます**。定理・式・文献の番号、`\ref`、
   スライドの区切り（`---` / `--`）は、ファイルをまたいでも通しで働きます。入れ子の `\input` も可。
 - 取り込んだファイルの `import` は主ファイルの `import` と同じ扱い（同じ文は 1 つにまとめる）。パスは `@/…` で書きます。
@@ -204,7 +236,7 @@ $f$ が凸なら …
 `\only` / `\uncover` が段落の中にあれば文中に、段落全体ならブロックとして表示します（LaTeX と同じく、空行の無い連続した行は 1 段落）。
 
 ### 文献の引用
-`src/references.bib` にエントリを追加し、本文で LaTeX と同じく `\cite{key}`、`\cite{a,b}`、`\cite[p.~5]{key}` と書きます。
+デッキのフォルダの `references.bib`（`decks/<名前>/references.bib`）にエントリを追加し、本文で LaTeX と同じく `\cite{key}`、`\cite{a,b}`、`\cite[p.~5]{key}` と書きます。
 番号付け・整形・文献リストは rehype-citation（CSL）が行い、`<Bibliography />` の位置に文献リストが入ります。
 本文の引用は `[1]` / `[1,2]` の形です（CSL: NLM/Vancouver 角括弧版）。このスタイルは頁指定（`[p.~5]`）を表示しません。
 スタイルを替えるときは CSL の公式リポジトリ（citation-style-language/styles）のファイルを `src/csl/` に置いて
@@ -221,7 +253,7 @@ $f$ が凸なら …
 コード（`` `…` ``、コードブロック、テンプレート文字列）と数式の中の記法は変換されないので、記法の説明はそこに書けます。
 
 ### 強調・用語・脚注などの書き方（標準の記法の範囲）
-見本は `src/slides/typography.mdx`。どれも変換処理に手を加えず、CommonMark・JSX・LaTeX（MathJax）の標準の書き方で書けます。
+見本は `decks/legendre/deck.mdx`（色と強調・出典・用語・脚注を、資料の中で使っている）。どれも変換処理に手を加えず、CommonMark・JSX・LaTeX（MathJax）の標準の書き方で書けます。
 
 | したいこと | 書き方 |
 |---|---|
@@ -248,19 +280,25 @@ $f$ が凸なら …
 | `\definecolor{…}{HTML}{EBEBEB}` | MathJax が HTML 形式に未対応。`RGB` か `gray` 形式で書く |
 
 ### 記法エラーと警告
-不完全な原稿から成果物は作りません。どれも **原稿（`slides.mdx`）の行番号** で報告します（unified の VFile メッセージ）。
+不完全な原稿から成果物は作りません。どれも **原稿（`deck.mdx` と取り込んだファイル）の行番号** で報告します（unified の VFile メッセージ）。
 
 | 種類 | 例 | `npm run dev` | `npm run build` |
 |---|---|---|---|
-| エラー | 環境の閉じ忘れ・`\end` の不一致、未対応の環境・命令、数式の誤り（MathJax）、不正な overlay 指定、環境の外の `\label`、MDX の構文エラー | エラー画面 | 失敗 |
-| 警告 | 参照先の無い `\ref`、未登録の文献、`\label` の重複 | 画面右上に一覧 | 失敗（`DECK_ALLOW_WARNINGS=1` で許可） |
-| はみ出し | スライドの最小サイズ（933×700）超過 | 最小サイズの範囲の赤い破線枠とバッジ・コンソール | （対象外） |
+| エラー | 環境の閉じ忘れ・`\end` の不一致、未対応の環境・命令、数式の誤り（MathJax）、不正な overlay 指定、環境の外の `\label`、文献ファイルの無いデッキでの `\cite`、MDX の構文エラー | エラー画面 | 失敗 |
+| 警告 | 参照先の無い `\ref`、未登録の文献、`\label` の重複 | 画面右上に一覧 | 失敗（`--allow-warnings` で許可） |
+| はみ出し | スライドの最小サイズ（933×700）超過、コードの枠からはみ出す行 | 最小サイズの範囲の赤い破線枠とバッジ・コンソール | `npm run check` の e2e テストが失敗 |
 
-### はみ出しの検出（開発時のみ）
-`npm run dev` 中、スライドの最小サイズ（933×700）を縦か横に超えたスライドには、最小サイズの範囲に赤い破線の枠と
-超過量のバッジが付き、コンソールに原稿の行と超過量が出ます。本番ビルドには含まれません。
+### はみ出しの検出
+`npm run dev` 中、スライドの最小サイズ（933×700）を縦か横に超えたスライドと、コードの行が枠からはみ出す
+スライド（枠の中ではスクロールになり、発表では行の続きが見えない）には、最小サイズの範囲に赤い破線の枠と
+超過量のバッジが付き、コンソールに原稿の行と超過量が出ます。
 スライドはウィンドウ全体を覆うので、いまの画面に収まって見えても、別の縦横比の画面では枠の外が切れます。
 検査はウィンドウの大きさに依らず、スライドを最小の幅で組み直して測ります。
+同じ検査を、ビルドしたデッキを `?check-overflow` で開いて行う e2e テスト（`e2e/overflow.spec.ts`）が全デッキで走るので、
+`npm run check` を通せば、はみ出したスライドが原稿の位置付きで報告されます。
+
+数式はビルド時に MathJax が組むので、MathJax は画面の幅を知りません。幅に依る組み方（`multline` の行の寄せなど）は、
+最小サイズのスライドの本文の幅で組みます（`vite/mdx-options.ts` の `CONTAINER_WIDTH_EX`）。
 
 ### 図（インタラクティブ可視化）
 `src/components/` に React コンポーネントとして追加。visx の部品（縮尺 `@visx/scale`、座標軸 `@visx/axis`、
@@ -272,19 +310,18 @@ SVG なので拡大しても鮮明で、印刷・PDF にもそのまま残る。
 
 見た目は 3 層で、後のものが前のものを上書きします。
 
-| 層 | ファイル | 持ち主 |
+| 層 | ファイル | 範囲 |
 |---|---|---|
-| トークン | `src/theme/tokens.css` | テンプレート |
-| 汎用の規則 | `src/theme/base.css`（書体は `fonts.css`） | テンプレート |
-| 特化 | `src/custom.css`（プリセットの読み込み・トークンの上書き・独自の規則） | 各クローン |
+| トークン | `src/theme/tokens.css` | 全デッキで共有 |
+| 汎用の規則 | `src/theme/base.css`（書体は `fonts.css`） | 全デッキで共有 |
+| 特化 | `decks/<名前>/style.css`（プリセットの読み込み・トークンの上書き・独自の規則） | そのデッキだけ |
 
-クローンで変えるのは `src/custom.css` だけにします。テンプレート側のファイルを書き換えないでおけば、
-テンプレートの更新を取り込むときに衝突しません。
+デッキだけの見た目は、そのデッキの `style.css` に書きます。土台（tokens / base）を書き換えると、全デッキに効きます。
 
 ```css
-/* src/custom.css */
-@import './theme/presets/math.css';    /* 数学向け: 欧文と数字を New Computer Modern に */
-@import './theme/presets/manual.css';  /* 業務マニュアル向け: 本文もゴシック、強調は太さで */
+/* decks/<名前>/style.css */
+@import '@/theme/presets/math.css';    /* 数学向け: 欧文と数字を New Computer Modern に */
+@import '@/theme/presets/manual.css';  /* 業務マニュアル向け: 本文もゴシック、強調は太さで */
 
 :root {
   --deck-preset: math;                 /* デッキ全体にかけるプリセット(空白区切りで複数可) */
@@ -306,7 +343,7 @@ SVG なので拡大しても鮮明で、印刷・PDF にもそのまま残る。
 </div>
 ```
 
-見本は `src/slides/manual.mdx`（数学向けのデッキの末尾に、業務マニュアル向けの 3 枚）。
+見本は `decks/manual/` と `decks/trial-balance/`（業務マニュアル向けのプリセットをデッキ全体にかけている）。
 
 用途に共通する改善はテンプレート（tokens / base）へ、特定の用途に寄った見た目はプリセット
 （`src/theme/presets/`）へ入れます。
@@ -314,7 +351,8 @@ SVG なので拡大しても鮮明で、印刷・PDF にもそのまま残る。
 ## フォントのサブセット
 
 日本語フォントは元は約 28MB。実際に使う文字だけに絞ることで合計約 600KB(woff2) にしています。
-`scripts/subset-fonts.mjs` が `src/**/*.{mdx,tsx,ts,bib}` を走査して使用文字を集め、
+`scripts/subset-fonts.mjs` が `src/` と全デッキ（`decks/`）の `*.{mdx,tsx,ts,bib}` と、原稿が `\input` で取り込むファイルを
+走査して使用文字を集め（書体は全デッキで共有するので、全デッキの文字の和）、
 `fonts-src/*.{ttf,otf}` → `src/fonts/*.woff2` を生成します。
 
 **テキスト（特に日本語）を増やしたら `npm run subset` を実行**して `src/fonts/*.woff2` を更新・コミットしてください。
@@ -322,7 +360,8 @@ SVG なので拡大しても鮮明で、印刷・PDF にもそのまま残る。
 
 ## PDF 出力
 
-`npm run pdf` で、ビルドから PDF まで書き出します（`pdf/slides.pdf` と、配布用の `pdf/handout.pdf`。git には入れない）。
+`npm run pdf -- <名前>` で、ビルドから PDF まで書き出します（`pdf/<名前>.pdf` と、配布用の `pdf/<名前>-handout.pdf`。
+名前を省くと全デッキ。git には入れない）。
 
 手で書き出すときは、URL に `?print-pdf` を付けて開き、ブラウザの印刷 → PDF に保存。
 印刷設定は **余白=なし / 背景のグラフィック=ON** を推奨（フレームの色を出すため）。
@@ -343,7 +382,6 @@ SVG なので拡大しても鮮明で、印刷・PDF にもそのまま残る。
 ## 次にやること
 
 - 表紙の双対のグラフ（3D の曲面）を visx の図にする。描く関数（$f = \tfrac12 x^2 + \tfrac13 y^3$ とその双対か）の確認待ち。
-- `src/custom.css` の扱いを決める。CLAUDE.md では「テンプレート側から書かない」だが、デモのデッキのために今は書いている（デモも 1 つのクローンとみなすか）。
 - 段階表示（`\pause` など）と図の状態の連動。原稿の書き方に関わるので、方法の相談から。
 - 今は書けない LaTeX の標準の記法: `\footnote`、`description` 環境、`\ref` のリンク（hyperref の動き）、スライドごとの文献リスト。
 - 開発用の依存の脆弱性警告（`braces`、`vite-plugin-singlefile` 経由）。修正版が出たら更新する。
