@@ -455,7 +455,7 @@ describe('動きの設定(motion.ts)', () => {
     const { file } = await run(src, { motion })
     expect(file.messages.map((m) => m.reason)).toEqual([
       expect.stringMatching(/impress\.ts:3: ラベル sec:none のスライドがありません/),
-      expect.stringMatching(/impress\.ts:5: impress の並べ方 "circle" はありません\(grid・spiral\)/),
+      expect.stringMatching(/impress\.ts:5: impress の並べ方 "circle" はありません\(grid・spiral・zoom\)/),
       expect.stringMatching(/impress\.ts:8: ラベル sec:none のスライドがありません/),
     ])
   })

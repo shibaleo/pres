@@ -1,0 +1,278 @@
+{/*
+  多様体の基礎。局所的にはユークリッド空間と同じに見える空間を、地図(座標近傍)の貼り合わせとして定め、
+  滑らかな構造と接空間までを説明する入門のデッキ。
+  impress モードの zoom(Prezi 風)の見本: 節の最初のスライドは題と一言だけにして下半分を空け、
+  そこに節の中の続き(--)が小さく並ぶ(motion.ts)。
+  定義・例は \newtheorem で日本語の見出しにし、節ごとの番号(定義 1.1 など)を共有する。
+*/}
+
+import CircleChart from './components/CircleChart'
+
+\newtheorem{definition}{定義}[section]
+\newtheorem{example}[definition]{例}
+\newtheorem{proposition}[definition]{命題}
+
+# 多様体の基礎
+
+<Center>
+
+**地図を貼り合わせて空間をつくる**
+
+</Center>
+
+<Byline lines={['多様体入門', '位相多様体から接空間まで']} />
+
+---
+
+## 多様体とは \label{sec:what}
+
+<Center>
+
+**どの点の近くも、ユークリッド空間 $\mathbb{R}^n$ と同じに見える空間**
+
+</Center>
+
+--
+
+## 地球と地図帳
+
+地球の表面は丸いが、狭い範囲なら平らな地図で表せる。
+
+\pause
+
+- 1 枚の地図で地球全体は描けない（どの図法でも、どこかが切れるか潰れる）
+- そこで何枚かの地図を用意し、重なる部分で食い違わないように**貼り合わせて**全体を表す
+
+\pause
+
+多様体は、この「地図帳」の考え方をそのまま定義にしたもの。
+
+--
+
+## 位相多様体 \label{sec:topological}
+
+\begin{definition}[位相多様体]\label{def:topological}
+位相空間 $M$ が次の 3 つを満たすとき、$M$ を $n$ 次元**位相多様体**という。
+
+1. ハウスドルフ空間である
+2. 第二可算公理を満たす
+3. 各点 $p \in M$ に、$\mathbb{R}^n$ の開集合と同相な開近傍がある
+\end{definition}
+
+1 と 2 は、空間が「行儀よく」あるための条件。本質は 3 の**局所ユークリッド性**。
+
+--
+
+## 例：円周 $S^1$ \label{sec:circle}
+
+<Cols>
+<Col>
+
+$S^1 = \{(x, y) \in \mathbb{R}^2 \mid x^2 + y^2 = 1\}$ の上半円
+$$
+U = \{(x, y) \in S^1 \mid y > 0\}
+$$
+は、射影 $\varphi(x, y) = x$ で開区間 $(-1, 1)$ と同相になる。
+
+下半円・右半円・左半円も同じようにして、4 枚の地図で $S^1$ 全体を覆える。
+
+</Col>
+<Col>
+
+<CircleChart width={460} height={300} />
+
+</Col>
+</Cols>
+
+---
+
+## 座標近傍と地図帳 \label{sec:charts}
+
+<Center>
+
+**地図を数式で書く**
+
+</Center>
+
+--
+
+## 座標近傍
+
+\begin{definition}[座標近傍]\label{def:chart}
+$M$ の開集合 $U$ と、$\mathbb{R}^n$ の開集合への同相写像 $\varphi \colon U \to \varphi(U) \subset \mathbb{R}^n$ の組 $(U, \varphi)$ を**座標近傍**（チャート）という。
+\end{definition}
+
+$\varphi(p) = \bigl(x^1(p), \dots, x^n(p)\bigr)$ と書き、$(x^1, \dots, x^n)$ を $U$ の上の**局所座標**という。
+地図の上の位置を、緯度と経度で読むのと同じこと。
+
+--
+
+## 地図帳（アトラス）
+
+\begin{definition}[アトラス]\label{def:atlas}
+座標近傍の族 $\{(U_\alpha, \varphi_\alpha)\}_{\alpha \in A}$ で、$M = \bigcup_\alpha U_\alpha$ となるものを $M$ の**アトラス**という。
+\end{definition}
+
+\begin{example}
+円周 $S^1$ は、上下左右の半円の 4 枚の座標近傍でアトラスができる（\ref{sec:circle}）。
+1 枚では足りない：$S^1$ はコンパクトなので、$\mathbb{R}$ の開集合と同相にはならない。
+\end{example}
+
+--
+
+## 座標変換 \label{sec:transition}
+
+2 枚の地図が重なる所では、同じ点に 2 通りの座標が付く。その読み替えが**座標変換**
+\begin{equation}\label{eq:transition}
+\varphi_\beta \circ \varphi_\alpha^{-1} \colon \varphi_\alpha(U_\alpha \cap U_\beta) \to \varphi_\beta(U_\alpha \cap U_\beta)
+\end{equation}
+
+\pause
+
+\begin{example}
+$S^1$ の上半円の地図 $\varphi(x, y) = x$ と右半円の地図 $\psi(x, y) = y$ は、第 1 象限で重なり
+$$
+\psi \circ \varphi^{-1}(x) = \sqrt{1 - x^2} \qquad (0 < x < 1)
+$$
+\end{example}
+
+---
+
+## 滑らかな構造 \label{sec:smooth}
+
+<Center>
+
+**座標変換が滑らかなら、多様体の上で微分ができる**
+
+</Center>
+
+--
+
+## $C^\infty$ 級アトラス
+
+\begin{definition}[可微分多様体]\label{def:smooth}
+座標変換 \eqref{eq:transition} がすべて $C^\infty$ 級であるアトラスを **$C^\infty$ 級アトラス**という。
+$C^\infty$ 級アトラスを 1 つ決めた（正確には、それを含む極大なアトラスを決めた）位相多様体を**可微分多様体**という。
+\end{definition}
+
+\pause
+
+関数 $f \colon M \to \mathbb{R}$ の滑らかさは、地図の上で $f \circ \varphi^{-1}$ が $C^\infty$ 級かで決める。
+座標変換が $C^\infty$ 級なので、どの地図で見ても答えは変わらない。
+
+--
+
+## 例：球面と立体射影 \label{sec:sphere}
+
+$S^n \subset \mathbb{R}^{n+1}$ の北極 $N = (0, \dots, 0, 1)$ からの**立体射影**
+$$
+\varphi_N(x^1, \dots, x^{n+1}) = \frac{(x^1, \dots, x^n)}{1 - x^{n+1}} \qquad (U_N = S^n \setminus \{N\})
+$$
+と、南極 $S$ からの $\varphi_S$ の 2 枚で $S^n$ が覆える。
+
+\pause
+
+座標変換は $\mathbb{R}^n \setminus \{0\}$ の上で
+\begin{equation}\label{eq:inversion}
+\varphi_S \circ \varphi_N^{-1}(u) = \frac{u}{|u|^2}
+\end{equation}
+となり $C^\infty$ 級。よって $S^n$ は可微分多様体。
+
+--
+
+## 滑らかな写像
+
+\begin{definition}[滑らかな写像]\label{def:smooth-map}
+可微分多様体の間の連続写像 $f \colon M \to N$ が**滑らか**（$C^\infty$ 級）とは、$M$ の座標近傍 $(U, \varphi)$ と $N$ の座標近傍 $(V, \psi)$ で
+$$
+\psi \circ f \circ \varphi^{-1}
+$$
+が（定義される所で）すべて $C^\infty$ 級であること。
+\end{definition}
+
+滑らかな写像で、逆写像も滑らかなものを**微分同相写像**という。多様体は微分同相なものを同じと見る。
+
+---
+
+## 接空間 \label{sec:tangent}
+
+<Center>
+
+**各点に、そこを通る曲線の「速度」全体を置く**
+
+</Center>
+
+--
+
+## 曲線の速度
+
+点 $p \in M$ を通る滑らかな曲線 $\gamma \colon (-\varepsilon, \varepsilon) \to M$（$\gamma(0) = p$）を考える。
+
+\pause
+
+\begin{definition}[接ベクトル]\label{def:tangent}
+$p$ のまわりの座標近傍 $(U, \varphi)$ で $(\varphi \circ \gamma_1)'(0) = (\varphi \circ \gamma_2)'(0)$ となるとき、$\gamma_1 \sim \gamma_2$ とする。
+この同値類 $[\gamma]$ を $p$ での**接ベクトル**、その全体 $T_p M$ を**接空間**という。
+\end{definition}
+
+座標変換のヤコビ行列で速度が写り合うので、$\sim$ は地図の選び方によらない。
+
+--
+
+## 座標による基底
+
+局所座標 $(x^1, \dots, x^n)$ の $i$ 番目の座標軸に沿う曲線の速度を $\left.\frac{\partial}{\partial x^i}\right|_p$ と書くと、
+\begin{equation}\label{eq:basis}
+T_p M = \left\{ \sum_{i=1}^n a^i \left.\frac{\partial}{\partial x^i}\right|_p \;\middle|\; a^i \in \mathbb{R} \right\}
+\end{equation}
+で、$\dim T_p M = n$。
+
+\pause
+
+別の局所座標 $(y^1, \dots, y^n)$ に替えると、基底は
+$$
+\frac{\partial}{\partial y^j} = \sum_{i=1}^n \frac{\partial x^i}{\partial y^j} \frac{\partial}{\partial x^i}
+$$
+と、座標変換のヤコビ行列で写り合う。
+
+--
+
+## 写像の微分
+
+\begin{definition}[微分]\label{def:differential}
+滑らかな写像 $f \colon M \to N$ の点 $p$ での**微分**を
+$$
+df_p \colon T_p M \to T_{f(p)} N, \qquad [\gamma] \mapsto [f \circ \gamma]
+$$
+で定める。
+\end{definition}
+
+局所座標では、$df_p$ は $\psi \circ f \circ \varphi^{-1}$ のヤコビ行列そのもの。
+曲がった空間の上の写像も、各点では線形写像で近似できる。
+
+---
+
+## まとめ \label{sec:summary}
+
+<Center>
+
+**局所は $\mathbb{R}^n$、全体は貼り合わせ**
+
+</Center>
+
+--
+
+## 振り返り
+
+- **位相多様体**（定義 \ref{def:topological}）: どの点の近くも $\mathbb{R}^n$ と同相
+- **アトラス**（定義 \ref{def:atlas}）: 座標近傍で全体を覆い、重なりは座標変換 \eqref{eq:transition} で読み替える
+- **可微分多様体**（定義 \ref{def:smooth}）: 座標変換が $C^\infty$ 級。球面は立体射影の 2 枚で覆える \eqref{eq:inversion}
+- **接空間**（定義 \ref{def:tangent}）: 曲線の速度の全体。$n$ 次元のベクトル空間 \eqref{eq:basis}
+
+詳しくは \cite{matsumoto1988} や \cite{lee2013,tu2011} を参照。
+
+--
+
+## 参考文献
+
+<Bibliography />

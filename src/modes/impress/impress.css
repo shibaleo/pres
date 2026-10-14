@@ -15,8 +15,9 @@ body.impress-enabled {
   overflow: hidden;
   background: var(--color-canvas);
 }
-/* 今のスライド以外は薄く。全体を見渡す step(id="overview"。impress が body に impress-on-overview を付ける)では全部濃く */
-.impress-enabled:not(.impress-on-overview) #impress .step:not(.active) {
+/* 今のスライド以外は薄く。全体を見渡す step(id="overview" と、zoom の置き方の最初の id="overview-start"。
+   impress が body に impress-on-<id> を付ける)では全部濃く */
+.impress-enabled:not(.impress-on-overview, .impress-on-overview-start) #impress .step:not(.active) {
   opacity: 0.3;
 }
 .impress-enabled #impress .step {

@@ -41,7 +41,10 @@ export type MotionConfig = {
  *   impress: { layout: 'spiral', positions: { 'sec:main': { z: -1500, scale: 2 } } }
  */
 export type ImpressMotion = {
-  /** 全体の並べ方(grid: 横の並びを右へ・縦の続きを下へ(既定)、spiral: 文書の順に螺旋に沿って) */
+  /**
+   * 全体の並べ方(grid: 横の並びを右へ・縦の続きを下へ(既定)、spiral: 文書の順に螺旋に沿って、
+   * zoom: Prezi のように節の最初のスライドを大きな枠にし、節の中の続きをその下半分に小さく置く。全体を見渡すところから始まる)
+   */
   layout?: ImpressLayout
   /**
    * 個別のスライドの置き場所。スライドは題に書いた \label の名前で指す。書いた項目だけが layout の値を置き換える

@@ -79,11 +79,13 @@ decks/                 デッキ(1 フォルダ = 1 デッキ。vite/decks.js)�
     components/        このデッキだけの部品(図など。原稿から ./components/… で import する)
   components/          (必要になったら)いくつかのデッキで共有するが、土台にするほど汎用ではない部品。デッキの名前には使えない
   landau/              複雑な数式の見本。Landau 減衰の線形計算(C. Villani『Birth of a Theorem』第 4 章の草稿の導出)と、
-                       付録「この資料の書き方」(slides/guide.mdx: 記法の一覧・定理環境・align・段階表示・可換図式)
+                       付録「この資料の書き方」(slides/guide.mdx: 記法の一覧・定理環境・align・段階表示・可換図式)。reveal モード
   legendre/            画像と SVG の見本。ルジャンドル部分多様体の母関数(卒業研究の発表を組み直したもの)。
-                       元の資料の画像(img/)と操作できる SVG の図(components/)、付録に図の部品(4 点・対数螺旋・地球儀・d3)
-  trial-balance/       表組の見本。試算表の作成(右揃えの金額・合計の行・表の題)
-  manual/              形式的な文書の見本。記帳業務の手順書(目的・手順・注意・用語・枠の使い分け)
+                       元の資料の画像(img/)と操作できる SVG の図(components/)、付録に図の部品(4 点・対数螺旋・地球儀・d3)。Spectacle モード
+  manifold/            impress の zoom(Prezi 風)の見本。多様体の基礎(位相多様体・アトラス・可微分構造・接空間)。
+                       節の最初のスライドを題と一言にして、節の中の続きがその下半分に小さく並ぶ。impress モード
+  trial-balance/       表組の見本。試算表の作成(右揃えの金額・合計の行・表の題)。Swiper モード(cards の演出)
+  manual/              形式的な文書の見本。記帳業務の手順書(目的・手順・注意・用語・枠の使い分け)。Shower モード(一覧から入る)
 index.html             全デッキで共通の器(題と入口のスクリプトは vite.config.ts がデッキごとに入れる)
 src/                   全デッキ・全モードで共有する土台(用途に特化しない)
   main.tsx             起動(土台の CSS を読み、デッキの入口から原稿とモードを受け取って描く。モードは入口が motion.ts から決める)
@@ -364,7 +366,8 @@ export default {
     'sec:main': 'zoom',
   },
   impress: {
-    // impress モードでの置き方。layout は grid(横の並びを右へ・縦の続きを下へ。既定)か spiral(文書の順に螺旋に沿って)
+    // impress モードでの置き方。layout は grid(横の並びを右へ・縦の続きを下へ。既定)、spiral(文書の順に螺旋に沿って)、
+    // zoom(Prezi 風。節の最初のスライドを大きな枠にし、節の中の続きをその下半分に小さく置く。全体を見渡すところから始まる)
     layout: 'spiral',
     // 個別のスライドの置き場所(ラベルで指す)。書いた項目だけが layout の値を置き換える
     // (x・y・z は中心の座標(px。スライドは 933×700)、rotate・rotateX・rotateY は回転(度)、scale は倍率)

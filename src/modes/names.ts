@@ -27,9 +27,11 @@ export const MODE_VARIANTS: Record<ModeName, { query: string; label: string }[]>
 
 /**
  * impress モードのスライドの並べ方(motion.ts の impress.layout)。先頭が既定。
- * grid は横の並び(---)を右へ、縦の続き(--)を下へ。spiral は文書の順に、外へ広がる螺旋に沿って置く
+ * grid は横の並び(---)を右へ、縦の続き(--)を下へ。spiral は文書の順に、外へ広がる螺旋に沿って置く。
+ * zoom は Prezi のように、節の最初のスライドを大きな枠にして、節の中の続きをその中に小さく置く(寄ったり引いたりして進む。
+ * 最初は全体を見渡すところから始まる)
  */
-export const IMPRESS_LAYOUTS = ['grid', 'spiral'] as const
+export const IMPRESS_LAYOUTS = ['grid', 'spiral', 'zoom'] as const
 export type ImpressLayout = (typeof IMPRESS_LAYOUTS)[number]
 
 /**

@@ -1,0 +1,15 @@
+/* このデッキの見た目の特化(書き方は src/theme/tokens.css と presets/ を参照)。数式の多い資料なので数学向け */
+
+@import '@/theme/presets/math.css';
+
+:root {
+  --deck-preset: math;
+}
+
+/* このデッキの図(components/)に固有の部分。図の汎用の語彙(点・取っ手・ラベル・曲線・ボタン)は theme/base.css */
+/* 点 p からその像 φ(p) への射影の線。CircleChart */
+.deck .figure-chart-projection {
+  stroke: var(--color-muted);
+  stroke-width: calc(var(--rule) / 2);
+  stroke-dasharray: var(--rule) var(--rule);
+}

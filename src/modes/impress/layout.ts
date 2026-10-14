@@ -53,9 +53,64 @@ function spiral(slides: SlideKey[], size: Size): Place[] {
   })
 }
 
+/**
+ * zoom の形(Prezi のように、大きな面の上で寄ったり引いたりする): 節の最初のスライド(---)を大きな枠として横に並べ
+ * (一つおきに少し上下にずらす)、節の中の続き(--)を、その枠の下半分(ZOOM_AREA)に縮めて並べる。
+ * 続きへ進むとカメラが枠の中へ寄り、次の節へは引いてから移る。節の最初のスライドを題と一言だけにしておくと、
+ * 枠の下半分が空き、続きと重ならない
+ */
+/** 節の枠どうしの間(枠の幅・高さに対する割合)と、一つおきの上下のずれ(高さに対する割合) */
+const ZOOM_SECTION_GAP = 0.35
+const ZOOM_SECTION_SHIFT = 0.45
+/** 続きを並べる範囲(枠の中の位置。幅・高さに対する割合。中心が原点で、y は下向き)と、続きどうしの間・一列の数・最大の倍率 */
+const ZOOM_AREA = { left: -0.45, right: 0.45, top: -0.02, bottom: 0.46 }
+const ZOOM_TILE_GAP = 0.03
+const ZOOM_COLUMNS = 3
+const ZOOM_MAX_SCALE = 0.3
+
+function zoom(slides: SlideKey[], size: Size): Place[] {
+  const { width: w, height: h } = size
+  // 節(h)ごとの枠の中心
+  const sectionCenter = (index: number) => ({
+    x: index * w * (1 + ZOOM_SECTION_GAP),
+    y: (index % 2 === 0 ? -1 : 1) * h * ZOOM_SECTION_SHIFT * (index === 0 ? 0 : 1),
+  })
+  const continuations = new Map<number, number>()
+  for (const s of slides) if (s.v > 0) continuations.set(s.h, Math.max(continuations.get(s.h) ?? 0, s.v))
+  return slides.map(({ h: section, v }) => {
+    const c = sectionCenter(section)
+    if (v === 0) return { ...origin(), ...c }
+    // 続き: 枠の下半分に、一列 ZOOM_COLUMNS 枚まで並べる(収まる最大の倍率で、ZOOM_MAX_SCALE まで)
+    const count = continuations.get(section)!
+    const cols = Math.min(count, ZOOM_COLUMNS)
+    const rows = Math.ceil(count / cols)
+    const areaW = (ZOOM_AREA.right - ZOOM_AREA.left) * w
+    const areaH = (ZOOM_AREA.bottom - ZOOM_AREA.top) * h
+    const gap = ZOOM_TILE_GAP * w
+    const scale = Math.min(ZOOM_MAX_SCALE, (areaW - (cols - 1) * gap) / (cols * w), (areaH - (rows - 1) * gap) / (rows * h))
+    const i = v - 1
+    const row = Math.floor(i / cols)
+    const inRow = row === rows - 1 ? count - row * cols : cols // 最後の列は残りの数だけで中央に寄せる
+    const col = i - row * cols
+    const tileW = w * scale
+    const tileH = h * scale
+    const rowWidth = inRow * tileW + (inRow - 1) * gap
+    const areaTop = c.y + ZOOM_AREA.top * h
+    const blockHeight = rows * tileH + (rows - 1) * gap
+    return {
+      ...origin(),
+      x: c.x - rowWidth / 2 + tileW / 2 + col * (tileW + gap),
+      y: areaTop + (areaH - blockHeight) / 2 + tileH / 2 + row * (tileH + gap),
+      scale,
+    }
+  })
+}
+
+const LAYOUTS = { grid, spiral, zoom }
+
 /** 全スライドの置き場所(slides と同じ順)。size はスライドの大きさ */
 export function placeSlides(slides: SlideKey[], size: Size, motion: ImpressMotion = {}): Place[] {
-  const placed = (motion.layout === 'spiral' ? spiral : grid)(slides, size)
+  const placed = LAYOUTS[motion.layout ?? 'grid'](slides, size)
   return placed.map((place, i) => {
     const id = slides[i].id
     return id && motion.positions?.[id] ? { ...place, ...motion.positions[id] } : place

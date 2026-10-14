@@ -53,8 +53,13 @@ impress の substep と Shower の `.next` は、要素を文書順に 1 つず�
 
 - スライドは impress の step。大きさは窓と同じ縦横比（置き方の間隔もその大きさから決め、窓の大きさが変わったら置き直して作り直す）。置き方は motion.ts の `impress`（`src/modes/impress/layout.ts`）:
   `layout` が `grid`（既定。横の並び（h）は右へ、縦の続き（v）は下へ）か `spiral`（文書の順に、外へ広がる螺旋に沿って。
-  スライドは螺旋の進む向きに傾け、隣とも隣の周とも対角線より離す）、`positions` でラベルのスライドだけ置き直す（書いた項目だけ）。
+  スライドは螺旋の進む向きに傾け、隣とも隣の周とも対角線より離す）か `zoom`（下）、`positions` でラベルのスライドだけ置き直す（書いた項目だけ）。
   最後に全体を見渡す step（`#overview`）を、全スライドが収まる所に足す
+- `zoom`（Prezi 風のキャンバスの寄り引き）: 節の最初のスライド（`---`）を大きな枠として横に並べ（一つおきに上下にずらす）、
+  節の中の続き（`--`）を、その枠の下半分に縮めて並べる（一列 3 枚まで。収まる最大の倍率で、0.3 倍まで）。
+  最初の step を全体の見渡し（`#overview-start`）にして、そこから表紙へ寄る。節の枠へ移ると下半分に続きが小さく見え、
+  続きへ進むとカメラが枠の中へ寄り、次の節へは引いてから移る。節の最初のスライドを題と一言だけにしておくと、続きと重ならない
+  （見本: `decks/manifold/`）
 - 段階表示は段の印（substep）
 - 作り直し: impress は初期化のときの置き場所と step しか知らないので、窓の大きさが変わったときと原稿を直したとき（HMR）は、
   置き直して作り直し、同じ番目の step に戻る。impress の `tear` は全体の中身を innerHTML で書き直す（React の要素が別物になり、図が動かなくなる）ので、
@@ -122,7 +127,15 @@ impress の substep と Shower の `.next` は、要素を文書順に 1 つず�
   reveal は reveal の名前と同じもの（data-transition）、Swiper はデッキの既定だけ（演出を作るときに 1 つだけ決める作り）
 - Spectacle では、そのスライドの遷移で入り、出るときもそのスライドの遷移で出る（前のスライドの leave と、次のスライドの from・enter が同時に動く）。
   slide だけは向きを文書の構造に合わせる（上の「Spectacle モード」）
-- 見本: `decks/legendre/motion.ts`（Spectacle。新しい節は cube、節の中の続きは cards、主定理 `sec:main` は zoom。impress では螺旋）
+- 見本（デッキごとにモードを割り当て、それぞれの持ち味を出している）:
+
+  | デッキ | モード | 動き |
+  |---|---|---|
+  | `decks/landau/` | reveal | 横は slide、付録の縦の続きは fade、結論の分散関係（`sec:dispersion`）は zoom |
+  | `decks/legendre/` | Spectacle | 新しい節は cube、節の中の続きは cards、主定理（`sec:main`）は zoom（impress で開くと螺旋） |
+  | `decks/manifold/` | impress | `zoom`（Prezi 風） |
+  | `decks/manual/` | Shower | 全ページを並べた一覧から入り、押したページを全画面で読む |
+  | `decks/trial-balance/` | Swiper | cards（カードが重なって入れ替わる） |
 
 ### 次にやること
 

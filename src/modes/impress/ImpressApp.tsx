@@ -28,6 +28,8 @@ const syncOverlays = (step: Element) => applyStep(step, currentStep(step, '.subs
  * 段階表示は段の印(impress の substep。components.tsx)で進める。まわりとの約束は deck/mode.ts。
  */
 export default function ImpressApp({ Slides, motion }: DeckSource) {
+  // zoom(Prezi 風)の置き方では、全体を見渡すところから始め、最初のスライドへ寄っていく(最初の step を見渡しにする)
+  const startFromOverview = motion?.impress?.layout === 'zoom'
   /** 作り直し(原稿が変わったときに呼ぶ。最初の効果が用意する) */
   const rebuild = useRef<(() => void) | null>(null)
 
@@ -36,6 +38,7 @@ export default function ImpressApp({ Slides, motion }: DeckSource) {
     /** 今の step の番目(#impress の .step の中で。作り直した後に戻る所) */
     let activeIndex = 0
     const allSteps = () => [...document.querySelectorAll<HTMLElement>('#impress .step')]
+    const slideSteps = () => [...document.querySelectorAll<HTMLElement>('#impress .step.slide')]
     const onChange = (e: Event) => {
       const step = (e.target as Element).closest('.step')
       if (!step) return
@@ -66,7 +69,10 @@ export default function ImpressApp({ Slides, motion }: DeckSource) {
         motion?.impress,
       )
       slides.forEach((s, i) => applyPlace(s, places[i]))
-      applyPlace(document.getElementById('overview')!, overviewOf(places, size))
+      const overview = overviewOf(places, size)
+      applyPlace(document.getElementById('overview')!, overview)
+      const start = document.getElementById('overview-start')
+      if (start) applyPlace(start, overview)
       slides.forEach(syncOverlays)
       return size
     }
@@ -94,7 +100,11 @@ export default function ImpressApp({ Slides, motion }: DeckSource) {
     const rebuildNow = () => {
       if (!api) return
       const root = document.getElementById('impress')!
-      const own = [root.querySelector<HTMLElement>('.impress-slides')!, document.getElementById('overview')!]
+      const own = [
+        ...(document.getElementById('overview-start') ? [document.getElementById('overview-start')!] : []),
+        root.querySelector<HTMLElement>('.impress-slides')!,
+        document.getElementById('overview')!,
+      ]
       own.forEach((el) => el.remove())
       const placeholder = document.createElement('div')
       placeholder.className = 'step active' // tear は今の step(.active)があるものとして読む
@@ -128,7 +138,7 @@ export default function ImpressApp({ Slides, motion }: DeckSource) {
       const active = document.querySelector('#impress .step.active')
       e.preventDefault()
       // 作り直した後は前のスライドの要素が無くなっていることがある(そのときは最初のスライドへ)
-      if (active === overview) api.goto(beforeOverview?.isConnected ? beforeOverview : allSteps()[0])
+      if (active === overview || active?.id === 'overview-start') api.goto(beforeOverview?.isConnected ? beforeOverview : slideSteps()[0])
       else {
         beforeOverview = active
         api.goto(overview)
@@ -173,6 +183,7 @@ export default function ImpressApp({ Slides, motion }: DeckSource) {
       data-max-scale="3"
       data-transition-duration="1000"
     >
+      {startFromOverview && <div id="overview-start" className="step overview" />}
       {/* impress は #impress の子を自分の canvas に移す。React の描く範囲をこの div の中に閉じて、移されても壊れないようにする */}
       <div className="impress-slides">
         <Slides components={impressComponents} />
