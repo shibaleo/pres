@@ -123,6 +123,9 @@ impress の substep と Shower の `.next` は、要素を文書順に 1 つず�
 ### 決めたこと
 
 - 発表者ビューは各ライブラリのものを使う（reveal はノートのプラグイン、impress は impressConsole）
+- reveal 以外のモードは、スライドを最小サイズ（933×700）の固定の大きさにし、窓に収まる倍率で縮小する（窓の幅には追従させない）。
+  窓との差はスライドの外の面（`--color-surface`）になり、スライドの地（`--color-canvas`）と別に色を決められる。
+  reveal だけは窓と同じ縦横比に広げる（`src/modes/reveal/slide-size.ts`）
 - 縦のスライド（`--`）は内容の層では「節の中の続き」。表し方はモードが決める（reveal は縦、impress は下に置く）
 - 段階表示は `\pause` などの Beamer の書き方でも `<Fragment>` でも書ける。`<Fragment>` は変換が `\pause` と同じく段を 1 つ進める `Overlay` にする（後ろの本文は隠さない）ので、どのモードでも同じに出る
 
