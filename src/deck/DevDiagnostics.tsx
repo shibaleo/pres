@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom'
  * 開発時だけ: 原稿の警告(参照先の無い \ref、未登録の文献、\label の重複)を画面右上に出す。
  * 表示は続けられるがそのままでは配布できないもの(build では失敗する)を、書きながら気づけるように。
  * 記法エラーはここではなく Vite のエラー画面に出る。
- * warnings は slides.mdx の export(vite/remark-beamer が出力する)。
+ * warnings は deck.mdx の export(vite/remark-beamer が出力する)。
  */
 export default function DevDiagnostics({ warnings }: { warnings: { file?: string; line?: number; message: string }[] }) {
   const [open, setOpen] = useState(true)
@@ -18,7 +18,7 @@ export default function DevDiagnostics({ warnings }: { warnings: { file?: string
           {warnings.map((w, i) => (
             <li key={i}>
               <code>
-                {w.file ?? 'slides.mdx'}
+                {w.file ?? 'deck.mdx'}
                 {w.line ? `:${w.line}` : ''}
               </code>{' '}
               {w.message}

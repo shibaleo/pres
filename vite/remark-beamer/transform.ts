@@ -26,8 +26,11 @@ import { findInclude, parseInclude, resolveInclude, type IncludeContext } from '
 import type { LatexCommand, LatexLine } from './mdast.ts'
 
 export type BeamerOptions = {
-  /** \cite の key を確認する BibTeX ファイル(未登録の key を警告する) */
-  bibliography?: string
+  /**
+   * \cite の key を確認する BibTeX ファイル(未登録の key を警告する)。関数なら変換する主ファイルのパスから決める
+   * (1 つの処理系で複数の文書を変換し、文書ごとに文献ファイルが違うとき。undefined なら文献ファイルは無い)
+   */
+  bibliography?: string | ((file: string) => string | undefined)
   /** 警告もエラーとして扱う(本番ビルド用) */
   strict?: boolean
 }
@@ -154,7 +157,6 @@ function parseCommand(raw: string) {
 
 export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
   const processor = this
-  const bibKeys = options.bibliography ? readBibKeys(options.bibliography) : null
   // @mdx-js/mdx は解析の直後に remark-mark-and-unravel を通す(JSX だけの段落を外し、明示的に書いた JSX に印を付ける)。
   // \input で取り込むファイルはその後(このプラグインの中)で解析するので、主ファイルと同じ変換をここで通す
   // (通さないと <tr> などの行が <p> に包まれる)。@mdx-js/mdx はこのプラグインを公開していないので、
@@ -165,6 +167,11 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
     : () => {}
 
   return function (tree: Root, file: VFile) {
+    // 文献ファイルは変換のたびに読む(開発中に .bib を書き換えても、読み直した原稿に反映されるように)
+    const bibliography = typeof options.bibliography === 'function' ? options.bibliography(file.path) : options.bibliography
+    const bibKeys = bibliography ? readBibKeys(bibliography) : null
+    // 文書ごとに決める指定で、この文書には文献ファイルが無い(\cite を書くと文献を引けない)
+    const noBibliography = typeof options.bibliography === 'function' && !bibliography
     // 診断。\input で取り込んだファイルのノードは「ファイル:行」をメッセージに含め、
     // 位置(place)は主ファイルの \input の行にする(VFile は主ファイルのものなので)
     // raw: ファイル名なしのメッセージ(開発時の一覧で使う)
@@ -487,7 +494,8 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
         }
         case 'cite': {
           const keys = cmd.body.split(',').map((k) => k.trim()).filter(Boolean)
-          for (const k of keys) if (bibKeys && !bibKeys.has(k)) warn(`文献 "${k}" が ${options.bibliography} に見つかりません`, node)
+          if (noBibliography) error(`\\cite{${cmd.body}} を書いていますが、文献ファイル(references.bib)がありません`, node)
+          for (const k of keys) if (bibKeys && !bibKeys.has(k)) warn(`文献 "${k}" が ${bibliography} に見つかりません`, node)
           // 初出順(= 番号順)に並べてから渡す。rehype-citation は複数文献の引用で、番号の並べ替え(CSL)と
           // リンク先の割り当て(書いた順)が食い違い、[1,2] の 1 が別の文献を指してしまうため
           for (const k of keys) if (!citeOrder.has(k)) citeOrder.set(k, citeOrder.size)
@@ -527,7 +535,7 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
     for (const w of warnings) file.message(w.message, { place: w.place })
     if (options.strict && warnings.length) {
       const all = warnings.map((w) => `\n  ${where(w)}${w.message}`).join('')
-      file.fail(`原稿に警告が ${warnings.length} 件あります(DECK_ALLOW_WARNINGS=1 で許可):${all}`, { place: warnings[0].place })
+      file.fail(`原稿に警告が ${warnings.length} 件あります(npm run build -- <デッキ> --allow-warnings で許可):${all}`, { place: warnings[0].place })
     }
   }
 }

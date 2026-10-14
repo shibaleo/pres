@@ -3,7 +3,7 @@
    本文には Computer Modern の細さを和らげた Book の太さを使う(LaTeX でこのフォントを読み込んだときの既定)。
    ライセンスは GUST Font License(fonts-src/NewCM-License.txt)。
 
-   使い方(src/custom.css): @import './theme/presets/math.css'; したうえで
+   使い方(デッキの decks/<名前>/style.css): @import '@/theme/presets/math.css'; したうえで
      デッキ全体に   :root { --deck-preset: math; }
      一部だけに     原稿で <div data-preset="math"> … </div> と囲む */
 @font-face {

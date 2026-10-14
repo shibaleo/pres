@@ -1,5 +1,5 @@
 /* トークン: デッキの見た目を決める値の一覧(既定値)。
-   クローンで変えるときはこのファイルではなく src/custom.css の :root で上書きする。
+   デッキで変えるときはこのファイルではなく、デッキの decks/<名前>/style.css の :root で上書きする。
    static: ユーティリティから使われていない変数も出力する(base.css が var() で直接参照するため)。
    token 名は Tailwind 組込みユーティリティ(font-bold 等)と衝突しない名前にする。 */
 @theme static {

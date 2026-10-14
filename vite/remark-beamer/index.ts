@@ -2,7 +2,7 @@
  * remark-beamer: Beamer / LaTeX 風記法の remark プラグイン。
  * remark-math・remark-directive と同じく「構文拡張(micromark)+ mdast 変換 + 構文木の変換」の 3 段で作る。
  *
- *   remarkPlugins: [remarkMath, [remarkBeamer, { bibliography: 'src/references.bib' }]]
+ *   remarkPlugins: [remarkMath, [remarkBeamer, { bibliography: 'decks/legendre/references.bib' }]]
  */
 import type { Processor } from 'unified'
 import type { Extension as MicromarkExtension } from 'micromark-util-types'

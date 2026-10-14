@@ -5,15 +5,17 @@
   "type": "module",
   "scripts": {
     "subset": "node scripts/subset-fonts.mjs",
-    "dev": "vite",
-    "build": "npm run subset && tsc -b && vite build",
-    "build:single": "npm run subset && tsc -b && vite build --mode single",
+    "decks": "node scripts/deck.mjs list",
+    "new": "node scripts/deck.mjs new",
+    "dev": "node scripts/deck.mjs dev",
+    "build": "npm run subset && tsc -b && node scripts/deck.mjs build",
+    "build:single": "npm run subset && tsc -b && node scripts/deck.mjs build --single",
     "preview": "vite preview",
     "typecheck": "tsc -b && tsc -p tsconfig.node.json && tsc -p e2e/tsconfig.json",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "shots": "npm run build:single && node scripts/screenshots.mjs",
-    "pdf": "npm run build:single && node scripts/pdf.mjs",
+    "shots": "npm run subset && node scripts/deck.mjs shots",
+    "pdf": "npm run subset && node scripts/deck.mjs pdf",
     "check": "npm run typecheck && npm run test && npm run build:single && npm run test:e2e"
   },
   "dependencies": {

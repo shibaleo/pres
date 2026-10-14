@@ -8,6 +8,7 @@ import { join, dirname, extname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import subsetFont from 'subset-font'
 import { findInclude, parseInclude, resolveInclude } from '../vite/remark-beamer/inputs.js'
+import { DECKS_DIR, listDecks, resolveDeck } from '../vite/decks.js'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const srcDir = join(root, 'src')
@@ -41,7 +42,12 @@ function collectInputs(file, ctx, acc = new Set()) {
   return acc
 }
 
-const files = new Set([...collectFiles(srcDir), ...collectInputs(join(srcDir, 'slides.mdx'), { baseDir: srcDir })])
+// 部品(src)と全デッキ(decks/)の文字を集める。書体はデッキ間で共有するので、サブセットも全デッキの和にする
+const files = new Set([...collectFiles(srcDir), ...collectFiles(DECKS_DIR)])
+for (const deck of listDecks()) {
+  const { main, dir } = resolveDeck(deck)
+  for (const f of collectInputs(main, { baseDir: dir })) files.add(f)
+}
 let text = ''
 for (const f of files) text += readFileSync(f, 'utf8')
 

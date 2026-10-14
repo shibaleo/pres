@@ -15,7 +15,7 @@ function Fragment(props: ComponentProps<typeof RevealFragment>) {
 }
 
 /**
- * スライド原稿(slides.mdx)から import なしで使える部品。
+ * スライド原稿(decks/<名前>/deck.mdx)から import なしで使える部品。
  * MDX は「スコープに無い大文字タグ」をこの components から引く。
  *
  * ここに置くのは文書の構造を表す汎用部品だけ。

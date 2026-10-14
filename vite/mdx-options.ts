@@ -5,6 +5,10 @@
  *   rehype-citation(引用の番号付け・文献リスト)
  */
 import type { CompileOptions } from '@mdx-js/mdx'
+import type { Root as HastRoot } from 'hast'
+import type { VFile } from 'vfile'
+import type { Processor } from 'unified'
+import { relative } from 'node:path'
 import remarkMath from 'remark-math'
 import rehypeCitation from 'rehype-citation'
 import { AllPackages } from 'mathjax-full/js/input/tex/AllPackages.js'
@@ -12,7 +16,29 @@ import remarkBeamer from './remark-beamer/index.ts'
 import rehypeMathjaxDocument from './rehype-mathjax-document.ts'
 import { rehypeMathPositions, rehypeMathErrors } from './remark-beamer/rehype-math-errors.ts'
 
-export function mdxOptions({ bibliography, strict }: { bibliography: string; strict: boolean }): CompileOptions {
+/** 文献ファイル。関数なら変換する主ファイルのパスから決める(デッキごとに文献ファイルが違うため。vite/decks.js) */
+export type Bibliography = string | ((file: string) => string | undefined)
+
+const CSL = 'src/csl/nlm-citation-sequence-brackets.csl'
+
+/**
+ * rehype-citation を、変換する原稿ごとの文献ファイルで動かす。rehype-citation の設定は処理系に 1 つだけなので、
+ * 原稿ごとに設定を作って呼ぶ(変換そのものは rehype-citation のまま)。文献ファイルの無い原稿では何もしない
+ * (\cite が書かれていれば remark-beamer がエラーにする)
+ */
+function rehypeCitationPerFile(this: Processor, { bibliography }: { bibliography: Bibliography }) {
+  const processor = this
+  return async (tree: HastRoot, file: VFile) => {
+    const bib = typeof bibliography === 'function' ? bibliography(file.path) : bibliography
+    if (!bib) return
+    // rehype-citation は Windows の絶対パス(C:\…)を URL と見なして読めないので、作業ディレクトリからの相対パスで渡す
+    const rel = relative(process.cwd(), bib).split('\\').join('/')
+    const transform = rehypeCitation.call(processor, { bibliography: rel, csl: CSL, linkCitations: true }) as (t: HastRoot, f: VFile) => Promise<void>
+    await transform(tree, file)
+  }
+}
+
+export function mdxOptions({ bibliography, strict }: { bibliography: Bibliography; strict: boolean }): CompileOptions {
   return {
     remarkPlugins: [
       remarkMath,
@@ -34,7 +60,7 @@ export function mdxOptions({ bibliography, strict }: { bibliography: string; str
       ],
       rehypeMathErrors,
       // CSL は公式リポジトリの NLM/Vancouver(角括弧版)。本文の引用は [1] / [1,2] の形になる
-      [rehypeCitation, { bibliography, csl: 'src/csl/nlm-citation-sequence-brackets.csl', linkCitations: true }],
+      [rehypeCitationPerFile, { bibliography }],
     ],
   }
 }

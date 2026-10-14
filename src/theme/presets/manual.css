@@ -6,7 +6,7 @@
    - 数字は等幅(tabular-nums)。金額・数量の桁が縦に揃う
    - 番号付きの箇条書き(手順)は番号を太く、表は 1 行おきに地を付けて行を追いやすくする
 
-   使い方(src/custom.css): @import './theme/presets/manual.css'; したうえで
+   使い方(デッキの decks/<名前>/style.css): @import '@/theme/presets/manual.css'; したうえで
      デッキ全体に   :root { --deck-preset: manual; }
      一部だけに     原稿で <div data-preset="manual"> … </div> と囲む */
 [data-preset~='manual'] {

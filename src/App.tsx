@@ -1,8 +1,7 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, type ComponentType } from 'react'
 import { Deck, useReveal } from '@revealjs/react'
 import RevealNotes from 'reveal.js/plugin/notes'
 import Menu from './components/Menu'
-import Slides, { deckWarnings } from './slides.mdx'
 import { mdxComponents } from './deck/mdx-components'
 import { watchOverflow } from './deck/overflow'
 import DevDiagnostics from './deck/DevDiagnostics'
@@ -10,15 +9,23 @@ import { isHandout, isPrint, useSlideSize } from './deck/slide-size'
 
 type RevealApi = NonNullable<ReturnType<typeof useReveal>>
 
+/** 原稿(decks/<名前>/deck.mdx)のコンパイル結果 */
+export type DeckSource = {
+  Slides: ComponentType<Record<string, unknown>>
+  /** 原稿の警告(参照先の無い \ref・未登録の文献など)。vite/remark-beamer が export する */
+  warnings: { file?: string; line?: number; message: string }[]
+}
+
 // 開発時(HMR)にスライド位置を保持する。本番では常に1枚目から始める。
-const SLIDE_KEY = 'deck-slide-index'
+// 開発サーバーは全デッキを /<名前>/ で配信するので、デッキごとに分けて持つ
+const SLIDE_KEY = `deck-slide-index:${location.pathname}`
 
 /**
  * デッキ本体。スライド機構 (ナビ・番号・hash・PDF出力) は reveal.js が担当し、
- * スライドの中身は src/slides.mdx(--- / -- で区切った 1 ファイル。<Slide> / <Stack> への変換は
+ * スライドの中身はデッキの decks/<名前>/deck.mdx(--- / -- で区切った原稿。<Slide> / <Stack> への変換は
  * vite/remark-beamer が行う)。
  */
-export default function App() {
+export default function App({ Slides, warnings }: DeckSource) {
   const deckRef = useRef<RevealApi | null>(null)
   const stopOverflow = useRef<(() => void) | null>(null)
   const { width, height } = useSlideSize()
@@ -80,7 +87,7 @@ export default function App() {
     >
       <Slides components={mdxComponents} />
       <Menu />
-      {import.meta.env.DEV && <DevDiagnostics warnings={deckWarnings} />}
+      {import.meta.env.DEV && <DevDiagnostics warnings={warnings} />}
     </Deck>
   )
 }

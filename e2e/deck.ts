@@ -2,16 +2,16 @@ import { pathToFileURL } from 'node:url'
 import { resolve } from 'node:path'
 import type { Locator, Page } from '@playwright/test'
 
-/** ビルドした単一 HTML の URL(hash でスライドを指定する。例: '#/7/2') */
-export const deckUrl = (hash = '', query = '') =>
-  pathToFileURL(resolve('dist/index.html')).href + query + hash
+/** ビルドしたデッキの単一 HTML(dist/<デッキ>/index.html)の URL(hash でスライドを指定する。例: '#/7/2') */
+export const deckUrl = (deck: string, hash = '', query = '') =>
+  pathToFileURL(resolve('dist', deck, 'index.html')).href + query + hash
 
 /**
  * 題に text を含むスライドへ移動する(スライドの番号は原稿を足し引きすると変わるので、題で探す)。
  * reveal の並び(横の位置 h、縦の束の中の位置 v)を DOM から求めて、URL の hash で移動する。
  */
-export async function gotoSlide(page: Page, text: string, query = '') {
-  await page.goto(deckUrl('', query))
+export async function gotoSlide(page: Page, deck: string, text: string, query = '') {
+  await page.goto(deckUrl(deck, '', query))
   await page.waitForSelector('.reveal.ready')
   const hash = await page.evaluate((t) => {
     const top = [...document.querySelectorAll('.reveal .slides > section')]

@@ -36,7 +36,7 @@ export function watchOverflow(deck: RevealApi): () => void {
       slide.classList.toggle('deck-overflow', !!message)
       slide.dataset.deckOverflow = message
       // data-slide-file / data-slide-line は原稿でのスライドの開始位置(vite/remark-beamer が付ける。\input で取り込んだものはそのファイル)
-      const path = `${slide.dataset.slideFile ?? 'slides.mdx'}:${slide.dataset.slideLine ?? '?'}`
+      const path = `${slide.dataset.slideFile ?? 'deck.mdx'}:${slide.dataset.slideLine ?? '?'}`
       if (message && reported.get(path) !== message) console.warn(`[deck] ${path} が${message}ています`)
       if (message) reported.set(path, message)
       else reported.delete(path)
