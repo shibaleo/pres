@@ -1,9 +1,9 @@
-import { createContext, useContext, useEffect, useRef, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useMemo, useRef, type ReactNode } from 'react'
 import { Deck, DeckContext, Notes, Slide as SpectacleSlide, SlideContext, useSteps } from 'spectacle'
 import type { DeckSource } from '../../deck/source'
 import { documentComponents } from '../../components'
 import { announcePresent, deckSlides, markReady, registerGoTo } from '../../deck/mode'
-import { MIN_WIDTH, SLIDE_HEIGHT } from '../../deck/slide-metrics'
+import { useViewSize } from '../../deck/view-size'
 import { PageNumber, watchPageNumbers } from '../page-number'
 import { FlatStack, isShown, overlayClass, slideAttributes, stepsOf, type OverlayProps, type SlideProps } from '../structure'
 import { SPECTACLE_TRANSITIONS } from './transitions'
@@ -91,14 +91,15 @@ function RegisterGoTo() {
 }
 
 /**
- * Spectacle のテーマ: スライドの大きさは最小サイズ(deck/slide-metrics.ts)。色と書体は本文の範囲(.deck)の規則が決める。
+ * Spectacle のテーマ: スライドの大きさは窓と同じ縦横比(deck/view-size.ts。窓の大きさが変わると渡し直す)。
+ * 色と書体は本文の範囲(.deck)の規則が決める。
  * backdropStyle は Spectacle の既定(ウィンドウいっぱいに固定)を丸ごと置き換えるので、既定の値も書く
  * (無いと外枠が中身の大きさに縮み、拡大と中央寄せが効かない)
  */
-const theme = {
-  size: { width: MIN_WIDTH, height: SLIDE_HEIGHT },
+const themeOf = (width: number, height: number) => ({
+  size: { width, height },
   backdropStyle: { position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'var(--color-surface)' },
-}
+})
 
 /**
  * Spectacle モード: React の部品でスライドを組むライブラリ(spectacle)。切り替えは横に滑る遷移。
@@ -108,6 +109,8 @@ const theme = {
 export default function SpectacleApp({ Slides, motion }: DeckSource) {
   // 既定の遷移(デッキの動きの設定 motion.ts)。無ければ Spectacle の既定(横に滑る)
   const transition = motion?.transition ? SPECTACLE_TRANSITIONS[motion.transition] : undefined
+  const { width, height } = useViewSize()
+  const theme = useMemo(() => themeOf(width, height), [width, height])
   return (
     <Deck theme={theme} template={() => null} transition={transition}>
       <Slides components={spectacleComponents} />

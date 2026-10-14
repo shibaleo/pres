@@ -36,8 +36,8 @@ reveal 以外は試作で、URL の `?mode=<名前>` で選ぶ（選び方は仮
 モードとまわりの約束（`src/deck/mode.ts`）: モードに頼むのは、今のスライドの知らせ（`announcePresent`。動く図が受ける）、
 「このスライドへ移る」の登録（`registerGoTo`。開発時の警告の一覧と、原稿の中のリンク `#名前` から移る。`src/deck/links.ts`）、準備完了の印（`markReady`。`<html data-deck-ready>`）、
 スライドの要素に `.slide` と原稿の位置を付けて `.deck` の中に文書の順で置くこと、の 4 つだけ。これで原稿の警告とはみ出しの検査
-（`src/devtools/`）は全モードで同じに働く。スライドの大きさは CSS 変数 `--deck-slide-width` / `--deck-slide-height`、
-窓に収める倍率は `watchFitScale` の `--deck-scale`。共通の部品は段の印（`src/modes/marker-steps.tsx`。impress と Shower）と、ページ番号（`src/modes/page-number.tsx`。reveal 以外）。
+（`src/devtools/`）は全モードで同じに働く。スライドの大きさは窓と同じ縦横比（`src/deck/view-size.ts`。CSS では `watchViewSize` の `--deck-view-width` / `--deck-view-height`、
+窓に合わせる倍率は `--deck-scale`）。最小サイズは `--deck-slide-width` / `--deck-slide-height`（はみ出しの枠）。共通の部品は段の印（`src/modes/marker-steps.tsx`。impress と Shower）と、ページ番号（`src/modes/page-number.tsx`。reveal 以外）。
 ページ番号は reveal の `c/t` と同じく文書の順のスライドで数え、スライドの中の右上（題の帯の上）に置く。impress・Shower・Swiper には
 ページ番号が無く、Spectacle の template は今のスライドの番号を全スライドに配る作りで、一覧と PDF 用の表示ではどのスライドも同じ番号になるので使わない。
 段階表示の見た目（`.overlay-hidden`）は theme/base.css。
@@ -50,7 +50,7 @@ impress の substep と Shower の `.next` は、要素を文書順に 1 つず�
 
 ### impress モード（試作）
 
-- スライドは impress の step。最小サイズ（933×700）の固定の大きさ。置き方は motion.ts の `impress`（`src/modes/impress/layout.ts`）:
+- スライドは impress の step。大きさは窓と同じ縦横比（置き方の間隔もその大きさから決め、窓の大きさが変わったら置き直して作り直す）。置き方は motion.ts の `impress`（`src/modes/impress/layout.ts`）:
   `layout` が `grid`（既定。横の並び（h）は右へ、縦の続き（v）は下へ）か `spiral`（文書の順に、外へ広がる螺旋に沿って。
   スライドは螺旋の進む向きに傾け、隣とも隣の周とも対角線より離す）、`positions` でラベルのスライドだけ置き直す（書いた項目だけ）。
   最後に全体を見渡す step（`#overview`）を、全スライドが収まる所に足す
@@ -73,7 +73,7 @@ impress の substep と Shower の `.next` は、要素を文書順に 1 つず�
 ### Spectacle モード（試作）
 
 - `spectacle` 10.2.3。React 19 の下で動く（依存の styled-components 5・`react-is@18` も問題なかった）。スライドの大きさは
-  `theme.size` で最小サイズ（933×700）
+  `theme.size` で窓と同じ縦横比の大きさ（窓の大きさが変わると渡し直す）
 - 段階表示は Spectacle の仕組みそのもの: 段のあるスライドが `useSteps(段の数 - 1)` で段を登録し、返る step（-1〜）+ 2 を
   今の段として部品に配る。段の印は要らない
 - Spectacle の機能がそのまま使える: 一覧（`?overviewMode=true`）、発表者ビュー（`?presenterMode=true`。時計と今・次のスライド）、
@@ -93,7 +93,7 @@ impress の substep と Shower の `.next` は、要素を文書順に 1 つず�
   Home / End）は、段が残っていれば段を進め、無ければスライドを移る。前のスライドへ戻ると最後の段、先へ進むと 1 段目から。
   段の数は `Slide` が要素に付ける `data-steps` から読み、表示は段の印のモードと同じ `applyStep`
 - スワイプ・ドラッグはスライドを移る（段は飛ばす）。図（`.figure`）・入力・ボタン・リンクの上ではスワイプにしない
-- 全体は最小サイズ（933×700）の容器を、ウィンドウに収まる倍率で中央に置く（Swiper は倍率をかける前の大きさで組む）
+- 全体は窓と同じ縦横比の大きさの容器を、窓に合わせる倍率で中央に置く（Swiper は倍率をかける前の大きさで組む）
 - まだ無いもの: 一覧、PDF 出力、発表者ビュー、原稿を直したときの描き直し（React が class を
   描き直すと Swiper の付けた class が消える）
 
@@ -123,9 +123,9 @@ impress の substep と Shower の `.next` は、要素を文書順に 1 つず�
 ### 決めたこと
 
 - 発表者ビューは各ライブラリのものを使う（reveal はノートのプラグイン、impress は impressConsole）
-- reveal 以外のモードは、スライドを最小サイズ（933×700）の固定の大きさにし、窓に収まる倍率で縮小する（窓の幅には追従させない）。
-  窓との差はスライドの外の面（`--color-surface`）になり、スライドの地（`--color-canvas`）と別に色を決められる。
-  reveal だけは窓と同じ縦横比に広げる（`src/modes/reveal/slide-size.ts`）
+- どのモードも、スライドを窓と同じ縦横比に広げ、窓全体を覆う（`src/deck/view-size.ts`。最小サイズ 933×700 が収まる倍率で縮小し、
+  余る分だけ横か縦に広げる）。固定の縦横比だと窓との差が余白になり、題の帯が窓の端に届かないため。原稿が当てにしてよいのは最小サイズだけで、
+  はみ出しの検査も最小サイズで測る
 - 縦のスライド（`--`）は内容の層では「節の中の続き」。表し方はモードが決める（reveal は縦、impress は下に置く）
 - 段階表示は `\pause` などの Beamer の書き方でも `<Fragment>` でも書ける。`<Fragment>` は変換が `\pause` と同じく段を 1 つ進める `Overlay` にする（後ろの本文は隠さない）ので、どのモードでも同じに出る
 

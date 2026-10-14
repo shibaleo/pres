@@ -73,20 +73,23 @@ export function watchOverflow(onChange?: (overflows: Overflow[]) => void): () =>
  * スライドを最小の幅で組んだときの中身の縦横(はみ出しを含む)と、コード(pre)の枠の中の横のはみ出しの最大。
  * コードの枠は overflow: auto なので、長い行は枠の中でスクロールになり、スライドの大きさには出ない(発表では行の続きが見えない)。
  * ライブラリは今のスライドから遠いものを描かないことがある(display: none。スライドにも、それを包む要素にも付く)ので、
- * 測る間だけ表示し、縮小(zoom。Shower の一覧)も外す
+ * 測る間だけ表示し、縮小(zoom。Shower の一覧)も外す。スライドは窓と同じ縦横比で最小サイズより広い・高いことがあるので
+ * (deck/view-size.ts)、測る間だけ幅と高さを最小サイズにする(高さはそれより中身が高ければ scrollHeight に出る)
  */
 function measureAtMinimum(slide: HTMLElement): { width: number; height: number; code: number } {
   const hidden: HTMLElement[] = []
   for (let el: HTMLElement | null = slide; el && el !== document.body; el = el.parentElement) {
     if (getComputedStyle(el).display === 'none') hidden.push(el)
   }
-  const prev = { display: hidden.map((el) => el.style.display), width: slide.style.width, zoom: slide.style.zoom }
+  const prev = { display: hidden.map((el) => el.style.display), width: slide.style.width, height: slide.style.height, zoom: slide.style.zoom }
   for (const el of hidden) el.style.display = 'block'
   slide.style.width = `${MIN_WIDTH}px`
+  slide.style.height = `${SLIDE_HEIGHT}px`
   slide.style.zoom = '1'
   const code = Math.max(0, ...[...slide.querySelectorAll('pre')].map((p) => p.scrollWidth - p.clientWidth))
   const size = { width: slide.scrollWidth, height: slide.scrollHeight, code }
   slide.style.width = prev.width
+  slide.style.height = prev.height
   slide.style.zoom = prev.zoom
   hidden.forEach((el, i) => (el.style.display = prev.display[i]))
   return size

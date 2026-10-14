@@ -8,10 +8,10 @@ body.impress-enabled {
 #impress .impress-slides {
   transform-style: preserve-3d;
 }
-/* スライド 1 枚は最小サイズ(deck/slide-metrics.ts。原稿が当てにしてよい大きさ)の固定の大きさ */
+/* スライド 1 枚は窓と同じ縦横比の大きさ(deck/view-size.ts の watchViewSize。置き方の間隔も同じ大きさで決める) */
 #impress .slide {
-  width: var(--deck-slide-width);
-  height: var(--deck-slide-height);
+  width: var(--deck-view-width);
+  height: var(--deck-view-height);
   overflow: hidden;
   background: var(--color-canvas);
 }

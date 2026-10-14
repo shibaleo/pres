@@ -8,8 +8,9 @@
  *   - スライドの要素に class="slide" と、変換が付ける原稿の位置(data-slide-line など)を付け、本文の範囲(class="deck")の中に
  *     文書の順で置く(deckSlides が拾う)
  *
- * スライドの大きさ(最小サイズ)は CSS 変数 --deck-slide-width / --deck-slide-height(main.tsx が付ける)、
- * 全体を窓に収める倍率が要るモードは watchFitScale の --deck-scale を使う。
+ * スライドの表示の大きさは窓と同じ縦横比(deck/view-size.ts。CSS 変数なら watchViewSize の --deck-view-width /
+ * --deck-view-height と倍率 --deck-scale)。最小サイズは CSS 変数 --deck-slide-width / --deck-slide-height(main.tsx が付ける。
+ * はみ出しの枠が使う)。
  */
 import { MIN_WIDTH, SLIDE_HEIGHT } from './slide-metrics'
 
@@ -57,16 +58,4 @@ export function setSlideSizeVariables() {
   const style = document.documentElement.style
   style.setProperty('--deck-slide-width', `${MIN_WIDTH}px`)
   style.setProperty('--deck-slide-height', `${SLIDE_HEIGHT}px`)
-}
-
-/**
- * 最小サイズのスライドが窓に収まる最大の倍率を CSS 変数 --deck-scale にし、窓の大きさが変わるたびに直す
- * (自分では拡大縮小しないライブラリのモード用)。返す関数で止める
- */
-export function watchFitScale(): () => void {
-  const update = () =>
-    document.documentElement.style.setProperty('--deck-scale', String(Math.min(innerWidth / MIN_WIDTH, innerHeight / SLIDE_HEIGHT)))
-  update()
-  addEventListener('resize', update)
-  return () => removeEventListener('resize', update)
 }

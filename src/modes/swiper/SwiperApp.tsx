@@ -11,7 +11,8 @@ import 'swiper/css/effect-fade'
 import 'swiper/css/effect-flip'
 import type { DeckSource } from '../../deck/source'
 import { documentComponents } from '../../components'
-import { announcePresent, markReady, registerGoTo, watchFitScale } from '../../deck/mode'
+import { announcePresent, markReady, registerGoTo } from '../../deck/mode'
+import { watchViewSize } from '../../deck/view-size'
 import { Overlay, applyStep } from '../marker-steps'
 import { PageNumber, watchPageNumbers } from '../page-number'
 import { MODE_TRANSITIONS, type SwiperEffect } from '../names'
@@ -67,8 +68,8 @@ export default function SwiperApp({ Slides, motion }: DeckSource) {
 
   useEffect(() => {
     const el = container.current!
-    // 全体の倍率: 最小サイズのスライドがウィンドウに収まる最大(Swiper は倍率をかける前の大きさで組む)
-    const stopFit = watchFitScale()
+    // 容器の大きさと倍率: 窓と同じ縦横比の大きさを、窓に合わせて縮小する(Swiper は倍率をかける前の大きさで組む)
+    const stopFit = watchViewSize()
     const stopPageNumbers = watchPageNumbers()
 
     // URL の &effect= が無ければ、デッキの動きの設定の既定の遷移(Swiper にあるもの)

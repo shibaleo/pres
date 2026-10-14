@@ -4,10 +4,10 @@
 body.shower {
   background: var(--color-surface);
 }
-/* スライド 1 枚は最小サイズ(deck/slide-metrics.ts。原稿が当てにしてよい大きさ)の固定の大きさ */
+/* スライド 1 枚は窓と同じ縦横比の大きさ(deck/view-size.ts の watchViewSize。最小サイズより横か縦に広い) */
 .shower .slide {
-  width: var(--deck-slide-width);
-  height: var(--deck-slide-height);
+  width: var(--deck-view-width);
+  height: var(--deck-view-height);
   overflow: hidden;
   background: var(--color-canvas);
 }
@@ -39,7 +39,7 @@ body.shower {
   outline: calc(var(--rule) / 0.3) solid var(--color-brand);
 }
 
-/* 全画面: 今のスライドだけを、ウィンドウの中央に収まる大きさで(--deck-scale は deck/mode.ts の watchFitScale が決める) */
+/* 全画面: 今のスライドだけを、ウィンドウの中央に収まる大きさで(--deck-scale は deck/view-size.ts の watchViewSize が決める) */
 .shower.full {
   overflow: hidden;
 }

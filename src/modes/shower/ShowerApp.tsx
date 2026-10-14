@@ -3,7 +3,8 @@ import { useEffect } from 'react'
 import Shower from '@shower/core/lib/shower.js'
 import type { DeckSource } from '../../deck/source'
 import { documentComponents } from '../../components'
-import { announcePresent, markReady, registerGoTo, watchFitScale } from '../../deck/mode'
+import { announcePresent, markReady, registerGoTo } from '../../deck/mode'
+import { watchViewSize } from '../../deck/view-size'
 import { Overlay, StepMarkers, applyStep, currentStep } from '../marker-steps'
 import { PageNumber, watchPageNumbers } from '../page-number'
 import { FlatStack, slideAttributes, stepsOf, type SlideProps } from '../structure'
@@ -38,7 +39,7 @@ let shower: Shower | null = null
 export default function ShowerApp({ Slides }: DeckSource) {
   useEffect(() => {
     if (shower) return
-    watchFitScale()
+    watchViewSize()
     watchPageNumbers()
     document.body.classList.add('shower')
     shower = new Shower()
