@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useReveal } from '@revealjs/react'
-import { slideTitle } from '../deck/slide-title'
+import { slideTitle } from './slide-title'
 
 /**
  * 左下ハンバーガー → 左サイドバー(スライド一覧)。旧 reveal.js-menu の代替。

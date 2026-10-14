@@ -5,10 +5,10 @@ import type { Topology, GeometryCollection } from 'topojson-specification'
 import type { FeatureCollection, Geometry } from 'geojson'
 // world-atlas をローカルバンドル (CDN fetch を廃止 → オフラインでも描画される)
 import worldData from 'world-atlas/countries-110m.json'
-import { useSvgDrag, type Point } from './figure/useSvgDrag'
-import ResetButton from './figure/ResetButton'
-import PlayPauseButton from './figure/PlayPauseButton'
-import { prefersReducedMotion, useOnPresentSlide } from './figure/motion'
+import { useSvgDrag, type Point } from '@/figure/useSvgDrag'
+import ResetButton from '@/figure/ResetButton'
+import PlayPauseButton from '@/figure/PlayPauseButton'
+import { prefersReducedMotion, useOnPresentSlide } from '@/figure/motion'
 
 /**
  * 回る地球儀(SVG・visx の正射図法)。

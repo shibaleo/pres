@@ -1,6 +1,6 @@
 /**
  * はみ出しの検査: ビルドした全デッキ(dist/<デッキ>/index.html)を ?check-overflow で開き、開発時と同じ検査
- * (src/deck/overflow.ts。スライドを最小サイズ 933×700 で組んで、縦横とコードの枠の中のはみ出しを測る)の結果を集める。
+ * (src/devtools/overflow.ts。スライドを最小サイズ 933×700 で組んで、縦横とコードの枠の中のはみ出しを測る)の結果を集める。
  * 原稿を書いて npm run check を通せば、はみ出したスライドが原稿の位置付きで報告される。
  */
 import { expect, test } from '@playwright/test'

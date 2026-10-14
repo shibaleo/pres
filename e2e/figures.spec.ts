@@ -1,5 +1,5 @@
 /**
- * 図(src/components/ の visx の図)の操作を、実際のブラウザで確かめる。
+ * 図(decks/legendre/components/ の visx の図)の操作を、実際のブラウザで確かめる。
  * ドラッグの座標は reveal の拡大縮小に左右されるので、拡大する大きさのウィンドウでも確かめる。
  */
 import { expect, test } from '@playwright/test'

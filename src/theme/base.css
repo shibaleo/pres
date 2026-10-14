@@ -14,14 +14,15 @@
      2. スライドの組版
      3. パネル
      4. その他の部品
-     5. デッキの外側の UI と開発時の表示 */
+     5. ページの器
+   モードに固有の規則(reveal のページ番号・矢印・印刷用の表示・一覧など)は src/modes/<名前>/ の CSS、
+   開発時の表示は src/devtools/devtools.css、1 つのデッキの図の規則はそのデッキの style.css に置く */
 
 /* ========== 1. 文書の既定 ==========
    どのモード(reveal・impress …)でも同じ組版になるよう、要素の既定の見た目を土台に持つ
    (以前は reveal の white テーマが .reveal の範囲で与えていたもの。値はトークンから)。
    デッキの本文の範囲は .deck(各モードが本文を包む要素に付ける) */
-body,
-.reveal-viewport {
+body {
   background-color: var(--color-canvas);
 }
 .deck {
@@ -218,37 +219,6 @@ body,
   line-height: inherit;
   vertical-align: baseline;
 }
-/* ページ番号「i/全体」: 右上に地を付けずに置く。題の帯のあるスライドでは帯の上なので地の色(白)、
-   帯の無いスライドではアクセント色。帯の有無は表示中のスライド(印刷ではページ)の先頭が h2 かで決める */
-.reveal .slide-number {
-  inset: 0 0 auto auto;
-  padding: calc(var(--ui-space) / 2) var(--ui-space);
-  font-family: var(--font-ui);
-  color: var(--color-brand);
-  background: none;
-}
-.reveal .slide-number-delimiter {
-  margin: 0;
-}
-html:not(.reveal-print) .reveal:has(.slides section.present:not(.stack) > h2:first-child) .slide-number,
-html.reveal-print .pdf-page:has(> section > h2:first-child) .slide-number {
-  color: var(--color-canvas);
-}
-.reveal :is(.controls, .progress) {
-  color: var(--color-brand);
-}
-/* 矢印は内容の邪魔をしないよう普段は薄くし、マウスを乗せたときだけはっきり出す */
-.reveal .controls {
-  opacity: var(--ui-idle);
-  transition: opacity 0.2s;
-}
-.reveal .controls:hover {
-  opacity: 1;
-}
-.reveal .progress {
-  height: var(--rule);
-  background: color-mix(in srgb, var(--color-canvas) 80%, black);
-}
 
 /* ========== 3. パネル ==========
    囲み全般の共通の形。面はすべて --color-surface で、色は見出しの下線(アクセント)にだけ使う。
@@ -408,7 +378,7 @@ html.reveal-print .pdf-page:has(> section > h2:first-child) .slide-number {
   margin: 0 auto;
   overflow: visible;
 }
-/* キーボードで選んだ図の要素(Tab で選び、矢印キーで動かす。components/figure/useSvgDrag.ts) */
+/* キーボードで選んだ図の要素(Tab で選び、矢印キーで動かす。figure/useSvgDrag.ts) */
 .deck .figure [tabindex]:focus-visible,
 .deck .figure[tabindex]:focus-visible {
   outline: calc(var(--rule) / 2) solid var(--color-brand);
@@ -425,7 +395,7 @@ html.reveal-print .pdf-page:has(> section > h2:first-child) .slide-number {
   stroke: var(--color-brand);
   stroke-width: var(--rule);
 }
-/* 図のラベル: 数式用イタリックの文字(components/figure/mathItalic.ts)を数式用フォントで描く。
+/* 図のラベル: 数式用イタリックの文字(figure/mathItalic.ts)を数式用フォントで描く。
    文字そのものがイタリックなので、斜体にはしない */
 .deck .figure-label {
   font-family: var(--font-math);
@@ -443,21 +413,6 @@ html.reveal-print .pdf-page:has(> section > h2:first-child) .slide-number {
   fill: none;
   stroke: var(--color-ink);
   stroke-width: calc(var(--rule) * 0.75);
-}
-/* 速度ベクトル(赤の矢印)と単位法線ベクトル(アクセント色の矢印)。CuspNormal */
-.deck .figure-velocity {
-  stroke: var(--color-frame-red);
-  stroke-width: var(--rule);
-}
-.deck .figure-velocity-head {
-  fill: var(--color-frame-red);
-}
-.deck .figure-normal {
-  stroke: var(--color-brand);
-  stroke-width: var(--rule);
-}
-.deck .figure-normal-head {
-  fill: var(--color-brand);
 }
 /* 複数の系列(NormalFamily の 3 つの点と曲線)。点・曲線・凡例を同じ色で対応させる */
 .deck .figure-series-0 {
@@ -482,11 +437,6 @@ html.reveal-print .pdf-page:has(> section > h2:first-child) .slide-number {
   font-size: calc(var(--text-base) / var(--type-ratio) / var(--type-ratio));
   fill: var(--series);
 }
-.deck .figure-tangent {
-  stroke: var(--color-frame-purple);
-  stroke-width: calc(var(--rule) / 2);
-  stroke-dasharray: var(--rule) var(--rule);
-}
 .deck .figure-grid line {
   stroke: var(--color-surface);
 }
@@ -499,17 +449,6 @@ html.reveal-print .pdf-page:has(> section > h2:first-child) .slide-number {
   font-size: calc(var(--text-base) / var(--type-ratio) / var(--type-ratio));
   fill: var(--color-muted);
 }
-.deck .figure-globe {
-  cursor: grab;
-}
-.deck .figure-globe-sea {
-  fill: var(--color-brand);
-}
-.deck .figure-globe-land {
-  fill: var(--color-ink);
-  stroke: var(--color-canvas);
-  stroke-width: 0.5;
-}
 /* 図の入れ物: 図の幅に合わせ、右上にリセットのボタンを置く */
 .deck .figure-block {
   position: relative;
@@ -517,7 +456,7 @@ html.reveal-print .pdf-page:has(> section > h2:first-child) .slide-number {
   max-width: 100%;
   margin: var(--space) auto;
 }
-/* 図のボタン(components/figure/ の ResetButton・PlayPauseButton): 図の右上に並べ、
+/* 図のボタン(figure/ の ResetButton・PlayPauseButton): 図の右上に並べ、
    普段は薄く、マウスを乗せたときだけはっきり出す */
 .deck .figure-buttons {
   position: absolute;
@@ -558,9 +497,6 @@ html.reveal-print .pdf-page:has(> section > h2:first-child) .slide-number {
   fill: currentColor;
   stroke: none;
 }
-html.reveal-print .reveal .figure-buttons {
-  display: none;
-}
 @media print {
   .deck .figure-buttons {
     display: none;
@@ -586,16 +522,6 @@ html.reveal-print .reveal .figure-buttons {
   font-variant-numeric: tabular-nums;
 }
 
-/* 段階表示(reveal モードの modes/reveal/Overlay.tsx。Beamer の \pause / <2-> / \only など) */
-/* ステップ数を揃えるための見えない fragment */
-.deck .overlay-step {
-  display: none !important;
-}
-/* \only: 非表示の間は場所も取らない(\uncover は場所を残す = reveal の既定) */
-.deck .fragment.only:not(.visible),
-.deck .fragment.only.fade-out.visible {
-  display: none;
-}
 /* reveal 以外のモードの段階表示(modes/structure.tsx の overlayClass。impress・Shower・Spectacle・Swiper)。
    非表示の間も場所は残し、\only は場所も取らない。段を進める印(空の要素)は見せない */
 .deck .overlay {
@@ -614,9 +540,9 @@ html.reveal-print .reveal .figure-buttons {
   display: none;
 }
 
-/* ========== 5. デッキの外側の UI と開発時の表示 ========== */
+/* ========== 5. ページの器 ========== */
 
-/* reveal は .reveal を親の高さいっぱいに広げるので、親に高さが無いと潰れて白画面になる */
+/* モードの器(reveal の .reveal など)は親の高さいっぱいに広がるので、親に高さが無いと潰れて白画面になる */
 html,
 body {
   margin: 0;
@@ -626,159 +552,6 @@ body {
   height: 100vh;
 }
 
-/* スライド一覧(components/Menu.tsx)。.deck の外(body 直下)に置く */
-.deck-menu {
-  font: 14px/1.5 var(--font-ui);
-  color: var(--color-ink);
-}
-.deck-menu button {
-  font: inherit;
-  color: inherit;
-  background: none;
-  border: none;
-  cursor: pointer;
-}
-.deck-menu-toggle {
-  position: fixed;
-  left: var(--ui-space);
-  bottom: var(--ui-space);
-  z-index: 50;
-  padding: var(--ui-space);
-  color: var(--color-brand) !important;
-  opacity: var(--ui-idle);
-  transition: opacity 0.2s;
-}
-.deck-menu-toggle:hover {
-  opacity: 1;
-}
-.deck-menu-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 40;
-  background: rgb(0 0 0 / 0.25);
-}
-.deck-menu-panel {
-  position: fixed;
-  inset: 0 auto 0 0;
-  z-index: 45;
-  width: 300px;
-  overflow-y: auto;
-  background: var(--color-canvas);
-  box-shadow: 0 0 calc(2 * var(--ui-space)) rgb(0 0 0 / 0.2);
-}
-.deck-menu-panel > header {
-  padding: calc(2 * var(--ui-space));
-  font-weight: bold;
-  color: var(--color-canvas);
-  background: var(--color-brand);
-}
-.deck-menu-panel ul {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.deck-menu-panel li button {
-  display: block;
-  width: 100%;
-  padding: var(--ui-space) calc(2 * var(--ui-space));
-  text-align: left;
-  border-bottom: 1px solid var(--color-surface);
-}
-/* 縦スライドは字下げし、従の色にする */
-.deck-menu-panel li button.sub {
-  padding-left: calc(4 * var(--ui-space));
-  color: var(--color-muted);
-}
-.deck-menu-panel li button[aria-current='true'] {
-  font-weight: bold;
-  color: var(--color-brand);
-  background: color-mix(in srgb, var(--color-canvas) var(--tint), var(--color-brand));
-}
 
-/* 原稿の警告の一覧(deck/DevDiagnostics.tsx。開発時だけ)。警告なので配色はテーマに依らない */
-.deck-diagnostics {
-  position: fixed;
-  top: var(--ui-space);
-  right: var(--ui-space);
-  z-index: 60;
-  max-width: 480px;
-  font: 13px/1.5 var(--font-ui);
-  background: #fff8e6;
-  border: 1px solid #e0a800;
-  box-shadow: 0 0 var(--ui-space) rgb(0 0 0 / 0.15);
-}
-.deck-diagnostics button {
-  display: block;
-  width: 100%;
-  padding: var(--ui-space);
-  text-align: left;
-  font: inherit;
-  font-weight: bold;
-  color: #8a5a00;
-  background: none;
-  border: none;
-  cursor: pointer;
-}
-.deck-diagnostics ul {
-  margin: 0;
-  padding: 0 var(--ui-space) var(--ui-space) calc(3 * var(--ui-space));
-}
-.deck-diagnostics code {
-  font-family: var(--font-code);
-}
 
-/* スライドの最小サイズからのはみ出し(deck/overflow.ts。開発時だけ付く)。
-   最小サイズの範囲(--deck-slide-width × --deck-slide-height。deck/mode.ts)を破線の枠で示し、その右上に超過量を出す。
-   枠もバッジも最小サイズの内側に置き、はみ出しの測定(scrollWidth / scrollHeight)を増やさない
-   (増やすと、原稿を直しても警告が消えない) */
-.deck .slide.deck-overflow::before,
-.deck .slide.deck-overflow::after {
-  position: absolute;
-  top: 0;
-  z-index: 1;
-  pointer-events: none;
-}
-.deck .slide.deck-overflow::before {
-  content: '';
-  left: 0;
-  box-sizing: border-box;
-  width: var(--deck-slide-width);
-  height: var(--deck-slide-height);
-  border: calc(var(--rule) / 2) dashed red;
-}
-.deck .slide.deck-overflow::after {
-  content: attr(data-deck-overflow);
-  left: var(--deck-slide-width);
-  translate: -100% 0;
-  padding: 0 var(--space);
-  font: calc(1em / var(--type-ratio) / var(--type-ratio)) / var(--leading) var(--font-ui);
-  white-space: nowrap;
-  color: #fff;
-  background: red;
-}
 
-/* PDF 出力(?print-pdf)。reveal は印刷用の表示(html.reveal-print)でスライドの余白を 0 にする
-   (padding: 0 !important)。題の帯は余白を負の margin で打ち消して端まで伸ばしているので、
-   余白が 0 だと帯がページの外に出て切れる。スライドの余白を戻す */
-html.reveal-print .reveal .slides section:not(.stack) {
-  padding: var(--slide-pad) !important;
-}
-/* PDF のページ番号はページと同じ論理座標で組まれるので、題の帯(高さ 3 半行)の縦の中央に置き、
-   右端からの距離を題の字下げ(スライドの余白)と揃える */
-html.reveal-print .reveal .slide-number-pdf {
-  display: flex;
-  align-items: center;
-  box-sizing: border-box;
-  height: calc(3 * var(--space));
-  padding: 0 var(--slide-pad);
-}
-/* デッキの外側の UI は、印刷用の表示でも印刷でも出さない */
-html.reveal-print :is(.deck-menu, .deck-diagnostics) {
-  display: none !important;
-}
-@media print {
-  .deck-menu,
-  .deck-diagnostics {
-    display: none !important;
-  }
-}

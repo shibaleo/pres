@@ -29,7 +29,7 @@ reveal.js プレゼンテーション。**MDX + TSX** で執筆し、可視化�
 | スライド | reveal.js 6 (`@revealjs/react`) |
 | 記法 | `vite/remark-beamer/`（LaTeX / Beamer 風記法の remark プラグイン） |
 | 数式 | `remark-math` + MathJax 3（SVG。式番号・`\label`・`\eqref` は AMS の規則。後ろにある式への参照も解決する。字形は文書全体で 1 回だけ持ち、各数式には画面に見えない MathML（assistive MathML）を添える） |
-| 文献 | BibTeX (`decks/<名前>/references.bib`) + `rehype-citation`（CSL: NLM/Vancouver 角括弧版。公式リポジトリの `src/csl/nlm-citation-sequence-brackets.csl`） |
+| 文献 | BibTeX (`decks/<名前>/references.bib`) + `rehype-citation`（CSL: NLM/Vancouver 角括弧版。公式リポジトリの `vite/csl/nlm-citation-sequence-brackets.csl`） |
 | その他 | Tailwind CSS v4 |
 | 図 | visx（React + D3 の SVG の部品）で React コンポーネント化。点や線のドラッグ・スライダーで操作できる |
 | 配布 | `vite-plugin-singlefile` で単一 HTML 化、フォントは subset woff2 |
@@ -71,47 +71,51 @@ npm run check                  # typecheck + test + build:single(全デッキ) +
 decks/                 デッキ(1 フォルダ = 1 デッキ。vite/decks.js)。どれも具体的な資料で、それぞれ別の見本を兼ねる
   <名前>/
     deck.mdx           原稿の主ファイル(--- で横、-- で縦に区切る。必須)
-    style.css          このデッキの見た目の特化(プリセットの読み込み・トークンの上書き。必須)
+    style.css          このデッキの見た目の特化(プリセットの読み込み・トークンの上書き・このデッキの図の規則。必須)
     references.bib     BibTeX 文献データ(\cite を使うデッキだけ)
     slides/ img/       \input{…} で取り込む原稿 / このデッキの画像(原稿から ./img/… で import する)
+    components/        このデッキだけの部品(図など。原稿から ./components/… で import する)
+  components/          (必要になったら)いくつかのデッキで共有するが、土台にするほど汎用ではない部品。デッキの名前には使えない
   landau/              複雑な数式の見本。Landau 減衰の線形計算(C. Villani『Birth of a Theorem』第 4 章の草稿の導出)と、
                        付録「この資料の書き方」(slides/guide.mdx: 記法の一覧・定理環境・align・段階表示・可換図式)
   legendre/            画像と SVG の見本。ルジャンドル部分多様体の母関数(卒業研究の発表を組み直したもの)。
-                       元の資料の画像(img/)と操作できる SVG の図、付録に図の部品(4 点・対数螺旋・地球儀・d3)
+                       元の資料の画像(img/)と操作できる SVG の図(components/)、付録に図の部品(4 点・対数螺旋・地球儀・d3)
   trial-balance/       表組の見本。試算表の作成(右揃えの金額・合計の行・表の題)
   manual/              形式的な文書の見本。記帳業務の手順書(目的・手順・注意・用語・枠の使い分け)
 index.html             全デッキで共通の器(題と入口のスクリプトは vite.config.ts がデッキごとに入れる)
-src/                   全デッキで共有する部品・見た目・デッキ本体
-  csl/                 引用スタイル(CSL。公式リポジトリのものをそのまま置く)
-  App.tsx              デッキ本体(<Deck> に原稿と <Menu> を合成)
-  main.tsx             起動(reveal と土台の CSS を読み込み、デッキの入口から原稿を受け取って描く)
+src/                   全デッキ・全モードで共有する土台(用途に特化しない)
+  main.tsx             起動(土台の CSS を読み、モードを選び、デッキの入口から原稿を受け取って描く)
+  deck/                モードに依らない仕組み
+    source.ts          原稿のコンパイル結果の型(DeckSource。どのモードも受け取る)
+    mode.ts            モードとまわり(図・開発時の道具・テスト)との約束(今のスライドの知らせ・移り方・準備完了の印)
+    slide-metrics.ts   スライドの最小サイズ 933×700(原稿が当てにしてよい大きさ。ビルド側も読む)
+  components/          文書の部品(どのモードでも同じ)
+    index.ts           原稿から import なしで使える部品の一覧
+    Frame / Theorem / layout / Notes  色付きの枠 / 定理・定義・証明 / 段組み・中央寄せ・署名・注・コード / スピーカーノート
+  figure/              図を作る道具(ドラッグ・リセットと再生のボタン・表示中のスライドだけで動かす・数式用イタリックのラベル)
+  modes/               モード(スライドを動かすライブラリごとの作り。docs/motion.md)
+    names.ts           モードの名前と開き方の変わり種(開発サーバーの一覧ページと共有)
+    structure.tsx      構造の部品(Slide・Stack・Overlay)の共通の約束と、段の表示の判定
+    marker-steps.tsx   段の印(impress・Shower。Swiper も表示の判定に使う)
+    reveal/            既定のモード: RevealApp・構造の部品・Overlay(fragment)・Menu(スライド一覧)・
+                       slide-size(窓と紙の大きさ)・slide-title・reveal.css(ページ番号・矢印・印刷用の表示など)
+    impress/ shower/ spectacle/ swiper/  試作のモード
+  devtools/            開発時の道具(原稿の警告とはみ出しの一覧・はみ出しの検査。どのモードでも同じ)
   theme/               見た目の土台。詳しくは「見た目のカスタマイズ」
-    index.css          入口(tokens → base の順に読み込む。この後にデッキの style.css が入る)
+    index.css          入口(tokens → base の順に読み込む。この後にモードの CSS、デッキの style.css が入る)
     tokens.css         トークンの既定値(色・書体・文字の段階・間隔)
     base.css           汎用の規則(トークンから導いた値だけを使う)
     fonts.css          土台の書体(本文の明朝 Noto Serif JP・見出しと強調のゴシック Noto Sans JP・等幅・図のラベルの数式用 New Computer Modern Math)
     presets/math.css   数学向けのプリセット(欧文と数字を New Computer Modern に)
     presets/manual.css 業務マニュアル向けのプリセット(本文もゴシック・太さで強調・等幅数字・手順の番号を太く)
-  deck/
-    mdx-components.tsx 原稿から import なしで使える部品の一覧
-    slide-size.ts      スライドの論理サイズ(ウィンドウ全体を覆う。原稿が当てにできるのは最小 933×700。slide-metrics.ts)
-    overflow.ts        はみ出しの検出(開発時と、ビルドしたデッキを ?check-overflow で開いたとき)
-    slide-title.ts     スライドの題(メニューに出す文字。見出しの文字そのもの)
-    render.test.tsx    全デッキを実際に描いて確かめるテスト(節番号・メニュー・参照・数式・文献・構造)
-    DevDiagnostics.tsx 開発時の原稿警告の一覧
-  components/          可視化・UI コンポーネント
-    BarChart / ConnectedScatterplot / Globe / FourPoints / LogSpiral
-    Frame              色付きフレーム
-    Theorem            定理・定義・証明(\begin{theorem} などの変換先)
-    Overlay            Beamer の段階表示(\pause, <2-> …)の変換先
-    Notes              スピーカーノート
-    Menu               左下ハンバーガー → スライド一覧サイドバー
-  data/ fonts/         図表データ / subset 済み woff2(全デッキの文字の和)
+  fonts/               subset 済み woff2(全デッキの文字の和)
+  render.test.tsx      全デッキを実際に描いて確かめるテスト(節番号・メニュー・参照・数式・文献・構造)
 vite.config.ts         Vite の設定(deckConfig: デッキの名前を受け取ってビルドの設定にする。引数なしは全デッキの開発サーバー)
-vite/
+vite/                  記法の処理(ビルド時)
   decks.js             デッキの一覧と場所(vite.config.ts と scripts/ が共有)
   mdx-options.ts       MDX のコンパイル設定(remark / rehype プラグインの構成。文献は原稿の属するデッキのもの)
   rehype-mathjax-document.ts  数式を 1 つの MathJax 文書として描く(後ろにある式への参照も解決)
+  csl/                 引用スタイル(CSL。公式リポジトリのものをそのまま置く)
   remark-beamer/       LaTeX / Beamer 風記法の remark プラグイン
     syntax.ts          micromark の構文拡張(どこからどこまでが記法か)
     mdast.ts           構文木ノードへの変換
@@ -138,14 +142,16 @@ LaTeX / Beamer 風の記法はすべて JSX の部品に変換されるので、
 
 - 定理・式・節の番号と文献リストは、デッキごとに 1 から振られます。
 - 文献を使うデッキは、フォルダに `references.bib` を置きます。無いデッキで `\cite` を書くとエラーになります。
-- 部品（`@/components/…`）と見た目の土台はすべてのデッキで共有します。デッキだけで使う画像や部品は、
-  デッキのフォルダに置いて相対パスで import します（`import d3js from './img/d3js.png'`）。
+- 文書の部品（定理・枠・段組みなど。import なしで使える）と見た目の土台はすべてのデッキで共有します。
+  デッキだけで使う画像や部品（図など）は、デッキのフォルダ（`img/`・`components/`）に置いて相対パスで import します
+  （`import d3js from './img/d3js.png'`、`import Globe from './components/Globe'`）。いくつかのデッキで共有するが
+  土台にするほど汎用ではない部品は、`decks/components/` に置きます（そのため `components` という名前のデッキは作れません）。
 
 ### スライドの区切り
 原稿の主ファイルは `decks/<名前>/deck.mdx` です。分けたい部分は LaTeX と同じ `\input` で取り込みます（下記）。
 
 ```mdx
-import Globe from '@/components/Globe'
+import Globe from './components/Globe'
 
 ## 1 枚目
 
@@ -161,8 +167,8 @@ import Globe from '@/components/Globe'
 
 - `---`（行単独）で横のスライド、`--`（行単独）で縦のスライド（直前のスライドの下）に区切ります。
 - 区切りの前後には空行を入れます（直前が文章だと Markdown の見出しと解釈されるため）。横線が要るときは `***`。
-- 縦スライドの進め方は `App.tsx` の `navigationMode`（`'linear'` にすると ←→ だけで縦も順に進む）。
-- 共有の部品は原稿の先頭で `@/components/...` から、デッキの画像は `./img/...` から import します。
+- 縦スライドの進め方は reveal モードの `src/modes/reveal/RevealApp.tsx` の `navigationMode`（`'linear'` にすると ←→ だけで縦も順に進む）。
+- デッキの部品は原稿の先頭で `./components/...` から、デッキの画像は `./img/...` から import します。
 
 ### ファイルの取り込み（`\input` と import パッケージ）
 LaTeX の `\input` と、標準の [import パッケージ](https://ctan.org/pkg/import) の `\import` / `\subimport` が使えます（行単独で書く）。
@@ -256,7 +262,7 @@ $f$ が凸なら …
 デッキのフォルダの `references.bib`（`decks/<名前>/references.bib`）にエントリを追加し、本文で LaTeX と同じく `\cite{key}`、`\cite{a,b}`、`\cite[p.~5]{key}` と書きます。
 番号付け・整形・文献リストは rehype-citation（CSL）が行い、`<Bibliography />` の位置に文献リストが入ります。
 本文の引用は `[1]` / `[1,2]` の形です（CSL: NLM/Vancouver 角括弧版）。このスタイルは頁指定（`[p.~5]`）を表示しません。
-スタイルを替えるときは CSL の公式リポジトリ（citation-style-language/styles）のファイルを `src/csl/` に置いて
+スタイルを替えるときは CSL の公式リポジトリ（citation-style-language/styles）のファイルを `vite/csl/` に置いて
 `vite/mdx-options.ts` で指定します。
 
 ### その他の部品（import なしで使える）
@@ -266,7 +272,7 @@ $f$ が凸なら …
 | `<Frame color="blue" title="...">` | 色付きフレーム（gray / red / blue / gold / green / purple） |
 | `<Cols>` `<Col>` `<Center>` `<Byline>` `<Note>` `<Code>` | レイアウト |
 
-一覧は `src/deck/mdx-components.tsx`。個別の図（`Globe` など）は原稿の先頭で import します。
+一覧は `src/components/index.ts`。個別の図（`Globe` など）はデッキの `components/` に置き、原稿の先頭で import します。
 コード（`` `…` ``、コードブロック、テンプレート文字列）と数式の中の記法は変換されないので、記法の説明はそこに書けます。
 
 ### 強調・用語・脚注などの書き方（標準の記法の範囲）
@@ -325,10 +331,10 @@ $f$ が凸なら …
 最小サイズのスライドの本文の幅で組みます（`vite/mdx-options.ts` の `CONTAINER_WIDTH_EX`）。
 
 ### 図（インタラクティブ可視化）
-`src/components/` に React コンポーネントとして追加。visx の部品（縮尺 `@visx/scale`、座標軸 `@visx/axis`、
+デッキの `components/`（いくつかのデッキで共有するなら `decks/components/`）に React コンポーネントとして追加。visx の部品（縮尺 `@visx/scale`、座標軸 `@visx/axis`、
 格子 `@visx/grid`、図形 `@visx/shape`、地図 `@visx/geo`）で SVG を組み、状態は React の state で持つ。
-ドラッグは `src/components/figure/useSvgDrag.ts`（reveal の拡大縮小があっても図の座標で受け取れる）。
-SVG なので拡大しても鮮明で、印刷・PDF にもそのまま残る。色は `theme/base.css` の `.figure-*` でトークンから決める。
+図を作る道具は `src/figure/`（`@/figure/…` で import）。ドラッグは `useSvgDrag.ts`（モードの拡大縮小があっても図の座標で受け取れる）。
+SVG なので拡大しても鮮明で、印刷・PDF にもそのまま残る。色は `theme/base.css` の `.figure-*`（点・取っ手・ラベル・軸・系列など、図に共通の語彙）でトークンから決め、1 つの図に固有の色はデッキの `style.css` に書く。
 
 ## 見た目のカスタマイズ
 
@@ -390,7 +396,7 @@ SVG なので拡大しても鮮明で、印刷・PDF にもそのまま残る。
 手で書き出すときは、URL に `?print-pdf` を付けて開き、ブラウザの印刷 → PDF に保存。
 印刷設定は **余白=なし / 背景のグラフィック=ON** を推奨（フレームの色を出すため）。
 
-ページの大きさは紙の大きさで、既定は **A4 横**。`src/deck/slide-size.ts` の `PRINT_PAPER`（mm）で変えられます
+ページの大きさは紙の大きさで、既定は **A4 横**。`src/modes/reveal/slide-size.ts` の `PRINT_PAPER`（mm）で変えられます
 （例: B5 横なら `{ width: 257, height: 182 }`）。スライドはその大きさで組み直されるので、
 画面の最小サイズ（933×700）より広い A4 横では、余白に少しゆとりが出ます。
 

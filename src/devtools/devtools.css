@@ -1,0 +1,69 @@
+/* 開発時の表示(DevDiagnostics.tsx・overflow.ts)。どのモードでも同じ。警告なので配色はテーマに依らない */
+
+/* 原稿の警告の一覧(devtools/DevDiagnostics.tsx。開発時だけ)。警告なので配色はテーマに依らない */
+.deck-diagnostics {
+  position: fixed;
+  top: var(--ui-space);
+  right: var(--ui-space);
+  z-index: 60;
+  max-width: 480px;
+  font: 13px/1.5 var(--font-ui);
+  background: #fff8e6;
+  border: 1px solid #e0a800;
+  box-shadow: 0 0 var(--ui-space) rgb(0 0 0 / 0.15);
+}
+.deck-diagnostics button {
+  display: block;
+  width: 100%;
+  padding: var(--ui-space);
+  text-align: left;
+  font: inherit;
+  font-weight: bold;
+  color: #8a5a00;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.deck-diagnostics ul {
+  margin: 0;
+  padding: 0 var(--ui-space) var(--ui-space) calc(3 * var(--ui-space));
+}
+.deck-diagnostics code {
+  font-family: var(--font-code);
+}
+
+/* スライドの最小サイズからのはみ出し(devtools/overflow.ts。開発時だけ付く)。
+   最小サイズの範囲(--deck-slide-width × --deck-slide-height。deck/mode.ts)を破線の枠で示し、その右上に超過量を出す。
+   枠もバッジも最小サイズの内側に置き、はみ出しの測定(scrollWidth / scrollHeight)を増やさない
+   (増やすと、原稿を直しても警告が消えない) */
+.deck .slide.deck-overflow::before,
+.deck .slide.deck-overflow::after {
+  position: absolute;
+  top: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+.deck .slide.deck-overflow::before {
+  content: '';
+  left: 0;
+  box-sizing: border-box;
+  width: var(--deck-slide-width);
+  height: var(--deck-slide-height);
+  border: calc(var(--rule) / 2) dashed red;
+}
+.deck .slide.deck-overflow::after {
+  content: attr(data-deck-overflow);
+  left: var(--deck-slide-width);
+  translate: -100% 0;
+  padding: 0 var(--space);
+  font: calc(1em / var(--type-ratio) / var(--type-ratio)) / var(--leading) var(--font-ui);
+  white-space: nowrap;
+  color: #fff;
+  background: red;
+}
+/* 印刷では出さない */
+@media print {
+  .deck-diagnostics {
+    display: none !important;
+  }
+}

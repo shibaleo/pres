@@ -2,9 +2,9 @@ import { useId, useMemo, useRef, useState } from 'react'
 import { scaleLinear } from '@visx/scale'
 import { AxisBottom, AxisLeft } from '@visx/axis'
 import { LinePath } from '@visx/shape'
-import { useSvgDrag, type Point } from './figure/useSvgDrag'
-import { mathItalic } from './figure/mathItalic'
-import ResetButton from './figure/ResetButton'
+import { useSvgDrag, type Point } from '@/figure/useSvgDrag'
+import { mathItalic } from '@/figure/mathItalic'
+import ResetButton from '@/figure/ResetButton'
 
 /**
  * 正規分布の族(SVG・visx)。左はパラメタ空間 H = {(μ, σ) | σ > 0}、右はその点の密度関数 p(x; μ, σ)。

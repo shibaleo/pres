@@ -9,7 +9,8 @@ reveal.js のほかに impress.js のようなズーム型、Sozi 風の見せ�
 ライブラリは完成品として**そのまま**使い、ライブラリごとに「モード」を作る。
 
 - **内容の層は中立に保つ**。原稿の変換（vite/remark-beamer）が出すのは部品の名前だけ:
-  `Slide`（並び `h`・`v` を持つ）・`Stack`（縦の続き）・`Overlay`（`from`・`to`・`only`）・`OverlaySteps`（段の数）・`Notes` など
+  `Slide`（並び `h`・`v` と段の数 `steps`、原稿の位置 `data-slide-*` を持つ）・`Stack`（縦の続き）・`Overlay`（`from`・`to`・`only`・`as`）。
+  型と「段 k で見せるか」の判定は `src/modes/structure.tsx`。文書の部品（定理・枠・段組み・`Notes`）は `src/components/` で全モード共通
 - **モード = その部品の、ライブラリ向けの実体 + 外枠**。段階表示・キー操作・発表者ビュー・PDF は、
   ライブラリが持っていればそれを使う。足りないものはそのモードの中だけで補い、モードをまたぐ共通の層は作らない
 - **見た目は土台（theme/）が持ち、どのモードでも同じ**。本文の範囲は `.deck`（各モードが本文を包む要素に付ける）、
@@ -26,19 +27,23 @@ reveal 以外は試作で、URL の `?mode=<名前>` で選ぶ（選び方は仮
 
 | モード | 場所 | 状態 |
 |---|---|---|
-| reveal（既定） | `src/App.tsx`・`src/deck/mdx-components.tsx` | 完成。一覧・ページ番号・はみ出しの検査・PDF・発表者ビュー（reveal のノートのプラグイン） |
+| reveal（既定） | `src/modes/reveal/` | 完成。一覧・ページ番号・はみ出しの検査・PDF・発表者ビュー（reveal のノートのプラグイン） |
 | impress | `src/modes/impress/` | `?mode=impress`。平面に並べてカメラが移る。下の「impress モード」 |
 | Shower | `src/modes/shower/` | `?mode=shower`。一覧と全画面を行き来する。下の「Shower モード」 |
 | Spectacle | `src/modes/spectacle/` | `?mode=spectacle`。React の部品のデッキ。下の「Spectacle モード」 |
 | Swiper | `src/modes/swiper/` | `?mode=swiper`（`&effect=cube` などで演出を選ぶ）。下の「Swiper モード」 |
 
-共通の部品: 段の印（`src/modes/marker-steps.tsx`。impress と Shower）と、今のスライドの知らせ（`deck:present` の出来事。
-reveal 以外のモードが送り、動く図が受ける。`src/components/figure/motion.ts`）。段階表示の見た目（`.overlay-hidden`）は theme/base.css。
+モードとまわりの約束（`src/deck/mode.ts`）: モードに頼むのは、今のスライドの知らせ（`announcePresent`。動く図が受ける）、
+「このスライドへ移る」の登録（`registerGoTo`。開発時の警告の一覧から移る）、準備完了の印（`markReady`。`<html data-deck-ready>`）、
+スライドの要素に `.slide` と原稿の位置を付けて `.deck` の中に文書の順で置くこと、の 4 つだけ。これで原稿の警告とはみ出しの検査
+（`src/devtools/`）は全モードで同じに働く。スライドの大きさは CSS 変数 `--deck-slide-width` / `--deck-slide-height`、
+窓に収める倍率は `watchFitScale` の `--deck-scale`。共通の部品は段の印（`src/modes/marker-steps.tsx`。impress と Shower）。
+段階表示の見た目（`.overlay-hidden`）は theme/base.css。
 
 ### 段の印（impress・Shower）
 
 impress の substep と Shower の `.next` は、要素を文書順に 1 つずつ現すだけで、段の番号の指定も「消える」も無い。
-そこで段の数だけ空の要素（印）を `OverlaySteps` の位置に置き、ライブラリには印だけを進めさせる。今の段 = 進んだ印の数 + 1 とし、
+そこで各モードの `Slide` が、段の数 - 1 個の空の要素（印）をスライドの末尾に置き、ライブラリには印だけを進めさせる。今の段 = 進んだ印の数 + 1 とし、
 各 `Overlay` の表示をそこから決める。`\only`・`<2-3>` も Beamer どおりに出る。
 
 ### impress モード（試作）
@@ -82,7 +87,7 @@ impress の substep と Shower の `.next` は、要素を文書順に 1 つず�
   影（slideShadows・cube の shadow）は硬い見た目の方針に合わないので、どの演出でも切る
 - Swiper には段階表示もプレゼン向けのキー操作も無いので、どちらもこのモードが持つ。キー（→ ↓ Space PageDown で次、← ↑ PageUp で前、
   Home / End）は、段が残っていれば段を進め、無ければスライドを移る。前のスライドへ戻ると最後の段、先へ進むと 1 段目から。
-  段の数は `OverlaySteps` が置く印（`data-steps`）から読み、表示は段の印のモードと同じ `applyStep`
+  段の数は `Slide` が要素に付ける `data-steps` から読み、表示は段の印のモードと同じ `applyStep`
 - スワイプ・ドラッグはスライドを移る（段は飛ばす）。図（`.figure`）・入力・ボタン・リンクの上ではスワイプにしない
 - 全体は最小サイズ（933×700）の容器を、ウィンドウに収まる倍率で中央に置く（Swiper は倍率をかける前の大きさで組む）
 - まだ無いもの: ページ番号、一覧、PDF 出力、発表者ビュー、原稿の中のリンク `#/4`、原稿を直したときの描き直し（React が class を
@@ -90,9 +95,8 @@ impress の substep と Shower の `.next` は、要素を文書順に 1 つず�
 
 ### 次にやること
 
-1. reveal モードを `src/modes/reveal/` にまとめる（今の `App.tsx`・`mdx-components.tsx`・reveal に固有の CSS）
-2. デッキがモードを選べるようにする（`decks/<名前>/` の設定のファイル。impress の座標の決め方もそこに）
-3. 各モードの足りないもの（上）を埋める。モードに共通の書き方（今は Slide・Stack・Overlay・OverlaySteps・Notes）を見直す
+1. デッキがモードを選べるようにする（`decks/<名前>/` の設定のファイル。impress の座標の決め方もそこに）
+2. 各モードの足りないもの（上）を埋める
 
 ### 決めたこと
 

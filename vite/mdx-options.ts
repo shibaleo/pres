@@ -20,7 +20,7 @@ import { rehypeMathPositions, rehypeMathErrors } from './remark-beamer/rehype-ma
 /** 文献ファイル。関数なら変換する主ファイルのパスから決める(デッキごとに文献ファイルが違うため。vite/decks.js) */
 export type Bibliography = string | ((file: string) => string | undefined)
 
-const CSL = 'src/csl/nlm-citation-sequence-brackets.csl'
+const CSL = 'vite/csl/nlm-citation-sequence-brackets.csl'
 
 /**
  * 数式を入れる箱の幅(ex)。最小サイズのスライド(src/deck/slide-metrics.ts)の本文の幅を、本文の書体の 1ex で割ったもの。

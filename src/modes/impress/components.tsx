@@ -1,4 +1,4 @@
-import { documentComponents } from '../../deck/mdx-components'
+import { documentComponents } from '../../components'
 import { Overlay, StepMarkers } from '../marker-steps'
 import { FlatStack, slideAttributes, stepsOf, type SlideProps } from '../structure'
 

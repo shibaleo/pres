@@ -5,3 +5,38 @@
 :root {
   --deck-preset: math;
 }
+
+/* このデッキの図(components/)に固有の部分。図の汎用の語彙(点・取っ手・ラベル・軸・系列・ボタン)は theme/base.css */
+/* 速度ベクトル(赤の矢印)と単位法線ベクトル(アクセント色の矢印)。CuspNormal */
+.deck .figure-velocity {
+  stroke: var(--color-frame-red);
+  stroke-width: var(--rule);
+}
+.deck .figure-velocity-head {
+  fill: var(--color-frame-red);
+}
+.deck .figure-normal {
+  stroke: var(--color-brand);
+  stroke-width: var(--rule);
+}
+.deck .figure-normal-head {
+  fill: var(--color-brand);
+}
+
+.deck .figure-tangent {
+  stroke: var(--color-frame-purple);
+  stroke-width: calc(var(--rule) / 2);
+  stroke-dasharray: var(--rule) var(--rule);
+}
+
+.deck .figure-globe {
+  cursor: grab;
+}
+.deck .figure-globe-sea {
+  fill: var(--color-brand);
+}
+.deck .figure-globe-land {
+  fill: var(--color-ink);
+  stroke: var(--color-canvas);
+  stroke-width: 0.5;
+}

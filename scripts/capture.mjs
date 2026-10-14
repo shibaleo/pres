@@ -53,7 +53,7 @@ ${shots.map((b) => `<img src="data:image/png;base64,${b.toString('base64')}">`).
 }
 
 /**
- * はみ出しの検査: ビルドしたデッキを ?check-overflow で開き、開発時と同じ検査(src/deck/overflow.ts)の結果を集める
+ * はみ出しの検査: ビルドしたデッキを ?check-overflow で開き、開発時と同じ検査(src/devtools/overflow.ts)の結果を集める
  * (e2e/overflow.spec.ts と同じ手順)。
  * @returns {Promise<{ file: string; line: string; message: string }[]>} はみ出したスライド(原稿の位置と超過の内容)
  */
@@ -81,7 +81,7 @@ export async function checkOverflow(html) {
 }
 
 /**
- * PDF を書き出す。ページの大きさは reveal が @page に書く大きさ(deck/slide-size.ts の PRINT_PAPER)で、
+ * PDF を書き出す。ページの大きさは reveal が @page に書く大きさ(modes/reveal/slide-size.ts の PRINT_PAPER)で、
  * 余白なし・背景あり(README の「PDF 出力」で手で印刷するときの推奨設定と同じ)
  * @returns {Promise<number>} ページ数
  */

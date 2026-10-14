@@ -1,5 +1,5 @@
 /**
- * スライドの最小サイズ(論理座標の px)。原稿が当てにしてよいのはこの大きさだけ(deck/slide-size.ts)。
+ * スライドの最小サイズ(論理座標の px)。原稿が当てにしてよいのはこの大きさだけ(modes/reveal/slide-size.ts)。
  * ブラウザに依存しないので、ビルド側(vite/mdx-options.ts の数式の組む幅)からも読む。
  */
 export const SLIDE_HEIGHT = 700

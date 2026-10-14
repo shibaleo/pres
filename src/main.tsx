@@ -1,17 +1,23 @@
+// CSS の順: reveal.js の本体(スライドの配置と遷移・UI) → 土台の見た目(theme/) → モードの見た目(modes/<名前>/ の CSS。
+// モードのモジュールが読む) → デッキの見た目(デッキの style.css。ページの入口が読む)。後のものが前のものを上書きする。
+// この 2 つはモードより先に評価されるよう先頭に置く(reveal のテーマは使わない)
+import 'reveal.js/reveal.css'
+import './theme/index.css'
 import React, { lazy, Suspense, type ComponentType } from 'react'
 import { createRoot } from 'react-dom/client'
-import App, { type DeckSource } from './App'
-import DevDiagnostics from './deck/DevDiagnostics'
 import { setSlideSizeVariables } from './deck/mode'
-import { isPrint } from './deck/slide-size'
+import type { DeckSource } from './deck/source'
+import DevDiagnostics from './devtools/DevDiagnostics'
 import type { ModeName } from './modes/names'
+import RevealApp from './modes/reveal/RevealApp'
+import { isPrint } from './modes/reveal/slide-size'
 
 /**
  * モード(スライドを動かすライブラリ。docs/motion.md。名前の一覧は modes/names.ts)。既定は reveal。
  * ほかは試作で、URL の ?mode=<名前> で選ぶ(選び方は仮)。reveal 以外は選んだときだけ読み込む
  */
 const MODES: Record<ModeName, ComponentType<DeckSource>> = {
-  reveal: App,
+  reveal: RevealApp,
   impress: lazy(() => import('./modes/impress/ImpressApp')),
   shower: lazy(() => import('./modes/shower/ShowerApp')),
   spectacle: lazy(() => import('./modes/spectacle/SpectacleApp')),
@@ -34,9 +40,6 @@ function modeName(): string {
   }
 }
 
-// reveal.js の本体の CSS(スライドの配置と遷移・UI)。本文の見た目は theme/ が持ち、reveal のテーマは使わない
-import 'reveal.js/reveal.css'
-import './theme/index.css'
 
 /**
  * デッキを起動する。ページの入口(vite.config.ts の /@deck/<名前>)が、このモジュールの後にデッキの style.css と
@@ -55,7 +58,7 @@ export function startDeck(deck: DeckSource): (next: DeckSource) => void {
   const check = (import.meta.env.DEV || new URLSearchParams(location.search).has('check-overflow')) && !isPrint
   const name = modeName()
   if (!(name in MODES)) console.warn(`[deck] モード「${name}」はありません(${Object.keys(MODES).join('・')})。reveal で開きます`)
-  const Mode = MODES[name as ModeName] ?? App
+  const Mode = MODES[name as ModeName] ?? RevealApp
   const root = createRoot(document.getElementById('root')!)
   const render = (d: DeckSource) =>
     root.render(

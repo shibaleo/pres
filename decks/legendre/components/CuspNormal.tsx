@@ -2,10 +2,10 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { scaleLinear } from '@visx/scale'
 import { AxisBottom, AxisLeft } from '@visx/axis'
 import { Line, LinePath } from '@visx/shape'
-import { useSvgDrag } from './figure/useSvgDrag'
-import { mathItalic } from './figure/mathItalic'
-import PlayPauseButton from './figure/PlayPauseButton'
-import { prefersReducedMotion, useOnPresentSlide } from './figure/motion'
+import { useSvgDrag } from '@/figure/useSvgDrag'
+import { mathItalic } from '@/figure/mathItalic'
+import PlayPauseButton from '@/figure/PlayPauseButton'
+import { prefersReducedMotion, useOnPresentSlide } from '@/figure/motion'
 
 /**
  * 3/2-カスプ γ(t) = (t², t³) と、その上の点での速度ベクトル・単位法線ベクトル(SVG・visx)。

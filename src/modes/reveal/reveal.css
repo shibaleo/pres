@@ -1,0 +1,149 @@
+/* reveal モード(RevealApp.tsx)に固有の見た目: reveal の UI(ページ番号・矢印・進み具合)、fragment、
+   スライド一覧(Menu.tsx)、PDF 用の表示(?print-pdf)。本文の見た目は theme/ の .deck の規則 */
+
+/* reveal の器(body に reveal-viewport が付く。reveal.css が白の地を付けるので、地の色に戻す) */
+.reveal-viewport {
+  background-color: var(--color-canvas);
+}
+
+/* ページ番号「i/全体」: 右上に地を付けずに置く。題の帯のあるスライドでは帯の上なので地の色(白)、
+   帯の無いスライドではアクセント色。帯の有無は表示中のスライド(印刷ではページ)の先頭が h2 かで決める */
+.reveal .slide-number {
+  inset: 0 0 auto auto;
+  padding: calc(var(--ui-space) / 2) var(--ui-space);
+  font-family: var(--font-ui);
+  color: var(--color-brand);
+  background: none;
+}
+.reveal .slide-number-delimiter {
+  margin: 0;
+}
+html:not(.reveal-print) .reveal:has(.slides section.present:not(.stack) > h2:first-child) .slide-number,
+html.reveal-print .pdf-page:has(> section > h2:first-child) .slide-number {
+  color: var(--color-canvas);
+}
+.reveal :is(.controls, .progress) {
+  color: var(--color-brand);
+}
+/* 矢印は内容の邪魔をしないよう普段は薄くし、マウスを乗せたときだけはっきり出す */
+.reveal .controls {
+  opacity: var(--ui-idle);
+  transition: opacity 0.2s;
+}
+.reveal .controls:hover {
+  opacity: 1;
+}
+.reveal .progress {
+  height: var(--rule);
+  background: color-mix(in srgb, var(--color-canvas) 80%, black);
+}
+
+html.reveal-print .reveal .figure-buttons {
+  display: none;
+}
+
+/* 段階表示(reveal モードの modes/reveal/Overlay.tsx。Beamer の \pause / <2-> / \only など) */
+/* ステップ数を揃えるための見えない fragment */
+.deck .overlay-step {
+  display: none !important;
+}
+/* \only: 非表示の間は場所も取らない(\uncover は場所を残す = reveal の既定) */
+.deck .fragment.only:not(.visible),
+.deck .fragment.only.fade-out.visible {
+  display: none;
+}
+
+/* スライド一覧(Menu.tsx)。.deck の外(body 直下)に置く */
+.deck-menu {
+  font: 14px/1.5 var(--font-ui);
+  color: var(--color-ink);
+}
+.deck-menu button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.deck-menu-toggle {
+  position: fixed;
+  left: var(--ui-space);
+  bottom: var(--ui-space);
+  z-index: 50;
+  padding: var(--ui-space);
+  color: var(--color-brand) !important;
+  opacity: var(--ui-idle);
+  transition: opacity 0.2s;
+}
+.deck-menu-toggle:hover {
+  opacity: 1;
+}
+.deck-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgb(0 0 0 / 0.25);
+}
+.deck-menu-panel {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 45;
+  width: 300px;
+  overflow-y: auto;
+  background: var(--color-canvas);
+  box-shadow: 0 0 calc(2 * var(--ui-space)) rgb(0 0 0 / 0.2);
+}
+.deck-menu-panel > header {
+  padding: calc(2 * var(--ui-space));
+  font-weight: bold;
+  color: var(--color-canvas);
+  background: var(--color-brand);
+}
+.deck-menu-panel ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.deck-menu-panel li button {
+  display: block;
+  width: 100%;
+  padding: var(--ui-space) calc(2 * var(--ui-space));
+  text-align: left;
+  border-bottom: 1px solid var(--color-surface);
+}
+/* 縦スライドは字下げし、従の色にする */
+.deck-menu-panel li button.sub {
+  padding-left: calc(4 * var(--ui-space));
+  color: var(--color-muted);
+}
+.deck-menu-panel li button[aria-current='true'] {
+  font-weight: bold;
+  color: var(--color-brand);
+  background: color-mix(in srgb, var(--color-canvas) var(--tint), var(--color-brand));
+}
+
+/* PDF 出力(?print-pdf)。reveal は印刷用の表示(html.reveal-print)でスライドの余白を 0 にする
+   (padding: 0 !important)。題の帯は余白を負の margin で打ち消して端まで伸ばしているので、
+   余白が 0 だと帯がページの外に出て切れる。スライドの余白を戻す */
+html.reveal-print .reveal .slides section:not(.stack) {
+  padding: var(--slide-pad) !important;
+}
+/* PDF のページ番号はページと同じ論理座標で組まれるので、題の帯(高さ 3 半行)の縦の中央に置き、
+   右端からの距離を題の字下げ(スライドの余白)と揃える */
+html.reveal-print .reveal .slide-number-pdf {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  height: calc(3 * var(--space));
+  padding: 0 var(--slide-pad);
+}
+/* デッキの外側の UI は、印刷用の表示でも印刷でも出さない */
+html.reveal-print :is(.deck-menu, .deck-diagnostics) {
+  display: none !important;
+}
+/* 一覧は印刷では出さない */
+@media print {
+  .deck-menu {
+    display: none !important;
+  }
+}

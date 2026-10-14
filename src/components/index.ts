@@ -1,7 +1,7 @@
-import Frame from '../components/Frame'
-import Notes from '../components/Notes'
-import { Theorem, Lemma, Proposition, Corollary, Definition, Proof, ThmTitle } from '../components/Theorem'
-import { Center, Cols, Col, Byline, Note, Code } from '../components/layout'
+import Frame from './Frame'
+import Notes from './Notes'
+import { Theorem, Lemma, Proposition, Corollary, Definition, Proof, ThmTitle } from './Theorem'
+import { Center, Cols, Col, Byline, Note, Code } from './layout'
 
 /**
  * 文書の部品: スライド原稿(decks/<名前>/deck.mdx)から import なしで使える部品のうち、どのモードでも同じもの。

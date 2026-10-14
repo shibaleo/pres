@@ -1,5 +1,5 @@
-import { deckSlides } from './mode'
-import { MIN_WIDTH, SLIDE_HEIGHT } from './slide-size'
+import { deckSlides } from '../deck/mode'
+import { MIN_WIDTH, SLIDE_HEIGHT } from '../deck/slide-metrics'
 
 /** はみ出したスライド(原稿の位置・超過の内容・文書の順での番号(deckSlides の何番目か)) */
 export type Overflow = { file: string; line: string; message: string; index: number }
@@ -13,7 +13,7 @@ export type Overflow = { file: string; line: string; message: string; index: num
  *
  * ライブラリははみ出し部分を黙って切るので、気づけるように
  *   - 最小サイズの範囲に赤い破線の枠と超過量のバッジ(theme/base.css の .deck-overflow)
- *   - 開発時の画面右上の一覧(deck/DevDiagnostics.tsx。押すとそのスライドへ)と、開発サーバーの端末
+ *   - 開発時の画面右上の一覧(devtools/DevDiagnostics.tsx。押すとそのスライドへ)と、開発サーバーの端末
  *   - 開発サーバーにつながっていないとき(ビルドしたデッキを ?check-overflow で開いたとき)はコンソールに警告
  * を出す。本文の変更(HMR)やフォント読み込みで大きさが変わるので、DOM 変化のたびに測り直す。
  */

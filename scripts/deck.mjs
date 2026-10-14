@@ -17,7 +17,7 @@
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { parseArgs } from 'node:util'
-import { DECK_NAME, DECKS_DIR, ROOT, listDecks, resolveDeck } from '../vite/decks.js'
+import { DECK_NAME, DECKS_DIR, RESERVED_NAMES, ROOT, listDecks, resolveDeck } from '../vite/decks.js'
 
 // Vite と設定(vite.config.ts)、ブラウザ(Playwright)は使うコマンドの中で読み込む(list / new を軽くするため)
 const vite = () => import('vite')
@@ -59,6 +59,7 @@ const commands = {
   new() {
     const [name] = names
     if (!name || !DECK_NAME.test(name)) throw new Error('npm run new -- <名前>(英小文字・数字・ハイフン)で指定してください')
+    if (RESERVED_NAMES.includes(name)) throw new Error(`decks/${name}/ はデッキで共有する部品の置き場所なので、デッキの名前には使えません`)
     const dir = join(DECKS_DIR, name)
     if (existsSync(dir)) throw new Error(`decks/${name}/ はもうあります`)
     mkdirSync(dir, { recursive: true })

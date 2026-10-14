@@ -1,8 +1,8 @@
 import { useEffect } from 'react'
 // パッケージの入口(lib/index.js)は document.currentScript を読んで自動で始めるので、まとめて読み込むと壊れる。本体を直に読む
 import Shower from '@shower/core/lib/shower.js'
-import type { DeckSource } from '../../App'
-import { documentComponents } from '../../deck/mdx-components'
+import type { DeckSource } from '../../deck/source'
+import { documentComponents } from '../../components'
 import { announcePresent, markReady, registerGoTo, watchFitScale } from '../../deck/mode'
 import { Overlay, StepMarkers, applyStep, currentStep } from '../marker-steps'
 import { FlatStack, slideAttributes, stepsOf, type SlideProps } from '../structure'

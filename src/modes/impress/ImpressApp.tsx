@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import type { DeckSource } from '../../App'
+import type { DeckSource } from '../../deck/source'
 import { MIN_WIDTH, SLIDE_HEIGHT } from '../../deck/slide-metrics'
 import { announcePresent, markReady, registerGoTo } from '../../deck/mode'
 import { applyStep, currentStep } from '../marker-steps'

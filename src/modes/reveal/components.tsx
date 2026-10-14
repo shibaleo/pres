@@ -1,5 +1,5 @@
 import { Slide as RevealSlide, Stack } from '@revealjs/react'
-import { documentComponents } from '../../deck/mdx-components'
+import { documentComponents } from '../../components'
 import { slideAttributes, stepsOf, type SlideProps } from '../structure'
 import { Overlay, OverlaySteps } from './Overlay'
 

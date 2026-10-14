@@ -10,11 +10,11 @@
 import type { ComponentType } from 'react'
 import { describe, expect, it } from 'vitest'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { revealComponents } from '../modes/reveal/components'
-import { slideTitle } from './slide-title'
+import { revealComponents } from './modes/reveal/components'
+import { slideTitle } from './modes/reveal/slide-title'
 
 type DeckModule = { default: ComponentType<Record<string, unknown>>; deckWarnings: { file?: string; line?: number; message: string }[] }
-const modules = import.meta.glob<DeckModule>('../../decks/*/deck.mdx', { eager: true })
+const modules = import.meta.glob<DeckModule>('../decks/*/deck.mdx', { eager: true })
 const decks = Object.entries(modules).map(([path, mod]) => ({ name: path.split('/').at(-2)!, mod }))
 
 /** 全デッキを通して、各機能を確かめた数(最後に 0 でないことを確かめる) */

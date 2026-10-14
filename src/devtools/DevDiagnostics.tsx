@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { deckSlides, goToSlide } from './mode'
+import { deckSlides, goToSlide } from '../deck/mode'
 import { watchOverflow, type Overflow } from './overflow'
+import './devtools.css'
 
 /**
  * 開発時の道具(どのモードでも同じ。main.tsx がモードと並べて置く):
- *   - スライドの最小サイズからのはみ出しの検査(deck/overflow.ts)。開発時と、ビルドしたデッキを ?check-overflow で開いたとき
+ *   - スライドの最小サイズからのはみ出しの検査(devtools/overflow.ts)。開発時と、ビルドしたデッキを ?check-overflow で開いたとき
  *   - 開発時だけ、原稿の警告(参照先の無い \ref、未登録の文献、\label の重複)とはみ出しの一覧を画面右上に出す
  * どちらも表示は続けられるがそのままでは配布できないもの(build・check では失敗する)を、書きながら気づけるように。
  * はみ出しは押すとそのスライドへ移る(今見ていないスライドのはみ出しにも気づける。移り方はモードが登録する。deck/mode.ts)。

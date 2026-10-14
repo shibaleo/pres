@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react'
-import { MIN_WIDTH, SLIDE_HEIGHT } from './slide-metrics'
+import { MIN_WIDTH, SLIDE_HEIGHT } from '../../deck/slide-metrics'
 
 /**
  * スライドの論理サイズ。reveal はこの大きさで組んでからウィンドウに合わせて縮小する。
@@ -7,7 +7,7 @@ import { MIN_WIDTH, SLIDE_HEIGHT } from './slide-metrics'
  * 論理サイズはウィンドウと同じ縦横比にし、スライドが常にウィンドウ全体を覆うようにする。
  * 固定の縦横比だとウィンドウとの差が上下や左右の余白になり、題の帯がウィンドウの端に届かないため。
  * 原稿が当てにしてよいのは最小サイズ(MIN_WIDTH × SLIDE_HEIGHT)だけで、
- * ウィンドウが横長なら横に、縦長なら縦に広がる。はみ出しの検査も最小サイズで行う(deck/overflow.ts)。
+ * ウィンドウが横長なら横に、縦長なら縦に広がる。はみ出しの検査も最小サイズで行う(devtools/overflow.ts)。
  *
  * PDF 出力(?print-pdf)では、論理サイズを紙の大きさ(PRINT_PAPER)にする。reveal は論理サイズを
  * そのまま @page の大きさ(CSS の px)にするので、mm を px に直して渡せば PDF のページが紙と一致する。

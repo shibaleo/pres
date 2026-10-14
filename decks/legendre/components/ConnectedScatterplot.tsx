@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import * as d3 from 'd3'
-import { connectedScatterData } from '../data/connectedScatter'
+import { connectedScatterData } from './connectedScatter'
 
 /**
  * connected scatterplot + クリックで系列トグルする凡例 (旧 connected-scatterplot.js).

@@ -55,7 +55,7 @@ for (const f of files) text += readFileSync(f, 'utf8')
 let base = ''
 for (let c = 0x20; c <= 0x7e; c++) base += String.fromCharCode(c)
 const extra = '　、。，．・：；？！゛゜（）「」『』【】〔〕…—–‐※→←↑↓°±×÷≤≥≠≒∞∫∂√πλμαβγθφ'
-// 数式用イタリックの文字(図のラベル。src/components/figure/mathItalic.ts が実行時に作るので、ソースには現れない)
+// 数式用イタリックの文字(図のラベル。src/figure/mathItalic.ts が実行時に作るので、ソースには現れない)
 let mathItalic = 'ℎ'
 for (let c = 0x1d434; c <= 0x1d467; c++) mathItalic += String.fromCodePoint(c) // 𝐴〜𝑧
 for (let c = 0x1d6fc; c <= 0x1d714; c++) mathItalic += String.fromCodePoint(c) // 𝛼〜𝜔

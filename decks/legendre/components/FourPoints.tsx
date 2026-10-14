@@ -1,9 +1,9 @@
 import { useRef, useState } from 'react'
 import { scaleLinear } from '@visx/scale'
 import { Line } from '@visx/shape'
-import { useSvgDrag, type Point } from './figure/useSvgDrag'
-import { mathItalic } from './figure/mathItalic'
-import ResetButton from './figure/ResetButton'
+import { useSvgDrag, type Point } from '@/figure/useSvgDrag'
+import { mathItalic } from '@/figure/mathItalic'
+import ResetButton from '@/figure/ResetButton'
 
 /**
  * 一直線上の 4 点(SVG・visx)。

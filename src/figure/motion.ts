@@ -1,5 +1,5 @@
 import { useEffect, useState, type RefObject } from 'react'
-import { PRESENT_EVENT, presentSlide } from '../../deck/mode'
+import { PRESENT_EVENT, presentSlide } from '../deck/mode'
 
 /** OS で動きを控える設定(prefers-reduced-motion)になっているか。動く図はこのとき一時停止の状態で始める */
 export function prefersReducedMotion(): boolean {

@@ -1,19 +1,15 @@
-import { useRef, type ComponentType } from 'react'
+import { useRef } from 'react'
 import { Deck, useReveal } from '@revealjs/react'
 import RevealNotes from 'reveal.js/plugin/notes'
-import Menu from './components/Menu'
-import { announcePresent, markReady, registerGoTo } from './deck/mode'
-import { isHandout, isPrint, useSlideSize } from './deck/slide-size'
-import { revealComponents } from './modes/reveal/components'
+import { announcePresent, markReady, registerGoTo } from '../../deck/mode'
+import type { DeckSource } from '../../deck/source'
+import { revealComponents } from './components'
+import Menu from './Menu'
+import { isHandout, isPrint, useSlideSize } from './slide-size'
+import './reveal.css'
 
 type RevealApi = NonNullable<ReturnType<typeof useReveal>>
 
-/** 原稿(decks/<名前>/deck.mdx)のコンパイル結果 */
-export type DeckSource = {
-  Slides: ComponentType<Record<string, unknown>>
-  /** 原稿の警告(参照先の無い \ref・未登録の文献など)。vite/remark-beamer が export する */
-  warnings: { file?: string; line?: number; message: string }[]
-}
 
 // 開発時(HMR)にスライド位置を保持する。本番では常に1枚目から始める。
 // 開発サーバーは全デッキを /<名前>/ で配信するので、デッキごとに分けて持つ
@@ -24,7 +20,7 @@ const SLIDE_KEY = `deck-slide-index:${location.pathname}`
  * スライドの中身はデッキの decks/<名前>/deck.mdx(--- / -- で区切った原稿。<Slide> / <Stack> への変換は
  * vite/remark-beamer が行い、その実体は modes/reveal/components.tsx)。まわりとの約束は deck/mode.ts。
  */
-export default function App({ Slides }: DeckSource) {
+export default function RevealApp({ Slides }: DeckSource) {
   const deckRef = useRef<RevealApi | null>(null)
   const { width, height } = useSlideSize()
 
@@ -33,7 +29,7 @@ export default function App({ Slides }: DeckSource) {
       // 本文の範囲(theme/base.css の .deck)
       className="deck"
       config={{
-        // 論理サイズはウィンドウの縦横比に合わせる(deck/slide-size.ts)。余白はスライド内の padding で取る
+        // 論理サイズはウィンドウの縦横比に合わせる(modes/reveal/slide-size.ts)。余白はスライド内の padding で取る
         width,
         height,
         margin: 0,

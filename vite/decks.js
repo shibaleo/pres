@@ -3,8 +3,9 @@
  *   deck.mdx        原稿の主ファイル(必須。\input で取り込むファイルはこのフォルダからの相対パス)
  *   style.css       このデッキの見た目の特化(必須。プリセットの読み込み・トークンの上書き)
  *   references.bib  文献(\cite を使うときだけ)
- * と、原稿が import する画像や部品。部品(src/components)・土台の見た目(src/theme)・記法の処理(vite/)は
- * すべてのデッキで共有する。
+ * と、原稿が import する画像や部品(img/・components/)。文書の部品(src/components)・土台の見た目(src/theme)・
+ * 記法の処理(vite/)はすべてのデッキで共有する。decks/components/ はいくつかのデッキで共有する部品の置き場所なので、
+ * デッキの名前には使えない(RESERVED_NAMES)。
  *
  * 開発サーバーは 1 つで全デッキを配信し(URL の /<名前>/ でデッキを選ぶ)、ビルドはデッキごとに行う
  * (scripts/deck.mjs がデッキの名前を引数で受け取り、vite.config.ts の deckConfig に渡す)。
@@ -19,6 +20,9 @@ export const DECKS_DIR = join(ROOT, 'decks')
 
 /** デッキの名前に使える文字(フォルダ名・URL・出力先にそのまま使うため) */
 export const DECK_NAME = /^[a-z0-9][a-z0-9-]*$/
+
+/** デッキの名前に使えない名前(decks/ の下の、デッキではないフォルダ) */
+export const RESERVED_NAMES = ['components']
 
 /** デッキの名前の一覧(decks/ の下で deck.mdx を持つフォルダ。名前順) */
 export function listDecks() {

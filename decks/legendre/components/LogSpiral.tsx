@@ -3,9 +3,9 @@ import { scaleLinear } from '@visx/scale'
 import { AxisBottom, AxisLeft } from '@visx/axis'
 import { GridColumns, GridRows } from '@visx/grid'
 import { Line, LinePath } from '@visx/shape'
-import { useSvgDrag } from './figure/useSvgDrag'
-import { mathItalic } from './figure/mathItalic'
-import ResetButton from './figure/ResetButton'
+import { useSvgDrag } from '@/figure/useSvgDrag'
+import { mathItalic } from '@/figure/mathItalic'
+import ResetButton from '@/figure/ResetButton'
 
 /**
  * 対数螺旋 r(φ) = a·e^{bφ}(0 ≤ φ ≤ 8π。SVG・visx)。
