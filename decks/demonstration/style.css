@@ -1,0 +1,11 @@
+/* このデッキの見た目の特化(書き方は src/theme/tokens.css と presets/ を参照) */
+
+/* 埋め込んだデッキの枠(components/LiveDeck)。外のスライドの地と区切るため、面の色の線で囲む */
+.deck .live-deck {
+  display: block;
+  box-sizing: border-box;
+  max-width: 100%;
+  margin: 0 auto;
+  border: var(--rule) solid var(--color-surface);
+  background: var(--color-surface);
+}

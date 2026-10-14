@@ -1,0 +1,96 @@
+{/*
+  モードの見本。スライドを動かすライブラリ(モード)を 1 つずつ説明し、そのモードを割り当てたデッキを
+  スライドの中に本物のまま埋め込む(components/LiveDeck。iframe)。枠の中を押すと、そのデッキを操作できる。
+  埋め込むデッキもビルドしておく(npm run build:single は全デッキ)。配るときは dist を丸ごと配る。
+*/}
+
+import LiveDeck from './components/LiveDeck'
+
+# モードの見本
+
+<Center>
+
+**同じ原稿を、5 つのライブラリで動かす**
+
+</Center>
+
+<Byline lines={['各スライドの枠の中は、本物のデッキ', '枠の中を押すと操作でき、枠の外を押すと戻る']} />
+
+---
+
+## モードとは
+
+スライドを動かすライブラリを完成品のまま包んだものが**モード**。デッキの `motion.ts` で選ぶ。
+
+<table>
+<thead>
+<tr><th>モード</th><th>持ち味</th><th>見本のデッキ</th></tr>
+</thead>
+<tbody>
+<tr><td>reveal</td><td>段階表示・縦の続き・発表者ビュー・PDF がそろった完成品</td><td>Landau 減衰</td></tr>
+<tr><td>impress</td><td>大きな面の上を、カメラが寄ったり引いたりして進む</td><td>多様体の基礎</td></tr>
+<tr><td>Shower</td><td>全ページの一覧と、1 ページの全画面を行き来する</td><td>記帳業務の手順書</td></tr>
+<tr><td>Spectacle</td><td>React の部品のデッキ。立方体やカードの切り替え</td><td>ルジャンドル部分多様体</td></tr>
+<tr><td>Swiper</td><td>スワイプとドラッグで送るカルーセル</td><td>試算表の作成</td></tr>
+</tbody>
+</table>
+
+---
+
+## reveal \label{sec:reveal}
+
+横に節、縦に節の中の続きが並び、段階表示で 1 段ずつ見せる。結論のスライドだけ寄って見せている。
+
+<LiveDeck deck="landau" title="reveal モードのデッキ(Landau 減衰の線形計算)" width={760} height={400} />
+
+<small>→ ↓ で次へ、`Esc` で一覧、`S` で発表者ビュー。</small>
+
+---
+
+## impress \label{sec:impress}
+
+全体を見渡すところから始まり、節の枠へ寄り、枠の中に並ぶ続きへさらに寄る。次の節へは引いてから移る。
+
+<LiveDeck deck="manifold" title="impress モードのデッキ(多様体の基礎)" width={760} height={400} />
+
+<small>→ で次へ、`O` で全体を見渡す。</small>
+
+---
+
+## Shower \label{sec:shower}
+
+全ページを並べた一覧から入り、押したページを全画面で読む。手順書を見渡してから読む使い方に。
+
+<LiveDeck deck="manual" title="Shower モードのデッキ(記帳業務の手順書)" width={760} height={400} />
+
+<small>一覧でページを押すと全画面、`Esc` で一覧に戻る。</small>
+
+---
+
+## Spectacle \label{sec:spectacle}
+
+React の部品でできたデッキ。新しい節へは立方体が回り、節の中の続きはカードが重なる。
+
+<LiveDeck deck="legendre" title="Spectacle モードのデッキ(ルジャンドル部分多様体の母関数)" width={760} height={400} />
+
+<small>→ で次へ、`Ctrl+Shift+O` で一覧、`Ctrl+Shift+P` で発表者ビュー。</small>
+
+---
+
+## Swiper \label{sec:swiper}
+
+スワイプやドラッグで送るカルーセル。伝票をめくるように、カードが重なって入れ替わる。
+
+<LiveDeck deck="trial-balance" title="Swiper モードのデッキ(試算表の作成)" width={760} height={400} />
+
+<small>ドラッグかスワイプで送る。→ で次へ、`Esc` で一覧。</small>
+
+---
+
+## 入れ子のしくみ
+
+枠の中は、それぞれ独立したデッキのページ（`../<デッキ>/index.html`）。
+
+- 外のデッキと中のデッキは、別々のモードで同時に動く
+- 中のデッキも、さらに別のデッキを埋め込める
+- 開発サーバーでも、ビルドしたフォルダ（`dist/`）でも同じように開ける

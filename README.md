@@ -78,6 +78,8 @@ decks/                 デッキ(1 フォルダ = 1 デッキ。vite/decks.js)�
     slides/ img/       \input{…} で取り込む原稿 / このデッキの画像(原稿から ./img/… で import する)
     components/        このデッキだけの部品(図など。原稿から ./components/… で import する)
   components/          (必要になったら)いくつかのデッキで共有するが、土台にするほど汎用ではない部品。デッキの名前には使えない
+  demonstration/       モードの見本。モードを 1 つずつ説明し、そのモードのデッキをスライドの中に本物のまま埋め込む
+                       (components/LiveDeck。iframe で ../<デッキ>/index.html。埋め込むデッキもビルドし、dist を丸ごと配る)。reveal モード
   landau/              複雑な数式の見本。Landau 減衰の線形計算(C. Villani『Birth of a Theorem』第 4 章の草稿の導出)と、
                        付録「この資料の書き方」(slides/guide.mdx: 記法の一覧・定理環境・align・段階表示・可換図式)。reveal モード
   legendre/            画像と SVG の見本。ルジャンドル部分多様体の母関数(卒業研究の発表を組み直したもの)。

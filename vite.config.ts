@@ -137,7 +137,13 @@ function decksPlugin(deck: string | undefined, mode: ModeName | undefined): Plug
       handler(html, ctx) {
         // 開発時は URL の最初の段がデッキの名前、次の段があればモード(/landau/ → landau、/landau/impress/ → landau を impress で)。
         // 無いデッキは resolveDeck がエラーにする
-        const [, first = '', second = ''] = (ctx.originalUrl ?? '/').split(/[?#]/)[0].split('/').map(decodeURIComponent)
+        // /<名前>/index.html と /<名前>/<モード>/index.html も同じ(ほかのデッキから ../<名前>/index.html で iframe に入れるときの形。
+        // ビルドしたフォルダでも同じ相対パスで開ける)
+        const [, first = '', second = ''] = (ctx.originalUrl ?? '/')
+          .split(/[?#]/)[0]
+          .replace(/\/index\.html$/, '/')
+          .split('/')
+          .map(decodeURIComponent)
         const d = resolveDeck(deck ?? first)
         const chosen = deck ? mode : second || undefined
         if (chosen !== undefined && !isMode(chosen)) throw new Error(`モード「${chosen}」はありません(${MODE_NAMES.join('・')})`)
