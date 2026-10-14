@@ -435,7 +435,7 @@ SVG なので拡大しても鮮明で、印刷・PDF にもそのまま残る。
 
 - **動きのライブラリごとのモード**（詳しくは [docs/motion.md](docs/motion.md)）。reveal.js・impress.js などを完成品のまま使い、
   原稿の変換が出す中立の部品（`Slide`・`Overlay` など）を、ライブラリごとの実体に対応させる。見た目は土台（`.deck`）が持ち、
-  どのモードでも同じ。impress・Shower・Spectacle の各モードは試作中（URL に `?mode=impress` など）。共通の書き方は、モードを増やしながら固める。
+  どのモードでも同じ。impress・Shower・Spectacle・Swiper の各モードは試作中（URL に `?mode=impress` など。Swiper は `&effect=cube` などで切り替えの演出も選べる）。共通の書き方は、モードを増やしながら固める。
   ほかのライブラリ（Shower・Swiper・Zumly ほか）の調査も docs/motion.md に。
 - **土台の配り方**。デッキを別のリポジトリで持ちたくなったら、土台（部品・見た目・記法の処理・コマンド）を npm のパッケージにして配る
   （Spectacle・MDX Deck と同じ形）。同じリポジトリに `decks/` を置く今の形で困らないうちは、このまま。

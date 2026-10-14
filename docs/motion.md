@@ -30,6 +30,7 @@ reveal 以外は試作で、URL の `?mode=<名前>` で選ぶ（選び方は仮
 | impress | `src/modes/impress/` | `?mode=impress`。平面に並べてカメラが移る。下の「impress モード」 |
 | Shower | `src/modes/shower/` | `?mode=shower`。一覧と全画面を行き来する。下の「Shower モード」 |
 | Spectacle | `src/modes/spectacle/` | `?mode=spectacle`。React の部品のデッキ。下の「Spectacle モード」 |
+| Swiper | `src/modes/swiper/` | `?mode=swiper`（`&effect=cube` などで演出を選ぶ）。下の「Swiper モード」 |
 
 共通の部品: 段の印（`src/modes/marker-steps.tsx`。impress と Shower）と、今のスライドの知らせ（`deck:present` の出来事。
 reveal 以外のモードが送り、動く図が受ける。`src/components/figure/motion.ts`）。段階表示の見た目（`.overlay-hidden`）は theme/base.css。
@@ -71,6 +72,21 @@ impress の substep と Shower の `.next` は、要素を文書順に 1 つず�
 - 注意: テーマの `backdropStyle` は Spectacle の既定（ウィンドウいっぱいに固定）を丸ごと置き換えるので、既定の値も書く
   （無いと拡大と中央寄せが効かない）。Slide の `padding` はテーマの間隔の段階の番号として読まれるので、値（`"0px"`）で渡す
 - まだ無いもの: ページ番号、原稿の中のリンク `#/4`。縦の続き（`--`）は横一列に並べる
+
+### Swiper モード（試作）
+
+- `swiper` 14.3.0 の本体を、React が描いた DOM（`.swiper > .swiper-wrapper > .swiper-slide`）に後からかける。
+  React の部品（`swiper/react`）は直下の子の型でスライドを見分けるので、MDX の部品の中のスライドを見分けられず使えない。
+  Swiper はループを使わなければスライドの DOM を動かさない
+- 切り替えの演出は URL の `&effect=<名前>` で選ぶ（選び方は仮）: slide（既定）・fade・cube・coverflow・flip・cards・creative。
+  影（slideShadows・cube の shadow）は硬い見た目の方針に合わないので、どの演出でも切る
+- Swiper には段階表示もプレゼン向けのキー操作も無いので、どちらもこのモードが持つ。キー（→ ↓ Space PageDown で次、← ↑ PageUp で前、
+  Home / End）は、段が残っていれば段を進め、無ければスライドを移る。前のスライドへ戻ると最後の段、先へ進むと 1 段目から。
+  段の数は `OverlaySteps` が置く印（`data-steps`）から読み、表示は段の印のモードと同じ `applyStep`
+- スワイプ・ドラッグはスライドを移る（段は飛ばす）。図（`.figure`）・入力・ボタン・リンクの上ではスワイプにしない
+- 全体は最小サイズ（933×700）の容器を、ウィンドウに収まる倍率で中央に置く（Swiper は倍率をかける前の大きさで組む）
+- まだ無いもの: ページ番号、一覧、PDF 出力、発表者ビュー、原稿の中のリンク `#/4`、原稿を直したときの描き直し（React が class を
+  描き直すと Swiper の付けた class が消える）
 
 ### 次にやること
 

@@ -34,6 +34,7 @@
     "react-dom": "^19.3.0",
     "reveal.js": "^6.0.2",
     "spectacle": "^10.2.3",
+    "swiper": "^14.3.0",
     "tailwindcss": "^4.3.3",
     "topojson-client": "^3.1.0",
     "world-atlas": "^2.0.2"

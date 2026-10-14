@@ -11,6 +11,7 @@ const MODES: Record<string, ComponentType<DeckSource>> = {
   impress: lazy(() => import('./modes/impress/ImpressApp')),
   shower: lazy(() => import('./modes/shower/ShowerApp')),
   spectacle: lazy(() => import('./modes/spectacle/SpectacleApp')),
+  swiper: lazy(() => import('./modes/swiper/SwiperApp')),
 }
 
 /**

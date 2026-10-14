@@ -1,0 +1,20 @@
+/* Swiper モード(SwiperApp.tsx)の配置。本文の見た目は theme/ の .deck の規則がそのまま効く。
+   Swiper は容器(.swiper)の大きさでスライドを組むので、容器を最小サイズにし、全体をウィンドウに収まる倍率で中央に置く */
+body:has(> #root > .swiper) {
+  overflow: hidden;
+  background: var(--color-surface);
+}
+.deck.swiper {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: var(--swiper-slide-width);
+  height: var(--swiper-slide-height);
+  translate: -50% -50%;
+  scale: var(--swiper-scale);
+}
+.deck.swiper .slide {
+  height: 100%;
+  overflow: hidden;
+  background: var(--color-canvas);
+}
