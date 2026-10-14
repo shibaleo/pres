@@ -9,11 +9,11 @@
 
 /* 表のセルは 1 行で読むので、行間は見出しと同じ詰めた値に(プリセットの本文の行間 1.6 のままだと、
    科目の多い試算表が 1 枚に収まらない) */
-.reveal :is(td, th) {
+.deck :is(td, th) {
   line-height: var(--leading-tight);
 }
 
 /* 金額の列は右揃え(桁が縦にそろう。等幅数字はプリセットが付ける) */
-.reveal :is(td, th).num {
+.deck :is(td, th).num {
   text-align: right;
 }

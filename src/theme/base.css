@@ -10,47 +10,128 @@
                         部品ごとに変わるのは見出しの下線のアクセント色だけ(色は線にだけ使う)
 
    構成:
-     1. reveal テーマ変数(reveal の white テーマが読む --r-*。reveal の標準の作り方)
+     1. 文書の既定(要素の既定の見た目。以前は reveal の white テーマが与えていたもの)
      2. スライドの組版
      3. パネル
      4. その他の部品
      5. デッキの外側の UI と開発時の表示 */
 
-/* ========== 1. reveal テーマ変数 ========== */
-:root {
-  --r-background-color: var(--color-canvas);
-  --r-main-font: var(--font-body);
-  --r-main-font-size: var(--text-base);
-  --r-main-color: var(--color-ink);
-  --r-block-margin: var(--space);
-  --r-heading-font: var(--font-heading);
-  --r-heading-color: var(--color-brand);
-  --r-heading-font-weight: var(--heading-weight);
-  --r-heading-line-height: var(--leading-tight);
-  /* white テーマの既定は uppercase。全大文字は語の形が失われて読みにくいので原稿どおりに出す */
-  --r-heading-text-transform: none;
-  --r-heading-margin: 0 0 var(--space);
-  --r-heading1-size: calc(1em * var(--type-ratio) * var(--type-ratio));
-  /* h2 はスライドの題(帯)、h3 は区切りのラベル(小さな帯)、h4 は書体と色だけの小見出し */
-  --r-heading2-size: 1em;
-  --r-heading3-size: calc(1em / var(--type-ratio));
-  --r-heading4-size: 1em;
-  --r-code-font: var(--font-code);
-  --r-link-color: var(--color-brand);
-  --r-link-color-hover: color-mix(in srgb, var(--color-ink) 30%, var(--color-brand));
+/* ========== 1. 文書の既定 ==========
+   どのモード(reveal・impress …)でも同じ組版になるよう、要素の既定の見た目を土台に持つ
+   (以前は reveal の white テーマが .reveal の範囲で与えていたもの。値はトークンから)。
+   デッキの本文の範囲は .deck(各モードが本文を包む要素に付ける) */
+body,
+.reveal-viewport {
+  background-color: var(--color-canvas);
+}
+.deck {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  font-weight: var(--body-weight);
+  color: var(--color-ink);
+}
+.deck ::selection {
+  color: var(--color-canvas);
+  background: var(--color-brand);
+}
+.deck :is(h1, h2, h3, h4, h5, h6) {
+  margin: 0 0 var(--space);
+  font-family: var(--font-heading);
+  font-weight: var(--heading-weight);
+  line-height: var(--leading-tight);
+  color: var(--color-brand);
+  overflow-wrap: break-word;
+}
+/* 文字の段階: h1 は 2 段上、h2(スライドの題の帯)と h4(書体と色だけの小見出し)は本文と同じ、h3(区切りのラベル)は 1 段下 */
+.deck h1 {
+  font-size: calc(1em * var(--type-ratio) * var(--type-ratio));
+}
+.deck :is(h2, h4) {
+  font-size: 1em;
+}
+.deck h3 {
+  font-size: calc(1em / var(--type-ratio));
+}
+.deck :is(h1, h2, h3, h4, h5, h6):last-child {
+  margin-bottom: 0;
+}
+.deck p {
+  margin: var(--space) 0;
+}
+.deck :is(ul, ol, dl) {
+  display: inline-block;
+  margin: 0 0 0 1em;
+  text-align: left;
+}
+.deck :is(img, video, iframe) {
+  max-width: 95%;
+  max-height: 95%;
+}
+.deck img {
+  margin: var(--space) 0;
+}
+.deck :is(sup, sub) {
+  font-size: smaller;
+}
+.deck q {
+  font-style: italic;
+}
+.deck a {
+  position: relative;
+  color: var(--color-brand);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.deck a:hover {
+  color: color-mix(in srgb, var(--color-ink) 30%, var(--color-brand));
+}
+.deck code {
+  font-family: var(--font-code);
+  tab-size: 2;
+}
+.deck pre {
+  display: block;
+  position: relative;
+  text-align: left;
+  font-family: var(--font-code);
+  line-height: 1.2em;
+  overflow-wrap: break-word;
+}
+.deck pre code {
+  display: block;
+  max-height: 400px;
+  overflow: auto;
+  overflow-wrap: normal;
+}
+.deck table {
+  margin: auto;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+.deck table th {
+  font-weight: bold;
+}
+.deck table :is(th, td) {
+  padding: 0.2em 0.5em;
+  text-align: left;
+}
+.deck table :is(th, td)[align='center'] {
+  text-align: center;
+}
+.deck table :is(th, td)[align='right'] {
+  text-align: right;
+}
+/* スピーカーノート(components/Notes.tsx)はスライドには出さない */
+.deck aside.notes {
+  display: none;
 }
 
 /* ========== 2. スライドの組版 ========== */
 
-/* 本文の太さ(reveal の white テーマは normal を直に書いているので、ここで上書きする) */
-.reveal {
-  font-weight: var(--body-weight);
-}
-
 /* プリセットを一部にかける範囲(<div data-preset="manual"> など。theme/presets/)。
    プリセットはその範囲でトークンを上書きするので、上の要素で一度決まった本文の書体・太さ・行間を
    ここで改めてトークンから決め直す(デッキ全体にかけるときは <html data-preset> で、上の規則がそのまま効く) */
-.reveal [data-preset] {
+.deck [data-preset] {
   /* 間隔の刻み(tokens.css)も、その範囲の本文の大きさと行間から導き直す */
   --line: calc(var(--text-base) * var(--leading));
   --space: calc(var(--line) / 2);
@@ -60,88 +141,82 @@
 }
 
 /* 縦スライドの束(.stack)ではなく、中身を持つ 1 枚 1 枚に余白を付ける */
-.reveal .slides section:not(.stack) {
+.deck .slide {
   box-sizing: border-box;
   padding: var(--slide-pad);
   text-align: left;
   line-height: var(--leading);
 }
-.reveal :is(p, li) {
+.deck :is(p, li) {
   line-height: inherit;
   /* 和文を文節で改行し(lang="ja" のとき有効)、段落末に 1 語だけ残る行を避ける */
   word-break: auto-phrase;
   text-wrap: pretty;
 }
-.reveal :is(h1, h2, h3, h4) {
+.deck :is(h1, h2, h3, h4) {
   word-break: auto-phrase;
   text-wrap: balance;
   font-feature-settings: 'palt';
 }
 
 /* 見出しと強調の文字。部品の見出し(Frame の題・定理の見出し・用語・表紙の主の行)も同じ扱い。
-   ブラウザや reveal の white テーマが既定で太字にする要素(h1〜h6・th・dt・strong・b)はすべてここに入れ、
+   ブラウザが既定で太字にする要素(h1〜h6・th・dt・strong・b)はすべてここに入れ、
    明朝の本文の書体のまま太字にならないようにする(太字ではなく、ゴシックの中太で際立たせる) */
-.reveal :is(h1, h2, h3, h4, h5, h6, th, strong, b, dt, .frame-title, .thm-head, .byline > :first-child) {
+.deck :is(h1, h2, h3, h4, h5, h6, th, strong, b, dt, .frame-title, .thm-head, .byline > :first-child) {
   font-family: var(--font-heading);
   font-weight: var(--heading-weight);
 }
 
 /* スライドの題(先頭の h2): スライドの幅いっぱいの帯。余白を負の margin で打ち消して端まで伸ばす。
    帯の高さは 3 半行(1.5 行)。上下の padding は、その高さから見出しの行の高さを引いた残りを等分したもの */
-.reveal .slides section > h2:first-child {
+.deck .slide > h2:first-child {
   margin: calc(-1 * var(--slide-pad)) calc(-1 * var(--slide-pad)) var(--space);
   padding: calc((3 * var(--space) - var(--leading-tight) * 1em) / 2) var(--slide-pad);
   color: var(--color-canvas);
   background: var(--color-brand);
 }
 /* 発表の題(h1): 表紙の主役なので帯にせず、大きさとアクセント色だけで示す */
-.reveal h1 {
+.deck h1 {
   text-align: center;
 }
 /* 区切りのラベル(h3。「参考文献」「証明のアイデア」など): スライドの題の帯を小さくしたもの。高さは 1 行 */
-.reveal h3 {
+.deck h3 {
   padding: calc((2 * var(--space) - var(--leading-tight) * 1em) / 2) var(--space);
   color: var(--color-canvas);
   background: var(--color-brand);
 }
 
 /* 箇条書きの字下げは和文 1 文字分(1ic = 全角 1 文字の幅)。行頭の記号・番号はその中にぶら下げる。
-   reveal の white テーマ(margin 1em、入れ子は 40px)とブラウザの既定(padding 40px)を打ち消す */
-.reveal :is(ul, ol) {
+   文書の既定(margin 1em)とブラウザの既定(padding 40px)を打ち消す */
+.deck :is(ul, ol) {
   margin-left: 0;
   padding-left: 1ic;
 }
-.reveal li::marker {
+.deck li::marker {
   color: var(--color-brand);
 }
 
 /* 用語と説明(HTML の <dl>。LaTeX の description 環境に当たる): 用語を見出しの書体で置き、説明を一段下げる */
-.reveal dl {
+.deck dl {
   margin: var(--space) 0;
 }
-.reveal dd {
+.deck dd {
   margin: 0 0 calc(var(--space) / 2) 1ic;
 }
 
 /* 区切り線(CommonMark の *** など)。脚注の上の線にも使う */
-.reveal hr {
+.deck hr {
   margin: var(--space) 0;
   border: none;
   border-top: thin solid var(--color-muted);
 }
 
 /* 小さい文字(<small>): 脚注・再掲など。文字の段階の 1 段下 */
-.reveal small {
+.deck small {
   display: inline;
   font-size: calc(1em / var(--type-ratio));
   line-height: inherit;
   vertical-align: baseline;
-}
-/* reveal の white テーマは .reveal small * { vertical-align: top } で中身をすべて上端揃えにする。
-   そのままだと文中の数式(mjx-container)がベースラインから浮くので、要素ごとの既定の揃え方に戻す
-   (数式の SVG は MathJax が自分で vertical-align を付けている。<sup> などはブラウザの既定のまま) */
-.reveal small * {
-  vertical-align: revert;
 }
 /* ページ番号「i/全体」: 右上に地を付けずに置く。題の帯のあるスライドでは帯の上なので地の色(白)、
    帯の無いスライドではアクセント色。帯の有無は表示中のスライド(印刷ではページ)の先頭が h2 かで決める */
@@ -172,120 +247,121 @@ html.reveal-print .pdf-page:has(> section > h2:first-child) .slide-number {
 }
 .reveal .progress {
   height: var(--rule);
+  background: color-mix(in srgb, var(--color-canvas) 80%, black);
 }
 
 /* ========== 3. パネル ==========
    囲み全般の共通の形。面はすべて --color-surface で、色は見出しの下線(アクセント)にだけ使う。
    見出しのある囲み(Frame・定理環境)は 見出し + 一段下げた本文 の 2 段で、Beamer の block と同じ構成。
    各部品は --accent だけを決める。 */
-.reveal :is(.frame, .note, .thm, pre) {
+.deck :is(.frame, .note, .thm, pre) {
   margin: var(--space) 0;
   padding: calc(var(--space) / 2) var(--space);
   border-radius: var(--radius);
   background: var(--color-surface);
 }
-.reveal :is(.frame-title, .thm > .thm-head) {
+.deck :is(.frame-title, .thm > .thm-head) {
   margin-bottom: calc(var(--space) / 2);
   border-bottom: var(--rule) solid var(--accent);
 }
-.reveal :is(.frame-body, .thm-body) {
+.deck :is(.frame-body, .thm-body) {
   padding-left: 1ic; /* 箇条書きの字下げと同じ 1 文字 */
 }
 /* 囲みの本文の直下の箇条書きは、行頭の記号を本文の字下げの中にぶら下げる
    (箇条書きの文字は本文の文字に、記号は見出しの位置に揃う。字下げが 2 段にならない) */
-.reveal :is(.frame-body, .thm-body) > :is(ul, ol) {
+.deck :is(.frame-body, .thm-body) > :is(ul, ol) {
   margin-left: -1ic; /* 箇条書きの字下げ(1ic)の分だけ戻す */
 }
-.reveal :is(.frame-body, .thm-body, .note) > :first-child {
+.deck :is(.frame-body, .thm-body, .note) > :first-child {
   margin-top: 0;
 }
-.reveal :is(.frame-body, .thm-body, .note) > :last-child {
+.deck :is(.frame-body, .thm-body, .note) > :last-child {
   margin-bottom: 0;
 }
 
 /* アクセント: Frame は color の指定から部品が渡す。定理は brand、定義は green */
-.reveal .thm {
+.deck .thm {
   --accent: var(--color-brand);
 }
-.reveal .thm-def {
+.deck .thm-def {
   --accent: var(--color-frame-green);
 }
 /* 証明はパネルにしない。「Proof.」と本文の 1 段落目を同じ行に続け、∎ は右下に置く(Beamer と同じ) */
-.reveal .thm-proof {
+.deck .thm-proof {
   position: relative;
   margin: var(--space) 0;
   padding-right: calc(2 * var(--space));
 }
-.reveal .thm-proof .thm-head {
+.deck .thm-proof .thm-head {
   font-family: inherit;
   font-weight: inherit;
   font-style: italic;
 }
-.reveal .thm-proof > p:first-of-type {
+.deck .thm-proof > p:first-of-type {
   display: inline;
 }
-.reveal .thm-proof .qed {
+.deck .thm-proof .qed {
   position: absolute;
   right: 0;
   bottom: 0;
 }
 
 /* コード(Markdown のコードブロックと layout.tsx の Code): 本文より 1 段小さく */
-.reveal pre {
+.deck pre {
   width: auto;
   font-size: calc(1em / var(--type-ratio));
   box-shadow: none;
 }
-.reveal pre code {
+.deck pre code {
   padding: 0;
 }
 
 /* ========== 4. その他の部品 ========== */
 
 /* 横並び(layout.tsx の Cols / Col)。列の間はスライドの余白と同じ 1 行 */
-.reveal .cols {
+.deck .cols {
   display: flex;
   justify-content: center;
   align-items: flex-start;
   gap: var(--slide-pad);
 }
-.reveal .col {
+.deck .col {
   flex: 1;
   min-width: 0;
 }
 /* 列の上端と下端は中身の余白を持ち込まず、どの列も同じ高さから始める */
-.reveal .col > :first-child {
+.deck .col > :first-child {
   margin-top: 0;
 }
-.reveal .col > :last-child {
+.deck .col > :last-child {
   margin-bottom: 0;
 }
 
 /* 表紙の署名(layout.tsx の Byline): 1 行目を主、以降(氏名・日付など)を従にする */
-.reveal .byline {
+.deck .byline {
   text-align: center;
   color: var(--color-muted);
 }
-.reveal .byline > :first-child {
+.deck .byline > :first-child {
   color: var(--color-ink);
 }
 
 /* 表: LaTeX の booktabs と同じく、上下の太線と見出しの下の細線だけ(行ごとの罫線は引かない) */
-.reveal table {
+.deck table {
   border-block: var(--rule) solid var(--color-ink);
 }
-.reveal table :is(th, td) {
+.deck table :is(th, td) {
   border-bottom: none;
 }
-.reveal table thead th {
+.deck table thead th {
   border-bottom: thin solid var(--color-ink);
 }
 /* 合計の行(<tfoot>)の上にも細線(booktabs の \midrule と同じ) */
-.reveal table tfoot :is(th, td) {
+.deck table tfoot :is(th, td) {
   border-top: thin solid var(--color-ink);
 }
 /* 表の題(<caption>)は表の上に、本文より 1 段小さく、従の色で */
-.reveal table caption {
+.deck table caption {
   caption-side: top;
   padding-bottom: calc(var(--space) / 2);
   font-size: calc(1em / var(--type-ratio));
@@ -293,39 +369,39 @@ html.reveal-print .pdf-page:has(> section > h2:first-child) .slide-number {
 }
 
 /* 文献(rehype-citation が出力する CSL の標準マークアップ) */
-.reveal .csl-entry {
+.deck .csl-entry {
   display: flex;
   gap: var(--space);
 }
-.reveal .csl-left-margin {
+.deck .csl-left-margin {
   flex: none;
   min-width: 4ch; /* 「[10]」の幅 */
 }
 
 /* 数式(rehype-mathjax の SVG 出力)。\eqref のリンク色をアクセントに合わせる(MathJax の既定は青) */
-.reveal mjx-container[jax='SVG'][display='true'] {
+.deck mjx-container[jax='SVG'][display='true'] {
   margin: var(--space) 0;
 }
-.reveal mjx-container[jax='SVG'] > svg a {
+.deck mjx-container[jax='SVG'] > svg a {
   fill: var(--color-brand);
 }
 /* 読み上げ用の MathML(MathJax の assistive MathML。画面には見えない)は 1px の高さに抑える。
    MathJax の規則は clip で隠すだけで高さは中身のままなので、Chrome が対応していない mlabeledtr(番号付きの式)
    では中身が縦に積み重なり、見えないままスライドの高さを数百 px 押し広げる(はみ出しの検査にもかかる)。
    overflow: hidden は MathJax の規則にあり、高さを決めれば中身は外に出ない(読み上げには影響しない) */
-.reveal mjx-assistive-mml {
+.deck mjx-assistive-mml {
   height: 1px;
 }
 /* 数式の字形は塗りだけで描く。MathJax は自前の CSS で字形(path / use[data-c])に stroke-width: 3 を付け、
    輪郭に線を足して太らせる。線の色は文字の色(currentColor)で、リンク(\eqref)の中では MathJax の
    svg a { stroke: blue } で純色の青になる。PDF では足された線が目立ち、数式が太く、リンクはさらに太く見えるので、
    字形の線そのものを消す(リンクの色は上の fill で付ける) */
-.reveal mjx-container[jax='SVG'] :is(path, use)[data-c] {
+.deck mjx-container[jax='SVG'] :is(path, use)[data-c] {
   stroke: none;
 }
 /* 図(components/ の FourPoints・LogSpiral・Globe。visx で描く SVG)。色はすべてトークンから。
    SVG の属性(stroke など)より CSS が優先されるので、visx の部品の既定の色もここで上書きできる */
-.reveal .figure {
+.deck .figure {
   display: block;
   max-width: 100%;
   height: auto;
@@ -333,109 +409,109 @@ html.reveal-print .pdf-page:has(> section > h2:first-child) .slide-number {
   overflow: visible;
 }
 /* キーボードで選んだ図の要素(Tab で選び、矢印キーで動かす。components/figure/useSvgDrag.ts) */
-.reveal .figure [tabindex]:focus-visible,
-.reveal .figure[tabindex]:focus-visible {
+.deck .figure [tabindex]:focus-visible,
+.deck .figure[tabindex]:focus-visible {
   outline: calc(var(--rule) / 2) solid var(--color-brand);
   outline-offset: calc(var(--rule) / 2);
 }
-.reveal .figure-ink {
+.deck .figure-ink {
   stroke: var(--color-ink);
 }
-.reveal .figure-point {
+.deck .figure-point {
   fill: var(--color-ink);
 }
-.reveal .figure-handle {
+.deck .figure-handle {
   fill: var(--color-canvas);
   stroke: var(--color-brand);
   stroke-width: var(--rule);
 }
 /* 図のラベル: 数式用イタリックの文字(components/figure/mathItalic.ts)を数式用フォントで描く。
    文字そのものがイタリックなので、斜体にはしない */
-.reveal .figure-label {
+.deck .figure-label {
   font-family: var(--font-math);
   fill: var(--color-ink);
 }
-.reveal .figure-controls .figure-label {
+.deck .figure-controls .figure-label {
   color: var(--color-ink);
 }
-.reveal .figure-curve {
+.deck .figure-curve {
   fill: none;
   stroke: var(--color-brand);
   stroke-width: var(--rule);
 }
-.reveal .figure-ink-curve {
+.deck .figure-ink-curve {
   fill: none;
   stroke: var(--color-ink);
   stroke-width: calc(var(--rule) * 0.75);
 }
 /* 速度ベクトル(赤の矢印)と単位法線ベクトル(アクセント色の矢印)。CuspNormal */
-.reveal .figure-velocity {
+.deck .figure-velocity {
   stroke: var(--color-frame-red);
   stroke-width: var(--rule);
 }
-.reveal .figure-velocity-head {
+.deck .figure-velocity-head {
   fill: var(--color-frame-red);
 }
-.reveal .figure-normal {
+.deck .figure-normal {
   stroke: var(--color-brand);
   stroke-width: var(--rule);
 }
-.reveal .figure-normal-head {
+.deck .figure-normal-head {
   fill: var(--color-brand);
 }
 /* 複数の系列(NormalFamily の 3 つの点と曲線)。点・曲線・凡例を同じ色で対応させる */
-.reveal .figure-series-0 {
+.deck .figure-series-0 {
   --series: var(--color-frame-red);
 }
-.reveal .figure-series-1 {
+.deck .figure-series-1 {
   --series: var(--color-frame-green);
 }
-.reveal .figure-series-2 {
+.deck .figure-series-2 {
   --series: var(--color-brand);
 }
-.reveal .figure-series {
+.deck .figure-series {
   fill: none;
   stroke: var(--series);
   stroke-width: var(--rule);
 }
-.reveal .figure-series-point {
+.deck .figure-series-point {
   fill: var(--series);
 }
-.reveal .figure-legend {
+.deck .figure-legend {
   font-family: var(--font-body);
   font-size: calc(var(--text-base) / var(--type-ratio) / var(--type-ratio));
   fill: var(--series);
 }
-.reveal .figure-tangent {
+.deck .figure-tangent {
   stroke: var(--color-frame-purple);
   stroke-width: calc(var(--rule) / 2);
   stroke-dasharray: var(--rule) var(--rule);
 }
-.reveal .figure-grid line {
+.deck .figure-grid line {
   stroke: var(--color-surface);
 }
-.reveal .figure-axis :is(line, path) {
+.deck .figure-axis :is(line, path) {
   stroke: var(--color-muted);
 }
 /* 目盛りの文字。visx は font-size="10" の <svg> で包んで描くので、em ではなく本文の大きさから決める */
-.reveal .figure-axis text {
+.deck .figure-axis text {
   font-family: var(--font-body);
   font-size: calc(var(--text-base) / var(--type-ratio) / var(--type-ratio));
   fill: var(--color-muted);
 }
-.reveal .figure-globe {
+.deck .figure-globe {
   cursor: grab;
 }
-.reveal .figure-globe-sea {
+.deck .figure-globe-sea {
   fill: var(--color-brand);
 }
-.reveal .figure-globe-land {
+.deck .figure-globe-land {
   fill: var(--color-ink);
   stroke: var(--color-canvas);
   stroke-width: 0.5;
 }
 /* 図の入れ物: 図の幅に合わせ、右上にリセットのボタンを置く */
-.reveal .figure-block {
+.deck .figure-block {
   position: relative;
   width: fit-content;
   max-width: 100%;
@@ -443,14 +519,14 @@ html.reveal-print .pdf-page:has(> section > h2:first-child) .slide-number {
 }
 /* 図のボタン(components/figure/ の ResetButton・PlayPauseButton): 図の右上に並べ、
    普段は薄く、マウスを乗せたときだけはっきり出す */
-.reveal .figure-buttons {
+.deck .figure-buttons {
   position: absolute;
   top: 0;
   right: 0;
   display: flex;
   gap: calc(var(--space) / 2);
 }
-.reveal .figure-button {
+.deck .figure-button {
   display: grid;
   place-items: center;
   width: 1em;
@@ -464,11 +540,11 @@ html.reveal-print .pdf-page:has(> section > h2:first-child) .slide-number {
   opacity: var(--ui-idle);
   transition: opacity 0.2s;
 }
-.reveal .figure-button:hover,
-.reveal .figure-button:focus-visible {
+.deck .figure-button:hover,
+.deck .figure-button:focus-visible {
   opacity: 1;
 }
-.reveal .figure-button svg {
+.deck .figure-button svg {
   width: 70%;
   height: 70%;
   fill: none;
@@ -478,7 +554,7 @@ html.reveal-print .pdf-page:has(> section > h2:first-child) .slide-number {
   stroke-linejoin: round;
 }
 /* 塗りの印(再生・一時停止) */
-.reveal .figure-button .figure-icon-fill {
+.deck .figure-button .figure-icon-fill {
   fill: currentColor;
   stroke: none;
 }
@@ -486,38 +562,38 @@ html.reveal-print .reveal .figure-buttons {
   display: none;
 }
 @media print {
-  .reveal .figure-buttons {
+  .deck .figure-buttons {
     display: none;
   }
 }
 /* 図の下の操作部品(スライダー) */
-.reveal .figure-controls {
+.deck .figure-controls {
   display: flex;
   justify-content: center;
   gap: var(--slide-pad);
   font-size: calc(1em / var(--type-ratio));
 }
-.reveal .figure-controls label {
+.deck .figure-controls label {
   display: flex;
   align-items: center;
   gap: var(--space);
 }
-.reveal .figure-controls input[type='range'] {
+.deck .figure-controls input[type='range'] {
   accent-color: var(--color-brand);
 }
-.reveal .figure-controls output {
+.deck .figure-controls output {
   min-width: 4ch; /* 「-0.15」の幅 */
   font-variant-numeric: tabular-nums;
 }
 
 /* 段階表示(components/Overlay.tsx。Beamer の \pause / <2-> / \only など) */
 /* ステップ数を揃えるための見えない fragment */
-.reveal .overlay-step {
+.deck .overlay-step {
   display: none !important;
 }
 /* \only: 非表示の間は場所も取らない(\uncover は場所を残す = reveal の既定) */
-.reveal .fragment.only:not(.visible),
-.reveal .fragment.only.fade-out.visible {
+.deck .fragment.only:not(.visible),
+.deck .fragment.only.fade-out.visible {
   display: none;
 }
 
@@ -533,7 +609,7 @@ body {
   height: 100vh;
 }
 
-/* スライド一覧(components/Menu.tsx)。.reveal の外(body 直下)に置く */
+/* スライド一覧(components/Menu.tsx)。.deck の外(body 直下)に置く */
 .deck-menu {
   font: 14px/1.5 var(--font-ui);
   color: var(--color-ink);
@@ -638,14 +714,14 @@ body {
    最小サイズの範囲(--deck-min-width × --deck-min-height)を破線の枠で示し、その右上に超過量を出す。
    枠もバッジも最小サイズの内側に置き、はみ出しの測定(scrollWidth / scrollHeight)を増やさない
    (増やすと、原稿を直しても警告が消えない) */
-.reveal .slides section.deck-overflow::before,
-.reveal .slides section.deck-overflow::after {
+.deck .slide.deck-overflow::before,
+.deck .slide.deck-overflow::after {
   position: absolute;
   top: 0;
   z-index: 1;
   pointer-events: none;
 }
-.reveal .slides section.deck-overflow::before {
+.deck .slide.deck-overflow::before {
   content: '';
   left: 0;
   box-sizing: border-box;
@@ -653,7 +729,7 @@ body {
   height: var(--deck-min-height);
   border: calc(var(--rule) / 2) dashed red;
 }
-.reveal .slides section.deck-overflow::after {
+.deck .slide.deck-overflow::after {
   content: attr(data-deck-overflow);
   left: var(--deck-min-width);
   translate: -100% 0;

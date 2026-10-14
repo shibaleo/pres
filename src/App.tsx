@@ -35,6 +35,8 @@ export default function App({ Slides, warnings }: DeckSource) {
 
   return (
     <Deck
+      // 本文の範囲(theme/base.css の .deck)
+      className="deck"
       config={{
         // 論理サイズはウィンドウの縦横比に合わせる(deck/slide-size.ts)。余白はスライド内の padding で取る
         width,

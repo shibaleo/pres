@@ -45,6 +45,8 @@ describe('スライド分割', () => {
     expect(top.map((c) => c.name)).toEqual(['Slide', 'Stack'])
     expect(jsx(top[1], 'Slide')).toHaveLength(2)
     expect(attr(top[0], 'data-slide-line')).toBe('3')
+    // スライドの並び(横の位置 h と縦の続きの中の位置 v)。モードがスライドを置く場所を決めるのに使う
+    expect([top[0], ...jsx(top[1], 'Slide')].map((s) => [attr(s, 'h'), attr(s, 'v')])).toEqual([['0', '0'], ['1', '0'], ['1', '1']])
   })
 
   it('*** は区切りにしない(普通の横線)', async () => {

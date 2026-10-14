@@ -470,8 +470,8 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
     )
 
     // (4)(5) 文中の命令と段階表示(スライドごと・文書順)
-    const slideElements: RootContent[] = built.map((stack) => {
-      const els = stack.map((nodes) => {
+    const slideElements: RootContent[] = built.map((stack, h) => {
+      const els = stack.map((nodes, v) => {
         const steps = new Steps()
         const overlays: Jsx[] = []
         const root = { type: 'root', children: nodes } as Root
@@ -483,8 +483,9 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
         }
         if (steps.max >= 2) root.children.push(jsxFlow('OverlaySteps', { max: steps.max }, []))
         const line = nodes[0]?.position?.start.line
-        // 開発時のはみ出し警告で原稿の位置を示すため(\input で取り込んだスライドはそのファイル)
-        return jsxFlow('Slide', { 'data-slide-line': line, 'data-slide-file': sourceOf(nodes[0])?.file }, root.children, nodes[0]?.position)
+        // h・v はスライドの並び(横の位置と、縦の続き(--)の中の位置。モードがスライドを置く場所を決めるのに使う)。
+        // data-slide-line / data-slide-file は開発時のはみ出し警告で原稿の位置を示すため(\input で取り込んだスライドはそのファイル)
+        return jsxFlow('Slide', { h, v, 'data-slide-line': line, 'data-slide-file': sourceOf(nodes[0])?.file }, root.children, nodes[0]?.position)
       })
       return els.length === 1 ? els[0] : jsxFlow('Stack', {}, els)
     })

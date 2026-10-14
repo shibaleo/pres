@@ -28,6 +28,7 @@
     "@visx/scale": "^4.0.0",
     "@visx/shape": "^4.0.0",
     "d3": "^7.9.0",
+    "impress.js": "^1.1.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "reveal.js": "^6.0.2",

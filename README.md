@@ -117,7 +117,7 @@ vite/
     mdast.ts           構文木ノードへの変換
     transform.ts       意味づけ(スライド分割・環境・節番号と定理番号・参照・引用・段階表示)
     rehype-math-errors.ts  MathJax の数式エラーを原稿の位置で報告
-docs/                  設計の方向と調査(motion.md: 内容・見た目・動きを分け、動きのライブラリを差し替えられるようにする)
+docs/                  設計の方向と調査(motion.md: 動きのライブラリごとのモード)
 e2e/                   e2e テスト(Playwright。入っている Chrome を使う)
 fonts-src/             サブセット元のフルフォント(.ttf / .otf)とライセンス。ビルド成果物には含めない
 scripts/
@@ -406,6 +406,7 @@ SVG なので拡大しても鮮明で、印刷・PDF にもそのまま残る。
 ## 次にやること
 
 - 表紙の双対のグラフ（3D の曲面）を visx の図にする。描く関数（$f = \tfrac12 x^2 + \tfrac13 y^3$ とその双対か）の確認待ち。
+- 可換図式（amscd の `\begin{CD}`）の行が崩れる（landau の「可換図式（amscd）」で 2 行が 1 行に並ぶ）。
 - 今は書けない LaTeX の標準の記法: `\footnote`、`description` 環境、`\ref` のリンク（hyperref の動き）、スライドごとの文献リスト、
   証明の見出しの語（`\renewcommand{\proofname}{証明}`。今は「Proof.」のまま）。
 - 開発用の依存の脆弱性警告（`braces`、`vite-plugin-singlefile` 経由）。修正版が出たら更新する。
@@ -421,7 +422,7 @@ SVG なので拡大しても鮮明で、印刷・PDF にもそのまま残る。
 
 1. **段階表示に図の部品が加わる仕組み**（Spectacle の `useSteps` に当たる）。図の部品が段階表示の 1 段として並び、
    今の段を受け取れるようにする（段階表示と図の状態の連動）。原稿の書き方（overlay 指定）は変えず、部品の側だけで足す。
-   下の「段階表示を reveal の fragment から切り離す」の上に載せる。
+   各モードの `Overlay` の実体（reveal は fragment、impress は substep）の上に、モードごとに載せる。
 2. **Beamer の題目の情報**（`\title` / `\author` / `\date` と `\maketitle`、footline）。表紙を `<Byline>` で手書きする代わりに、
    Beamer の標準の書き方で表紙と各ページの下端の題目・著者を作る。原稿の書き方に関わるので、設計を提案して承認を得てから。
 3. **コードの行の強調を段階にする**（Spectacle の `CodePane` の `highlightRanges`）。LaTeX に標準の書き方が無いので、記法ではなく部品で。
@@ -433,11 +434,10 @@ SVG なので拡大しても鮮明で、印刷・PDF にもそのまま残る。
 
 見直すアーキテクチャ:
 
-- **内容・見た目・動きを分け、動きを JS のライブラリの単位で差し替えられるようにする**（詳しくは [docs/motion.md](docs/motion.md)）。
-  reveal.js に期待しているのは画面遷移の美しさだけなので、段階表示・キー操作・PDF を自前の「進行」と「出力」の層に移し、
-  動きの層（基本は借り物: reveal.js・impress.js など）は「スライド単位で移ること」だけを担うアダプターにする。
-  デッキがどの動きを使うかは動きの設定のファイル（`decks/<名前>/motion.js` など）で選ぶ。上の 1（図が段階表示に加わる）は進行の層の上に載り、
-  `@revealjs/react`（0.x）への依存もアダプターの中に閉じる。ほかのライブラリ（Shower・Swiper・Zumly ほか）の調査も docs/motion.md に。
+- **動きのライブラリごとのモード**（詳しくは [docs/motion.md](docs/motion.md)）。reveal.js・impress.js などを完成品のまま使い、
+  原稿の変換が出す中立の部品（`Slide`・`Overlay` など）を、ライブラリごとの実体に対応させる。見た目は土台（`.deck`）が持ち、
+  どのモードでも同じ。impress モードは試作中（URL に `?mode=impress`）。共通の書き方は、モードを増やしながら固める。
+  ほかのライブラリ（Shower・Swiper・Zumly ほか）の調査も docs/motion.md に。
 - **土台の配り方**。デッキを別のリポジトリで持ちたくなったら、土台（部品・見た目・記法の処理・コマンド）を npm のパッケージにして配る
   （Spectacle・MDX Deck と同じ形）。同じリポジトリに `decks/` を置く今の形で困らないうちは、このまま。
 

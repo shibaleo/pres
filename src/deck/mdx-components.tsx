@@ -1,10 +1,18 @@
 import type { ComponentProps } from 'react'
-import { Fragment as RevealFragment, Slide, Stack } from '@revealjs/react'
+import { Fragment as RevealFragment, Slide as RevealSlide, Stack } from '@revealjs/react'
 import Frame from '../components/Frame'
 import Notes from '../components/Notes'
 import { Theorem, Lemma, Proposition, Corollary, Definition, Proof, ThmTitle } from '../components/Theorem'
 import { Overlay, OverlaySteps } from '../components/Overlay'
 import { Center, Cols, Col, Byline, Note, Code } from '../components/layout'
+
+/**
+ * スライド 1 枚(theme/base.css の .deck .slide)。h・v(スライドの並び。vite/remark-beamer が付ける)は
+ * reveal が DOM の入れ子(<Stack>)から自分で数えるので使わない
+ */
+function Slide({ h: _h, v: _v, ...props }: ComponentProps<typeof RevealSlide> & { h?: number | string; v?: number | string }) {
+  return <RevealSlide className="slide" {...props} />
+}
 
 /**
  * 段階表示。reveal の既定は <span> だが、スライドでは段落や定理を囲む使い方が主なので

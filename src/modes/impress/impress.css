@@ -1,0 +1,42 @@
+/* impress モード(ImpressApp.tsx)の見た目。本文の見た目は theme/ の .deck の規則がそのまま効く */
+
+/* スライドの外は面の色にして、白いスライドの境目を見せる(縮小して並びを見渡したとき) */
+body.impress-enabled {
+  background: var(--color-surface);
+}
+/* impress は #impress の子(.impress-slides)を自分の canvas に移す。3D の配置を潰さないよう、立体のまま渡す */
+#impress .impress-slides {
+  transform-style: preserve-3d;
+}
+/* スライド 1 枚は最小サイズ(deck/slide-metrics.ts。原稿が当てにしてよい大きさ)の固定の大きさ */
+#impress .slide {
+  width: var(--impress-slide-width);
+  height: var(--impress-slide-height);
+  overflow: hidden;
+  background: var(--color-canvas);
+}
+/* 今のスライド以外は薄く。全体を見渡す step(id="overview"。impress が body に impress-on-overview を付ける)では全部濃く */
+.impress-enabled:not(.impress-on-overview) #impress .step:not(.active) {
+  opacity: 0.3;
+}
+.impress-enabled #impress .step {
+  transition: opacity 1s;
+}
+
+/* 段階表示(components.tsx の Overlay)。非表示の間も場所は残す(\uncover)。\only は場所も取らない */
+#impress .overlay {
+  transition:
+    opacity 0.2s ease,
+    visibility 0.2s ease;
+}
+#impress .overlay.overlay-hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+#impress .overlay.only.overlay-hidden {
+  display: none;
+}
+/* 段を進める印(空の substep) */
+#impress .overlay-step {
+  display: none;
+}

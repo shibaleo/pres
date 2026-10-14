@@ -1,11 +1,10 @@
 import React from 'react'
 import { createRoot } from 'react-dom/client'
 import App, { type DeckSource } from './App'
+import ImpressApp from './modes/impress/ImpressApp'
 
-// reveal.js core + theme, all bundled locally (no CDN).
-// theme/index.css は最後に読み込む(reveal white テーマを上書きするため)。
+// reveal.js の本体の CSS(スライドの配置と遷移・UI)。本文の見た目は theme/ が持ち、reveal のテーマは使わない
 import 'reveal.js/reveal.css'
-import 'reveal.js/theme/white.css'
 import './theme/index.css'
 
 /**
@@ -19,11 +18,13 @@ export function startDeck(deck: DeckSource): (next: DeckSource) => void {
   const preset = getComputedStyle(document.documentElement).getPropertyValue('--deck-preset').trim()
   if (preset) document.documentElement.dataset.preset = preset
 
+  // モード(スライドを動かすライブラリ)。既定は reveal。?mode=impress で impress.js(試作。選び方は仮)
+  const Mode = new URLSearchParams(location.search).get('mode') === 'impress' ? ImpressApp : App
   const root = createRoot(document.getElementById('root')!)
   const render = (d: DeckSource) =>
     root.render(
       <React.StrictMode>
-        <App {...d} />
+        <Mode {...d} />
       </React.StrictMode>,
     )
   render(deck)

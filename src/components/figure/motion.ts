@@ -15,7 +15,12 @@ export function useOnPresentSlide(ref: RefObject<Element | null>): boolean {
   const deck = useReveal()
   const [present, setPresent] = useState(false)
   useEffect(() => {
-    if (!deck) return
+    if (!deck) {
+      // impress モード(modes/impress): 今の step に入ったときに知らせる
+      const onEnter = (e: Event) => setPresent(!!ref.current && (e.target as Element).contains(ref.current))
+      document.addEventListener('impress:stepenter', onEnter)
+      return () => document.removeEventListener('impress:stepenter', onEnter)
+    }
     const update = () => {
       const slide = deck.getCurrentSlide() as Element | undefined
       setPresent(!!(slide && ref.current && slide.contains(ref.current)))
