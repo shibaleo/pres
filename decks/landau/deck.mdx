@@ -2,7 +2,14 @@
   Landau 減衰の線形計算。C. Villani『Birth of a Theorem』第 4 章の草稿(2008 年 4 月 19 日付)の導出を
   スライドにしたもの(notes/birth.final.md の 360〜426 行)。
   原文の誤記と思われる 2 箇所(Duhamel の公式の \hat W'(k) と末尾の dv)は、直後の式に合わせて直した。
+  定理型の環境は \newtheorem で日本語の見出しにし、デッキ全体の通し番号を共有する(付録の見本も同じ)。
 */}
+
+\newtheorem{theorem}{定理}
+\newtheorem{lemma}[theorem]{補題}
+\newtheorem{proposition}[theorem]{命題}
+\newtheorem{corollary}[theorem]{系}
+\newtheorem{definition}[theorem]{定義}
 
 # Landau 減衰の線形計算
 

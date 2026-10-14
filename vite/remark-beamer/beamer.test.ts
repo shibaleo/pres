@@ -97,6 +97,63 @@ y
     expect(lineOf(e)).toBe(3)
   })
 
+  it('\\newtheorem: 見出しの語、番号の共有、節ごとの番号、番号なし(amsthm と同じ)', async () => {
+    const src = [
+      '\\newtheorem{theorem}{定理}[section]',
+      '\\newtheorem{definition}[theorem]{定義}',
+      '\\newtheorem{example}{例}',
+      '\\newtheorem*{remark}{注意}',
+      '',
+      '## 1 節',
+      '',
+      '\\begin{definition}\\label{def:a}\nd\n\\end{definition}',
+      '',
+      '\\begin{theorem}\nt\n\\end{theorem}',
+      '',
+      '\\begin{example}\ne\n\\end{example}',
+      '',
+      '--',
+      '',
+      '## 1 節の続き(縦のスライドは同じ節)',
+      '',
+      '<Theorem>j</Theorem>',
+      '',
+      '---',
+      '',
+      '## 2 節',
+      '',
+      '\\begin{theorem}\nu\n\\end{theorem}',
+      '',
+      '\\begin{remark}\nr\n\\end{remark}',
+      '',
+      '\\begin{example}\nf\n\\end{example}',
+      '',
+      '定義 \\ref{def:a}',
+    ].join('\n')
+    const { tree } = await run(src)
+    // 定理と定義は節ごとに 1 から(定理 1.1, 定義 1.1 ではなく共有して 1.1, 1.2, 1.3)、例は通し番号、注意は番号なし
+    expect(jsx(tree, 'Definition').map((n) => [attr(n, 'heading'), attr(n, 'n')])).toEqual([['定義', '1.1']])
+    expect(jsx(tree, 'Theorem').map((n) => [attr(n, 'heading'), attr(n, 'n')])).toEqual([
+      ['定理', '1.2'],
+      ['例', '1'],
+      ['定理', '1.3'], // JSX で直接書いたものにも見出しと番号
+      ['定理', '2.1'],
+      ['注意', ''],
+      ['例', '2'],
+    ])
+    expect(textOf(tree)).toContain('定義 1.1')
+    // 宣言の行は出力に残らない
+    expect(textOf(tree)).not.toContain('newtheorem')
+  })
+
+  it('\\newtheorem の誤り: 二重の宣言、使った後の宣言、無い共有先、使えない区切り', async () => {
+    expect((await fails('\\newtheorem{a}{A}\n\\newtheorem{a}{A}')).message).toContain('2 回宣言')
+    expect((await fails('\\begin{theorem}\nx\n\\end{theorem}\n\n\\newtheorem{theorem}{定理}')).message).toContain('使う前に')
+    expect((await fails('\\newtheorem{a}[nope]{A}')).message).toContain('[nope] がありません')
+    expect((await fails('\\newtheorem{a}{A}[chapter]')).message).toContain('section か subsection')
+    expect((await fails('\\newtheorem*{a}{A}[section]')).message).toContain('番号の無い環境')
+  })
+
   it('対応しない \\end・未対応の環境・環境の外の \\label はエラー', async () => {
     expect((await fails('\\begin{lemma}\nx\n\\end{theorem}\n\\end{lemma}')).message).toContain('\\end{theorem}')
     expect((await fails('\\begin{itemize}\n\\end{itemize}')).message).toContain('未対応の環境')

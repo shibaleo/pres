@@ -206,9 +206,24 @@ $f$ が凸なら …
 \end{proof}
 ```
 
-- 環境: `theorem` `lemma` `proposition` `corollary` `definition`（1 本の通し番号）、`proof`（番号なし・末尾に ∎）
+- 環境: `theorem` `lemma` `proposition` `corollary` `definition`（既定では 1 本の通し番号・見出しは英語）、`proof`（番号なし・末尾に ∎）
 - `[…]` は括弧書きの名前（数式も書ける。`proof` では見出し語の置き換え）。`\begin` / `\end` は行単独で書きます。
-- JSX でも書けます: `<Theorem title="Jensen" id="thm:jensen">…</Theorem>`。見出し語を変えるときは `heading="定理"`。
+- JSX でも書けます: `<Theorem heading="定理" title="Jensen" id="thm:jensen">…</Theorem>`（`heading` は見出しの語、`title` は括弧書きの名前）。
+
+見出しの語と番号の付け方は、amsthm と同じ `\newtheorem` で決めます（原稿の先頭など、その環境を使う前に行単独で書く）。
+
+```latex
+\newtheorem{theorem}{定理}[section]      % 節ごとの番号(定理 2.1)。subsection なら 2.1.1
+\newtheorem{definition}[theorem]{定義}   % theorem と番号を共有する
+\newtheorem{example}{例}                 % 新しい環境(その環境だけの通し番号)
+\newtheorem*{remark}{注意}               % 番号なし
+```
+
+- 節はスライドの題の番号（横のスライドが節、縦のスライドの 2 枚目以降が小節）。
+- 宣言しない環境は既定のまま（`\newtheorem{theorem}{Theorem}`、`\newtheorem{lemma}[theorem]{Lemma}` …… と宣言したのと同じ）。
+  既定の環境は宣言し直せます。JSX で書いた `<Theorem>` などにも宣言の見出しと番号が付きます（`heading` を書けばそちら）。
+- 二重の宣言、使った後の宣言、無い共有先、使えない区切り（section / subsection 以外）はエラー。
+- 見本: `decks/legendre/`（節ごと。元の資料と同じ「定義 2.1」）、`decks/landau/`（通し番号。日本語の見出し）。
 
 ### 数式と相互参照
 | 書き方 | 意味 |

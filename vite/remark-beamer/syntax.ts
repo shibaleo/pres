@@ -7,7 +7,7 @@
  *
  * 構文:
  *   flow  `\begin{equation|align|gather|multline}` … `\end{…}`  → 別行立て数式(MathJax に渡す)
- *   flow  `\begin{name}<spec>[opt]\label{…}` / `\end{name}` / `\pause` / `\input{file}`(行単独)
+ *   flow  `\begin{name}<spec>[opt]\label{…}` / `\end{name}` / `\pause` / `\input{file}` / `\newtheorem{…}{…}`(行単独)
  *   text  `\name<spec>[opt]{body}`(\cite \ref \eqref \label \only \uncover … 未知の命令もエラー報告のため拾う)
  */
 import { asciiAlpha, markdownLineEnding } from 'micromark-util-character'
@@ -61,10 +61,11 @@ function lineConstruct(name: 'latexLine', accept: (line: string) => boolean): Co
 }
 
 const ENV_LINE_RE =
-  /^\\begin\{([A-Za-z]+\*?)\}(?:<[^>]*>)?(?:\[[^\]]*\])?\s*(?:\\label\{[^}]*\})?$|^\\end\{([A-Za-z]+\*?)\}$|^\\pause$|^\\(?:input|import|inputfrom|subimport|subinputfrom)\*?(?:\{[^}]*\}){1,2}$/
+  /^\\begin\{([A-Za-z]+\*?)\}(?:<[^>]*>)?(?:\[[^\]]*\])?\s*(?:\\label\{[^}]*\})?$|^\\end\{([A-Za-z]+\*?)\}$|^\\pause$|^\\(?:input|import|inputfrom|subimport|subinputfrom)\*?(?:\{[^}]*\}){1,2}$|^\\newtheorem\*?\{[^}]*\}(?:\[[^\]]*\])?\{[^}]*\}(?:\[[^\]]*\])?$/
 /**
  * `\begin{theorem}[…]` / `\end{theorem}` / `\pause` / ファイルの取り込み(`\input{…}`、import パッケージの
- * `\import{…}{…}` `\subimport{…}{…}` と別名)。数式環境は別の構文が先に拾う
+ * `\import{…}{…}` `\subimport{…}{…}` と別名)/ 定理型の環境の宣言(amsthm の `\newtheorem`)。
+ * 数式環境は別の構文が先に拾う
  */
 const latexLine = lineConstruct('latexLine', (line) => {
   const m = line.match(ENV_LINE_RE)

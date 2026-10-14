@@ -115,10 +115,26 @@ describe.each(decks)('$name', ({ name, mod }) => {
   })
 
   describe('定理環境', () => {
-    it('定理・定義などの番号はデッキ全体の通し番号(1 から順に)', () => {
-      const nums = [...root.querySelectorAll('.thm > .thm-head')].map((e) => Number(e.textContent!.match(/^\S+ (\d+)/)?.[1]))
-      seen.theorem += nums.length
-      expect(nums).toEqual(nums.map((_, i) => i + 1))
+    it('定理・定義などの「見出し 番号」は重ならず、節ごとの番号(2.1 など)は、そのスライドの節の番号から始まる', () => {
+      // 番号の並びの詳しい規則(共有・節ごと・番号なし)は vite/remark-beamer/beamer.test.ts で確かめる
+      const seenHeads = new Set<string>()
+      let section = ''
+      for (const l of leaves) {
+        const num = titleHeading(l)?.querySelector('.secnum')?.textContent?.trim()
+        if (num) section = num.replace(/\.$/, '') // 「4.」「4.1.」→ 4 / 4.1
+        for (const head of l.el.querySelectorAll('.thm > .thm-head')) {
+          seen.theorem++
+          const m = head.textContent!.match(/^(\S+) (\d+(?:\.\d+)*)/)
+          if (!m) continue // 番号なし(\newtheorem*)
+          const key = `${m[1]} ${m[2]}`
+          expect(seenHeads.has(key), `${where(l)}: ${key} が重複`).toBe(false)
+          seenHeads.add(key)
+          if (m[2].includes('.')) {
+            const sec = section.split('.')[0]
+            expect(m[2].startsWith(`${sec}.`), `${where(l)}: ${key} の節が ${section} と違う`).toBe(true)
+          }
+        }
+      }
     })
 
     it('見出しと本文の 2 段で描かれる', () => {

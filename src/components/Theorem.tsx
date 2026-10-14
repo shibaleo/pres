@@ -1,13 +1,14 @@
 import { Children, isValidElement, type ReactNode } from 'react'
 
 /**
- * 定理環境。Theorem / Lemma / Proposition / Corollary / Definition は
- * 1 本の通し番号(数学書の慣習「定義 1, 定理 2, 補題 3 …」)。
- * 番号は原稿の変換時にデッキ全体の出現順で振られて n に入る(vite/remark-beamer/transform.ts)。
+ * 定理環境。番号は原稿の変換時に振られて n に入る(vite/remark-beamer/transform.ts)。
+ * 既定では Theorem / Lemma / Proposition / Corollary / Definition が 1 本の通し番号を共有し
+ * (数学書の慣習「定義 1, 定理 2, 補題 3 …」)、見出しの語は英語。原稿の \newtheorem(amsthm と同じ)で、
+ * 見出しの語・番号の共有・節ごとの番号(「定理 2.1」)・番号なしを決められる。
  *
  * 原稿では LaTeX 環境でも JSX でも書ける:
  *   \begin{theorem}[Jensen]\label{thm:j} … \end{theorem}
- *   <Theorem title="Jensen" id="thm:j"> … </Theorem>
+ *   <Theorem heading="定理" title="Jensen" id="thm:j"> … </Theorem>
  */
 
 /** \begin{theorem}[名前] の名前(数式などを含められる)。Theorem が見出しに取り込む */
@@ -18,9 +19,9 @@ export function ThmTitle({ children }: { children?: ReactNode }) {
 type EnvProps = {
   /** 括弧書きの名前(JSX で書くとき。LaTeX 環境の [名前] は <ThmTitle> として渡る) */
   title?: ReactNode
-  /** 見出し語の上書き(日本語にしたいときなど) */
+  /** 見出しの語(「定理」「Definition」など)。省くと \newtheorem の見出し、それも無ければ英語の既定 */
   heading?: string
-  /** 通し番号(変換時に付く) */
+  /** 番号(変換時に付く。「3」や節ごとの「2.1」。空文字なら番号なし = \newtheorem*) */
   n?: string
   /** \label と同じ参照用の key(JSX で書くとき) */
   id?: string
@@ -36,7 +37,8 @@ function env(defaultHeading: string, variant: 'thm' | 'def') {
     return (
       <div className={`thm thm-${variant}`}>
         <div className="thm-head">
-          {heading} {n ?? '?'}
+          {heading}
+          {n !== '' && <> {n ?? '?'}</>}
           {name && <> ({name})</>}
         </div>
         <div className="thm-body">{body}</div>

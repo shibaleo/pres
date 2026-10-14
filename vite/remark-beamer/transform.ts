@@ -35,20 +35,29 @@ export type BeamerOptions = {
   strict?: boolean
 }
 
-/** 定理型の環境(1 本の通し番号を共有する) */
-const THEOREM_ENVS: Record<string, string> = {
-  theorem: 'Theorem',
-  lemma: 'Lemma',
-  proposition: 'Proposition',
-  corollary: 'Corollary',
-  definition: 'Definition',
+/**
+ * 定理型の環境。tag は変換先の部品、heading は見出しの語(無ければ部品の既定の英語)、counter は番号を共有する
+ * 環境の名前、within は番号を節ごとにするか(\newtheorem の末尾の [section] / [subsection])、numbered は番号の有無
+ * (\newtheorem* なら無し)
+ */
+type TheoremEnv = { tag: string; heading?: string; counter: string; within?: 'section' | 'subsection'; numbered: boolean }
+/**
+ * 既定の定理型の環境。amsthm で \newtheorem{theorem}{Theorem}、\newtheorem{lemma}[theorem]{Lemma} …… と
+ * 宣言したのと同じ(5 つの環境が 1 本の通し番号を共有する)。原稿の \newtheorem で宣言した環境はこれより優先する
+ */
+const DEFAULT_THEOREMS: Record<string, TheoremEnv> = {
+  theorem: { tag: 'Theorem', counter: 'theorem', numbered: true },
+  lemma: { tag: 'Lemma', counter: 'theorem', numbered: true },
+  proposition: { tag: 'Proposition', counter: 'theorem', numbered: true },
+  corollary: { tag: 'Corollary', counter: 'theorem', numbered: true },
+  definition: { tag: 'Definition', counter: 'theorem', numbered: true },
 }
-const ENV_TAGS: Record<string, string> = { ...THEOREM_ENVS, proof: 'Proof' }
-const THEOREM_TAGS = new Set(Object.values(THEOREM_ENVS))
+/** JSX で直接書いた部品(<Theorem> など)の環境の名前 */
+const TAG_ENV: Record<string, string> = Object.fromEntries(Object.entries(DEFAULT_THEOREMS).map(([env, t]) => [t.tag, env]))
 const OVERLAY_COMMANDS = new Set(['only', 'uncover', 'visible', 'onslide'])
 
 type Jsx = MdxJsxFlowElement | MdxJsxTextElement
-type BeamerData = { pause?: boolean; spec?: string; label?: string }
+type BeamerData = { pause?: boolean; spec?: string; label?: string; env?: string }
 type AnyNode = RootContent | PhrasingContent | Root
 
 // ---------- 小道具 ----------
@@ -140,9 +149,13 @@ type Line =
   | { kind: 'begin'; name: string; spec?: string; opt?: string; label?: string }
   | { kind: 'end'; name: string }
   | { kind: 'pause' }
+  | { kind: 'newtheorem'; star: boolean; name: string; shared?: string; heading: string; within?: string }
 function parseLine(raw: string): Line {
   const s = raw.trim()
   if (s === '\\pause') return { kind: 'pause' }
+  // amsthm: \newtheorem{名前}[番号を共有する環境]{見出し} / \newtheorem{名前}{見出し}[section] / \newtheorem*{名前}{見出し}
+  const nt = s.match(/^\\newtheorem(\*?)\{([^}]*)\}(?:\[([^\]]*)\])?\{([^}]*)\}(?:\[([^\]]*)\])?$/)
+  if (nt) return { kind: 'newtheorem', star: nt[1] === '*', name: nt[2].trim(), shared: nt[3]?.trim(), heading: nt[4].trim(), within: nt[5]?.trim() }
   const end = s.match(/^\\end\{([A-Za-z]+\*?)\}$/)
   if (end) return { kind: 'end', name: end[1] }
   const b = s.match(/^\\begin\{([A-Za-z]+\*?)\}(?:<([^>]*)>)?(?:\[([^\]]*)\])?\s*(?:\\label\{([^}]*)\})?$/)!
@@ -170,6 +183,10 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
     // 文献ファイルは変換のたびに読む(開発中に .bib を書き換えても、読み直した原稿に反映されるように)
     const bibliography = typeof options.bibliography === 'function' ? options.bibliography(file.path) : options.bibliography
     const bibKeys = bibliography ? readBibKeys(bibliography) : null
+    // 定理型の環境(既定 + 原稿の \newtheorem)。宣言した環境と、使った環境(宣言より前の使用を誤りにするため)
+    const theorems: Record<string, TheoremEnv> = { ...DEFAULT_THEOREMS }
+    const declared = new Set<string>()
+    const used = new Set<string>()
     // 文書ごとに決める指定で、この文書には文献ファイルが無い(\cite を書くと文献を引けない)
     const noBibliography = typeof options.bibliography === 'function' && !bibliography
     // 診断。\input で取り込んだファイルのノードは「ファイル:行」をメッセージに含め、
@@ -285,14 +302,19 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
         const line = parseLine((child as LatexLine).value)
         if (line.kind === 'pause') {
           stack.push({ kind: 'pause', node: inherit(overlayFlow({ pause: true }, [], child.position), child), items: [] })
+        } else if (line.kind === 'newtheorem') {
+          declareTheorem(line, child)
         } else if (line.kind === 'begin') {
-          const tag = ENV_TAGS[line.name]
+          const env = theorems[line.name]
+          const tag = env?.tag ?? (line.name === 'proof' ? 'Proof' : undefined)
           if (!tag) {
-            error(`未対応の環境 \\begin{${line.name}} です(使えるのは ${Object.keys(ENV_TAGS).join(', ')} と数式環境)`, child)
+            error(`未対応の環境 \\begin{${line.name}} です(使えるのは ${[...Object.keys(theorems), 'proof'].join(', ')} と数式環境。定理型の環境は \\newtheorem で足せる)`, child)
             continue
           }
-          const el = jsxFlow(tag, tag === 'Proof' ? { heading: line.opt } : {}, [], child.position)
-          el.data = { beamer: { spec: line.spec, label: line.label } } as object
+          used.add(line.name)
+          // 見出しの語: 証明は [ ] の中身(LaTeX の \begin{proof}[…] と同じ)、定理型は \newtheorem の見出し
+          const el = jsxFlow(tag, tag === 'Proof' ? { heading: line.opt } : { heading: env?.heading }, [], child.position)
+          el.data = { beamer: { spec: line.spec, label: line.label, env: line.name } } as object
           inherit(el, child)
           const head = line.opt && tag !== 'Proof' ? [titleElement(line.opt, child.position)] : []
           stack.push({ kind: 'env', node: el, name: line.name, items: [], head })
@@ -318,6 +340,40 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
       return stack[0].items
     }
 
+    /**
+     * 定理型の環境の宣言(amsthm の \newtheorem と同じ)。
+     *   \newtheorem{名前}{見出し}            その環境だけの通し番号
+     *   \newtheorem{名前}[共有する環境]{見出し}  共有する環境と同じ番号の並び
+     *   \newtheorem{名前}{見出し}[section]    節ごとの番号(節.番号。節はスライドの題の番号。subsection なら 節.小節.番号)
+     *   \newtheorem*{名前}{見出し}           番号なし
+     * LaTeX と同じく、宣言はその環境を使う前に書く。既定の環境(theorem など)は宣言し直せる
+     */
+    function declareTheorem(line: Extract<Line, { kind: 'newtheorem' }>, node: RootContent) {
+      const { name, shared, heading, within, star } = line
+      const where = `\\newtheorem${star ? '*' : ''}{${name}}`
+      if (!/^[A-Za-z]+$/.test(name)) return error(`${where} の環境の名前は英字で書いてください`, node)
+      if (name === 'proof') return error(`${where}: proof は証明の環境なので宣言し直せません`, node)
+      if (declared.has(name)) return error(`${where} が 2 回宣言されています`, node)
+      if (used.has(name)) return error(`${where} は環境を使う前に書いてください(LaTeX と同じく、宣言より前の \\begin{${name}} は使えません)`, node)
+      if (star && (shared || within)) return error(`${where}: 番号の無い環境(*)には [ ] を付けられません`, node)
+      if (shared && within) return error(`${where}: 番号を共有する環境 [${shared}] と節ごとの番号 [${within}] は同時に指定できません(amsthm と同じ)`, node)
+      if (within && within !== 'section' && within !== 'subsection') {
+        return error(`${where}: 番号を区切る単位は section か subsection です([${within}] は使えません)`, node)
+      }
+      const base = shared ? theorems[shared] : undefined
+      if (shared && !base) return error(`${where}: 番号を共有する環境 [${shared}] がありません(先に宣言してください)`, node)
+      declared.add(name)
+      theorems[name] = {
+        // 既定の環境は部品(見た目の区別: 定義は thm-def)を保ち、新しい環境は Theorem で描く
+        tag: DEFAULT_THEOREMS[name]?.tag ?? 'Theorem',
+        heading,
+        counter: base ? base.counter : name,
+        // 節ごとかどうかは番号の持ち主(counter の環境)が決める。共有する環境はそれに従う
+        within: within as TheoremEnv['within'],
+        numbered: !star,
+      }
+    }
+
     /** \begin{theorem}[名前] の名前。数式などを含められるよう Markdown として解析する */
     function titleElement(title: string, position?: Position): MdxJsxFlowElement {
       const parsed = processor.parse(title) as Root
@@ -339,17 +395,20 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
     // その小節(4.1.)。LaTeX の \section / \subsection と同じく番号を見出しの文字に含める
     // (ビルド時に決まるので、ブラウザで全スライドを描いて数える必要がない。メニューも同じ番号を出せる)
     let sec = 0
-    built.forEach((stack) => {
+    /** 各スライドの節と小節の番号(定理型の環境の節ごとの番号に使う。題の無いスライドは直前の番号のまま) */
+    const sectionOf = built.map((stack) => {
       let sub = 0
-      stack.forEach((nodes, v) => {
+      return stack.map((nodes, v) => {
         const first = nodes.find((n) => n.type !== 'mdxFlowExpression') // 先頭の {/* コメント */} は飛ばす
-        if (first?.type !== 'heading' || first.depth !== 2) return
-        const number = v === 0 ? `${++sec}.` : `${sec}.${++sub}.`
-        first.children.unshift(jsxText('span', { className: 'secnum' }, [text(`${number} `)], first.position))
+        if (first?.type === 'heading' && first.depth === 2) {
+          const number = v === 0 ? `${++sec}.` : `${sec}.${++sub}.`
+          first.children.unshift(jsxText('span', { className: 'secnum' }, [text(`${number} `)], first.position))
+        }
+        return { sec, sub }
       })
     })
 
-    type Label = { kind: 'thm' | 'eq'; n?: number }
+    type Label = { kind: 'thm' | 'eq'; n?: string }
     /** 文献 key の初出順(\cite を文書順に処理しながら記録する) */
     const citeOrder = new Map<string, number>()
     const labels = new Map<string, Label>()
@@ -357,20 +416,40 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
       if (labels.has(key)) warn(`\\label{${key}} が重複しています`, node)
       labels.set(key, value)
     }
-    let thm = 0
+    /** 番号の並び(counter の環境の名前)ごとの、今の区切り(節ごとの番号の節)と番号 */
+    const counters = new Map<string, { scope: string; n: number }>()
+    let place = { sec: 0, sub: 0 }
     const numberWalk = (node: AnyNode, envs: Jsx[]) => {
       let inner = envs
-      if ((node.type === 'mdxJsxFlowElement' || node.type === 'mdxJsxTextElement') && node.name && THEOREM_TAGS.has(node.name)) {
-        thm++
-        setAttr(node, 'n', thm)
+      // 定理型の環境: \begin から作ったもの(環境の名前を持つ)と、JSX で直接書いた <Theorem> など
+      const envName = (node.type === 'mdxJsxFlowElement' || node.type === 'mdxJsxTextElement') && node.name
+        ? (beamer(node)?.env ?? TAG_ENV[node.name])
+        : undefined
+      const env = envName ? theorems[envName] : undefined
+      if (env && (node.type === 'mdxJsxFlowElement' || node.type === 'mdxJsxTextElement')) {
+        // JSX で直接書いたものにも \newtheorem の見出しを当てる(heading 属性を書いていればそちら)
+        if (env.heading && getAttr(node, 'heading') === undefined) setAttr(node, 'heading', env.heading)
+        let n = ''
+        if (env.numbered) {
+          const within = theorems[env.counter]?.within
+          const scope = within === 'section' ? `${place.sec}` : within === 'subsection' ? `${place.sec}.${place.sub}` : ''
+          const c = counters.get(env.counter)
+          const next = c && c.scope === scope ? c.n + 1 : 1
+          counters.set(env.counter, { scope, n: next })
+          n = scope ? `${scope}.${next}` : `${next}`
+        }
+        setAttr(node, 'n', n)
         const label = beamer(node)?.label ?? getAttr(node, 'id')
-        if (label) addLabel(label, { kind: 'thm', n: thm }, node)
+        if (label) {
+          if (n) addLabel(label, { kind: 'thm', n }, node)
+          else warn(`番号の無い環境(${envName})に \\label{${label}} が付いています`, node)
+        }
         inner = [...envs, node]
       }
       if (node.type === 'latexCommand' && parseCommand((node as LatexCommand).value).name === 'label') {
         const key = parseCommand((node as LatexCommand).value).body.trim()
         const env = inner[inner.length - 1]
-        if (env) addLabel(key, { kind: 'thm', n: Number(getAttr(env, 'n')) }, node)
+        if (env) addLabel(key, { kind: 'thm', n: getAttr(env, 'n') }, node)
         else error(`\\label{${key}} が定理環境・数式の外にあります`, node)
       }
       if (node.type === 'math' || node.type === 'inlineMath') {
@@ -383,7 +462,12 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
       }
       if ('children' in node) for (const c of node.children) numberWalk(c as AnyNode, inner)
     }
-    for (const stack of built) for (const nodes of stack) for (const n of nodes) numberWalk(n, [])
+    built.forEach((stack, h) =>
+      stack.forEach((nodes, v) => {
+        place = sectionOf[h][v]
+        for (const n of nodes) numberWalk(n, [])
+      }),
+    )
 
     // (4)(5) 文中の命令と段階表示(スライドごと・文書順)
     const slideElements: RootContent[] = built.map((stack) => {

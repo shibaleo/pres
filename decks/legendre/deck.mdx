@@ -2,7 +2,7 @@
   ルジャンドル部分多様体の母関数(卒業研究の発表、2024 年 2 月 13 日)を MDX で組み直したもの。
   画像と SVG の図の見本: 表紙の曲面・ルジャンドル曲線・波面・関係の図は元の資料の画像(img/。PDF から取り出して縮めたもの)、
   カスプの法線と正規分布の族は操作できる SVG の図(visx)。付録に、ほかの SVG の図の部品を並べる。
-  定理・定義の番号はデッキの通し番号で振られる(元の資料の「定義 1.1」のような節ごとの番号ではない)。
+  定理・定義・例は \newtheorem で日本語の見出しにし、元の資料と同じく節ごとの番号(定義 2.1 など)を共有する。
 */}
 
 import CuspNormal from '@/components/CuspNormal'
@@ -19,6 +19,10 @@ import lift from './img/lift.png'
 import mWavefront from './img/m-wavefront.png'
 import diagram from './img/diagram.png'
 import d3js from './img/d3js.png'
+
+\newtheorem{theorem}{定理}[section]
+\newtheorem{definition}[theorem]{定義}
+\newtheorem{example}[theorem]{例}
 
 # ルジャンドル部分多様体の母関数
 
@@ -144,11 +148,11 @@ $$
 \xi_{q(t)} = (dz - p\,dx)\big|_{q(t)} = 3t^2\,dt - \frac32 t \cdot 2t\,dt = 0.
 $$
 
-\begin{proposition}
+\begin{example}
 可微分関数 $f : \mathbb{R}^n \to \mathbb{R}$ に対し，$(df, f)$ のグラフ
 $G = \left\{\left(x_1, \dots, x_n, \tfrac{\partial f}{\partial x_1}, \dots, \tfrac{\partial f}{\partial x_n}, f(\boldsymbol{x})\right) \;\middle|\; \boldsymbol{x} \in \mathbb{R}^n\right\}$
 は $\mathbb{R}^{2n+1}$ のルジャンドル部分多様体．
-\end{proposition}
+\end{example}
 
 \begin{proof}
 $G$ の上で $\alpha = dz - \sum_{i=1}^n p_i\,dx_i = df - \sum_{i=1}^n \frac{\partial f}{\partial x_i}\,dx_i = 0$．
