@@ -4,6 +4,7 @@ import type { DeckSource } from '../../deck/source'
 import { documentComponents } from '../../components'
 import { announcePresent, deckSlides, markReady, registerGoTo } from '../../deck/mode'
 import { MIN_WIDTH, SLIDE_HEIGHT } from '../../deck/slide-metrics'
+import { PageNumber, watchPageNumbers } from '../page-number'
 import { FlatStack, isShown, overlayClass, slideAttributes, stepsOf, type OverlayProps, type SlideProps } from '../structure'
 import { SPECTACLE_TRANSITIONS } from './transitions'
 import './spectacle.css'
@@ -54,6 +55,7 @@ function Body({ step, attributes, placeholder, children }: { step: number; attri
     <div className="deck spectacle-body">
       <section ref={ref} className="slide" {...attributes}>
         <StepContext.Provider value={step}>{children}</StepContext.Provider>
+        <PageNumber />
       </section>
       {placeholder}
     </div>
@@ -74,9 +76,10 @@ function SpectacleNotes({ children }: { children?: ReactNode }) {
 /** 縦の続きの束は包まない(Spectacle のスライドは一列) */
 const spectacleComponents = { ...documentComponents, Notes: SpectacleNotes, Slide, Stack: FlatStack, Overlay }
 
-/** 「このスライドへ移る」を登録する(Spectacle の DeckContext の中で) */
+/** 「このスライドへ移る」を登録する(Spectacle の DeckContext の中で)。ページ番号もここで書く */
 function RegisterGoTo() {
   const { skipTo } = useContext(DeckContext)
+  useEffect(() => watchPageNumbers(), [])
   useEffect(() => {
     registerGoTo((slide) => {
       const slideIndex = deckSlides().indexOf(slide)

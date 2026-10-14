@@ -1,5 +1,6 @@
 import { documentComponents } from '../../components'
 import { Overlay, StepMarkers } from '../marker-steps'
+import { PageNumber } from '../page-number'
 import { FlatStack, slideAttributes, stepsOf, type SlideProps } from '../structure'
 
 /**
@@ -14,6 +15,7 @@ function Slide(props: SlideProps) {
   return (
     <div className="step slide" data-x={Number(props.h ?? 0) * GAP.x} data-y={Number(props.v ?? 0) * GAP.y} {...slideAttributes(props)}>
       {props.children}
+      <PageNumber />
       <StepMarkers steps={stepsOf(props)} markerClass="substep" />
     </div>
   )

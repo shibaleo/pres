@@ -13,6 +13,7 @@ import type { DeckSource } from '../../deck/source'
 import { documentComponents } from '../../components'
 import { announcePresent, markReady, registerGoTo, watchFitScale } from '../../deck/mode'
 import { Overlay, applyStep } from '../marker-steps'
+import { PageNumber, watchPageNumbers } from '../page-number'
 import { MODE_TRANSITIONS, type SwiperEffect } from '../names'
 import { FlatStack, slideAttributes, stepsOf, type SlideProps } from '../structure'
 import './swiper.css'
@@ -25,6 +26,7 @@ function Slide(props: SlideProps) {
   return (
     <section className="swiper-slide slide" data-steps={stepsOf(props)} {...slideAttributes(props)}>
       {props.children}
+      <PageNumber />
     </section>
   )
 }
@@ -67,6 +69,7 @@ export default function SwiperApp({ Slides, motion }: DeckSource) {
     const el = container.current!
     // 全体の倍率: 最小サイズのスライドがウィンドウに収まる最大(Swiper は倍率をかける前の大きさで組む)
     const stopFit = watchFitScale()
+    const stopPageNumbers = watchPageNumbers()
 
     // URL の &effect= が無ければ、デッキの動きの設定の既定の遷移(Swiper にあるもの)
     const fromMotion = motion?.transition && MODE_TRANSITIONS.swiper.deck.includes(motion.transition) ? motion.transition : undefined
@@ -138,6 +141,7 @@ export default function SwiperApp({ Slides, motion }: DeckSource) {
     return () => {
       document.removeEventListener('keydown', onKey)
       stopFit()
+      stopPageNumbers()
       swiper.destroy(true, false)
     }
   }, [])

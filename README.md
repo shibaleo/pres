@@ -98,6 +98,7 @@ src/                   全デッキ・全モードで共有する土台(用途�
     names.ts           モードの名前と開き方の変わり種(開発サーバーの一覧ページと共有)
     structure.tsx      構造の部品(Slide・Stack・Overlay)の共通の約束と、段の表示の判定
     marker-steps.tsx   段の印(impress・Shower。Swiper も表示の判定に使う)
+    page-number.tsx    ページ番号「i/全体」(reveal 以外。reveal は reveal のもの)
     reveal/            既定のモード: RevealApp・構造の部品・Overlay(fragment)・Menu(スライド一覧)・
                        slide-size(窓と紙の大きさ)・slide-title・reveal.css(ページ番号・矢印・印刷用の表示など)
     impress/ shower/ spectacle/ swiper/  試作のモード
@@ -250,7 +251,7 @@ $f$ が凸なら …
 - `\label` は HTML の `id` になります（スライドの題なら `<section id="…">`、定理なら定理の要素）。リンクを押すと、
   どのモードでもその飛び先を含むスライドへ移ります（`src/deck/links.ts`）。ラベルの名前は LaTeX の慣習どおり
   `sec:`・`thm:`・`eq:` などの接頭辞で分けると、ほかの id と衝突しません。重複は警告です。
-- スライドへのリンクに、ライブラリの形の hash（reveal の `#/4` など）は書きません（スライドを足し引きするとずれる）。
+- スライドへのリンクに、ライブラリの形の hash（reveal の `#/4` など）は書きません（スライドを足し引きするとずれ、ほかのモードでは移れない）。
 - 可換図式は `\begin{CD}…\end{CD}`（`$$` の中）。
 
 ### 段階表示（Beamer の overlay → reveal の fragment）
@@ -296,7 +297,7 @@ $f$ が凸なら …
 | 脚注 | 本文に `<sup>*1)</sup>`、下に `***`（区切り線）と `<small>*1) …</small>` |
 | 再掲・補足 | `<small>（再掲）…</small>` |
 | 要点を中央に | `<Center>` |
-| 別のスライドへのリンク | `[定理環境のスライド](#/5/1)`（reveal のスライド番号。スライドを足すと変わる） |
+| 別のスライドへのリンク | 題に `\label{sec:env}` を付けたスライドへ `[定理環境のスライド](#sec:env)`（どのモードでも移る。上の「数式と相互参照」） |
 | 節番号 | 自動。横のスライドが `4.`、その下の縦のスライドが `4.1.` |
 
 次のものは今の構成では書けません。

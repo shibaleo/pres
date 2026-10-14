@@ -3,6 +3,7 @@ import type { DeckSource } from '../../deck/source'
 import { MIN_WIDTH, SLIDE_HEIGHT } from '../../deck/slide-metrics'
 import { announcePresent, markReady, registerGoTo } from '../../deck/mode'
 import { applyStep, currentStep } from '../marker-steps'
+import { watchPageNumbers } from '../page-number'
 import { impressComponents } from './components'
 import './impress.css'
 
@@ -30,6 +31,7 @@ export default function ImpressApp({ Slides }: DeckSource) {
     }
     const events = ['impress:stepenter', 'impress:substep:enter', 'impress:substep:leave']
     for (const name of events) document.addEventListener(name, onChange)
+    const stopPageNumbers = watchPageNumbers()
 
     // 全体を見渡す step: 全スライドの範囲の中央に置き、範囲が画面に収まる倍率にする
     const slides = [...document.querySelectorAll<HTMLElement>('#impress .step.slide')]
@@ -51,6 +53,7 @@ export default function ImpressApp({ Slides }: DeckSource) {
     })
     return () => {
       for (const name of events) document.removeEventListener(name, onChange)
+      stopPageNumbers()
     }
   }, [])
 

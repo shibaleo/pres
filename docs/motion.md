@@ -34,10 +34,12 @@ reveal 以外は試作で、URL の `?mode=<名前>` で選ぶ（選び方は仮
 | Swiper | `src/modes/swiper/` | `?mode=swiper`（`&effect=cube` などで演出を選ぶ）。下の「Swiper モード」 |
 
 モードとまわりの約束（`src/deck/mode.ts`）: モードに頼むのは、今のスライドの知らせ（`announcePresent`。動く図が受ける）、
-「このスライドへ移る」の登録（`registerGoTo`。開発時の警告の一覧から移る）、準備完了の印（`markReady`。`<html data-deck-ready>`）、
+「このスライドへ移る」の登録（`registerGoTo`。開発時の警告の一覧と、原稿の中のリンク `#名前` から移る。`src/deck/links.ts`）、準備完了の印（`markReady`。`<html data-deck-ready>`）、
 スライドの要素に `.slide` と原稿の位置を付けて `.deck` の中に文書の順で置くこと、の 4 つだけ。これで原稿の警告とはみ出しの検査
 （`src/devtools/`）は全モードで同じに働く。スライドの大きさは CSS 変数 `--deck-slide-width` / `--deck-slide-height`、
-窓に収める倍率は `watchFitScale` の `--deck-scale`。共通の部品は段の印（`src/modes/marker-steps.tsx`。impress と Shower）。
+窓に収める倍率は `watchFitScale` の `--deck-scale`。共通の部品は段の印（`src/modes/marker-steps.tsx`。impress と Shower）と、ページ番号（`src/modes/page-number.tsx`。reveal 以外）。
+ページ番号は reveal の `c/t` と同じく文書の順のスライドで数え、スライドの中の右上（題の帯の上）に置く。impress・Shower・Swiper には
+ページ番号が無く、Spectacle の template は今のスライドの番号を全スライドに配る作りで、一覧と PDF 用の表示ではどのスライドも同じ番号になるので使わない。
 段階表示の見た目（`.overlay-hidden`）は theme/base.css。
 
 ### 段の印（impress・Shower）
@@ -51,9 +53,9 @@ impress の substep と Shower の `.next` は、要素を文書順に 1 つず�
 - スライドは impress の step。最小サイズ（933×700）の固定の大きさで、横の並び（h）は右へ、縦の続き（v）は下へ置く。
   最後に全体を見渡す step（`#overview`）を足す
 - 段階表示は段の印（substep）
-- まだ無いもの: 一覧・ページ番号・はみ出しの検査・開発時の警告の表示、
+- まだ無いもの: 一覧、
   PDF 出力（reveal モードで作る）、発表者ビュー（impress の impressConsole は CSS を URL で読むので単一 HTML では使えない）、
-  原稿の中のリンク `#/4`（impress の hash は step の id）、原稿を直したときの描き直し（impress は初期化のときの step しか知らない）
+  原稿を直したときの描き直し（impress は初期化のときの step しか知らない）
 
 ### Shower モード（試作）
 
@@ -63,7 +65,7 @@ impress の substep と Shower の `.next` は、要素を文書順に 1 つず�
   全画面に入るキーは Shift+F5（Mac は Cmd+Enter）。見た目のテーマ（ribbon など）は使わず、配置だけを `shower.css` で決める
 - 段階表示は段の印（`.next`）。一覧ではどのスライドも最後の段の状態
 - 読み上げ用の領域（Shower が置く `section.region`。今のスライドの複製）は、見た目だけ隠す
-- まだ無いもの: ページ番号、PDF 出力、発表者ビュー、原稿の中のリンク `#/4`。
+- まだ無いもの: PDF 出力、発表者ビュー。
   Shower は URL を `?full#番号` に書き換えるので `?mode=shower` は消える（モードはタブの中で覚えているので、読み直しても Shower のまま）
 
 ### Spectacle モード（試作）
@@ -76,7 +78,7 @@ impress の substep と Shower の `.next` は、要素を文書順に 1 つず�
   PDF 用の表示（`?exportMode=true`）。キーは矢印（Space は使わない）
 - 注意: テーマの `backdropStyle` は Spectacle の既定（ウィンドウいっぱいに固定）を丸ごと置き換えるので、既定の値も書く
   （無いと拡大と中央寄せが効かない）。Slide の `padding` はテーマの間隔の段階の番号として読まれるので、値（`"0px"`）で渡す
-- まだ無いもの: ページ番号、原稿の中のリンク `#/4`。縦の続き（`--`）は横一列に並べる
+- まだ無いもの: 縦の続き（`--`）は横一列に並べる
 
 ### Swiper モード（試作）
 
@@ -90,7 +92,7 @@ impress の substep と Shower の `.next` は、要素を文書順に 1 つず�
   段の数は `Slide` が要素に付ける `data-steps` から読み、表示は段の印のモードと同じ `applyStep`
 - スワイプ・ドラッグはスライドを移る（段は飛ばす）。図（`.figure`）・入力・ボタン・リンクの上ではスワイプにしない
 - 全体は最小サイズ（933×700）の容器を、ウィンドウに収まる倍率で中央に置く（Swiper は倍率をかける前の大きさで組む）
-- まだ無いもの: ページ番号、一覧、PDF 出力、発表者ビュー、原稿の中のリンク `#/4`、原稿を直したときの描き直し（React が class を
+- まだ無いもの: 一覧、PDF 出力、発表者ビュー、原稿を直したときの描き直し（React が class を
   描き直すと Swiper の付けた class が消える）
 
 ### デッキの動きの設定（motion.ts）

@@ -339,13 +339,18 @@ body {
 }
 
 /* 文献(rehype-citation が出力する CSL の標準マークアップ) */
+/* 番号の列はいちばん長い番号の幅にし(LaTeX の thebibliography と同じく右揃え)、本文との間は半角ほど(LaTeX の \labelsep 0.5em) */
+.deck .csl-bib-body {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 0.5ic;
+}
 .deck .csl-entry {
-  display: flex;
-  gap: var(--space);
+  display: contents;
 }
 .deck .csl-left-margin {
-  flex: none;
-  min-width: 4ch; /* 「[10]」の幅 */
+  justify-self: end;
+  white-space: nowrap;
 }
 
 /* 数式(rehype-mathjax の SVG 出力)。\eqref のリンク色をアクセントに合わせる(MathJax の既定は青) */
@@ -538,6 +543,27 @@ body {
 }
 .deck .overlay-step {
   display: none;
+}
+
+/* reveal 以外のモードのページ番号「i/全体」(modes/page-number.tsx。reveal は reveal のもの)。
+   スライドの右上に地を付けずに置き、題の帯(高さ 3 半行)の縦の中央に、右端からの距離を題の字下げと揃える
+   (reveal の PDF のページ番号と同じ置き方)。帯のあるスライドでは地の色、無いスライドではアクセント色。
+   スライドの要素は各モードで位置の基準になっている(impress の step・Shower・Spectacle・Swiper のスライド) */
+.deck .slide > .page-number {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  height: calc(3 * var(--space));
+  padding: 0 var(--slide-pad);
+  font: calc(var(--text-base) / var(--type-ratio) / var(--type-ratio)) / 1 var(--font-ui);
+  color: var(--color-brand);
+  pointer-events: none;
+}
+.deck .slide:has(> h2:first-child) > .page-number {
+  color: var(--color-canvas);
 }
 
 /* ========== 5. ページの器 ========== */
