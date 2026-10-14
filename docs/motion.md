@@ -80,7 +80,8 @@ impress の substep と Shower の `.next` は、要素を文書順に 1 つず�
   PDF 用の表示（`?exportMode=true`）。キーは矢印（Space は使わない）
 - 注意: テーマの `backdropStyle` は Spectacle の既定（ウィンドウいっぱいに固定）を丸ごと置き換えるので、既定の値も書く
   （無いと拡大と中央寄せが効かない）。Slide の `padding` はテーマの間隔の段階の番号として読まれるので、値（`"0px"`）で渡す
-- まだ無いもの: 縦の続き（`--`）は横一列に並べる
+- 縦の続き（`--`）: Spectacle のスライドは一列なので一列に並べ、既定の遷移（slide、または指定なし）では reveal と同じく、続きへは下から、
+  新しい節へは右から入る（`structuralSlide`）。出ていくスライドは次のスライドに合わせて上か左へ出る（続きの束 `Stack` が「次は続きか」を配る）
 
 ### Swiper モード（試作）
 
@@ -113,7 +114,8 @@ impress の substep と Shower の `.next` は、要素を文書順に 1 つず�
 - 遷移の語彙は `src/modes/names.ts` の `TRANSITIONS`（none・slide・fade・zoom・cube・cards・flip）、モードごとに使えるものは
   `MODE_TRANSITIONS`。Spectacle はすべて（`src/modes/spectacle/transitions.ts`。from・enter・leave の 3 つの形を transform で書く）、
   reveal は reveal の名前と同じもの（data-transition）、Swiper はデッキの既定だけ（演出を作るときに 1 つだけ決める作り）
-- Spectacle では、そのスライドの遷移で入り、出るときもそのスライドの遷移で出る（前のスライドの leave と、次のスライドの from・enter が同時に動く）
+- Spectacle では、そのスライドの遷移で入り、出るときもそのスライドの遷移で出る（前のスライドの leave と、次のスライドの from・enter が同時に動く）。
+  slide だけは向きを文書の構造に合わせる（上の「Spectacle モード」）
 - 見本: `decks/legendre/motion.ts`（Spectacle。新しい節は cube、節の中の続きは cards、主定理 `sec:main` は zoom。impress では螺旋）
 
 ### 次にやること

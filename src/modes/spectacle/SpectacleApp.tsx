@@ -1,12 +1,13 @@
-import { createContext, useContext, useEffect, useMemo, useRef, type ReactNode } from 'react'
+import { Children, createContext, isValidElement, useContext, useEffect, useMemo, useRef, type ReactNode } from 'react'
 import { Deck, DeckContext, Notes, Slide as SpectacleSlide, SlideContext, useSteps } from 'spectacle'
 import type { DeckSource } from '../../deck/source'
 import { documentComponents } from '../../components'
 import { announcePresent, deckSlides, markReady, registerGoTo } from '../../deck/mode'
 import { useViewSize } from '../../deck/view-size'
 import { PageNumber, watchPageNumbers } from '../page-number'
-import { FlatStack, isShown, overlayClass, slideAttributes, stepsOf, type OverlayProps, type SlideProps } from '../structure'
-import { SPECTACLE_TRANSITIONS } from './transitions'
+import { isShown, overlayClass, slideAttributes, stepsOf, type OverlayProps, type SlideProps } from '../structure'
+import type { TransitionName } from '../names'
+import { SPECTACLE_TRANSITIONS, structuralSlide } from './transitions'
 import './spectacle.css'
 
 /**
@@ -15,21 +16,52 @@ import './spectacle.css'
  */
 const StepContext = createContext(1)
 
+/** デッキの既定の遷移(motion.ts の transition) */
+const DeckTransitionContext = createContext<TransitionName | undefined>(undefined)
+/** 次のスライドが節の中の続き(--)か。続きの束(Stack)が中のスライドに配る(束の外のスライドの次は新しい節) */
+const NextIsContinuationContext = createContext(false)
+
+/**
+ * 縦の続きの束。Spectacle のスライドは一列なので包まずに並べ、中のスライドに「次は続きか」を配る
+ * (最後のスライドの次は新しい節)
+ */
+function Stack({ children }: { children?: ReactNode }) {
+  const slides = Children.toArray(children).filter(isValidElement)
+  return (
+    <>
+      {slides.map((slide, i) => (
+        <NextIsContinuationContext.Provider key={slide.key ?? i} value={i < slides.length - 1}>
+          {slide}
+        </NextIsContinuationContext.Provider>
+      ))}
+    </>
+  )
+}
+
+/**
+ * スライドの遷移: そのスライドの遷移(motion.ts で題で指したもの)か、デッキの既定。slide(と、指定の無いとき)は
+ * 文書の構造に合わせた向きにする(新しい節へは右から、節の中の続きへは下から。structuralSlide)
+ */
+function useSlideTransition(props: SlideProps) {
+  const deckTransition = useContext(DeckTransitionContext)
+  const name = props.transition ?? deckTransition
+  const nextIsContinuation = useContext(NextIsContinuationContext)
+  if (name !== undefined && name !== 'slide') return SPECTACLE_TRANSITIONS[name]
+  return structuralSlide(Number(props.v ?? 0) > 0, nextIsContinuation)
+}
+
 /** スライド 1 枚 = Spectacle の Slide。中身は本文の範囲(.deck)と 1 枚(.slide)で包む */
 function Slide(props: SlideProps) {
+  const transition = useSlideTransition(props)
   const steps = stepsOf(props)
   const body = (step: number, placeholder?: ReactNode) => (
     <Body step={step} attributes={slideAttributes(props)} placeholder={placeholder}>
       {props.children}
     </Body>
   )
-  // padding は Spectacle のテーマの間隔の段階の番号として読まれるので、値で渡す。遷移(motion.ts)はそのスライドの遷移に
+  // padding は Spectacle のテーマの間隔の段階の番号として読まれるので、値で渡す
   return (
-    <SpectacleSlide
-      padding="0px"
-      backgroundColor="var(--color-canvas)"
-      transition={props.transition ? SPECTACLE_TRANSITIONS[props.transition] : undefined}
-    >
+    <SpectacleSlide padding="0px" backgroundColor="var(--color-canvas)" transition={transition}>
       {steps >= 2 ? <SteppedBody steps={steps} body={body} /> : body(1)}
     </SpectacleSlide>
   )
@@ -73,8 +105,7 @@ function SpectacleNotes({ children }: { children?: ReactNode }) {
   return <Notes>{children}</Notes>
 }
 
-/** 縦の続きの束は包まない(Spectacle のスライドは一列) */
-const spectacleComponents = { ...documentComponents, Notes: SpectacleNotes, Slide, Stack: FlatStack, Overlay }
+const spectacleComponents = { ...documentComponents, Notes: SpectacleNotes, Slide, Stack, Overlay }
 
 /** 「このスライドへ移る」を登録する(Spectacle の DeckContext の中で)。ページ番号もここで書く */
 function RegisterGoTo() {
@@ -102,19 +133,20 @@ const themeOf = (width: number, height: number) => ({
 })
 
 /**
- * Spectacle モード: React の部品でスライドを組むライブラリ(spectacle)。切り替えは横に滑る遷移。
+ * Spectacle モード: React の部品でスライドを組むライブラリ(spectacle)。
  * Spectacle の機能はそのまま使える: 一覧(?overviewMode=true)、発表者ビュー(?presenterMode=true)、PDF 用の表示(?exportMode=true)。
- * 縦の続き(--)は横一列に並べる。まわりとの約束は deck/mode.ts。
+ * 縦の続き(--)は一列に並べ、既定の遷移(slide)では下から入る(新しい節へは右から。reveal と同じ見え方)。まわりとの約束は deck/mode.ts。
  */
 export default function SpectacleApp({ Slides, motion }: DeckSource) {
-  // 既定の遷移(デッキの動きの設定 motion.ts)。無ければ Spectacle の既定(横に滑る)
-  const transition = motion?.transition ? SPECTACLE_TRANSITIONS[motion.transition] : undefined
   const { width, height } = useViewSize()
   const theme = useMemo(() => themeOf(width, height), [width, height])
   return (
-    <Deck theme={theme} template={() => null} transition={transition}>
-      <Slides components={spectacleComponents} />
-      <RegisterGoTo />
-    </Deck>
+    // 遷移はスライドごとに決める(既定の遷移 motion.ts の transition は DeckTransitionContext で配る)
+    <DeckTransitionContext.Provider value={motion?.transition}>
+      <Deck theme={theme} template={() => null}>
+        <Slides components={spectacleComponents} />
+        <RegisterGoTo />
+      </Deck>
+    </DeckTransitionContext.Provider>
   )
 }

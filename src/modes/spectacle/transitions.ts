@@ -40,3 +40,16 @@ export const SPECTACLE_TRANSITIONS: Record<TransitionName, SlideTransition> = {
     leave: { transform: `${PERSPECTIVE} rotateY(-180deg)`, opacity: 1, backfaceVisibility: 'hidden' },
   },
 }
+
+/**
+ * slide を、文書の構造に合わせた向きにしたもの(reveal と同じ見え方): 新しい節へは右から、節の中の続き(--)へは下から入る。
+ * Spectacle は出ていくスライドを、出ていく側の遷移(leave)で動かすので、出ていく向きは次のスライドに合わせる
+ * (次が続きなら上へ、次が新しい節なら左へ)。向きが変わっても間が補われるよう、形はどれも translate(横, 縦) で書く
+ */
+export function structuralSlide(continuation: boolean, nextIsContinuation: boolean): SlideTransition {
+  return {
+    from: { transform: continuation ? 'translate(0%, 100%)' : 'translate(100%, 0%)', opacity: 1 },
+    enter: { transform: 'translate(0%, 0%)', opacity: 1 },
+    leave: { transform: nextIsContinuation ? 'translate(0%, -100%)' : 'translate(-100%, 0%)', opacity: 1 },
+  }
+}
