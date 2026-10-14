@@ -277,7 +277,7 @@ $f$ が凸なら …
 ### その他の部品（import なしで使える）
 | 部品 | 用途 |
 |---|---|
-| `<Notes>` | スピーカーノート。`S` キーの発表者ビューにだけ出る |
+| `<Notes>` | スピーカーノート。発表者ビューにだけ出る（reveal は `S` キーか、開発サーバーの一覧ページの「発表者」。Spectacle は一覧ページの「発表者」（`?presenterMode=true`）） |
 | `<Frame color="blue" title="...">` | 色付きフレーム（gray / red / blue / gold / green / purple） |
 | `<Cols>` `<Col>` `<Center>` `<Byline>` `<Note>` `<Code>` | レイアウト |
 

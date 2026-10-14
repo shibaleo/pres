@@ -19,10 +19,14 @@ export function watchPageNumbers(): () => void {
   let frame = 0
   const update = () => {
     frame = 0
+    // 原稿の位置(data-slide-file / data-slide-line)で数える。同じスライドが 2 度描かれていても(Spectacle の発表者ビューは
+    // 今と次の 2 つのデッキを描く)、同じ番号・同じ全体になる
     const slides = deckSlides()
-    slides.forEach((slide, i) => {
+    const keyOf = (slide: HTMLElement) => `${slide.dataset.slideFile ?? ''}:${slide.dataset.slideLine}`
+    const order = [...new Set(slides.map(keyOf))]
+    slides.forEach((slide) => {
       const el = slide.querySelector(':scope > .page-number')
-      const text = `${i + 1}/${slides.length}`
+      const text = `${order.indexOf(keyOf(slide)) + 1}/${order.length}`
       if (el && el.textContent !== text) el.textContent = text // 同じなら書かない(書くと監視がまた呼ばれる)
     })
   }

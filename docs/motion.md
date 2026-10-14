@@ -27,7 +27,7 @@ reveal 以外は試作で、URL の `?mode=<名前>` で選ぶ（選び方は仮
 
 | モード | 場所 | 状態 |
 |---|---|---|
-| reveal（既定） | `src/modes/reveal/` | 完成。一覧・ページ番号・はみ出しの検査・PDF・発表者ビュー（reveal のノートのプラグイン） |
+| reveal（既定） | `src/modes/reveal/` | 完成。一覧・ページ番号・はみ出しの検査・PDF・発表者ビュー（reveal のノートのプラグイン。S キー、または `?presenter` で開くと準備ができたときに開く。別窓を止められたら押して開くボタンを出す） |
 | impress | `src/modes/impress/` | `?mode=impress`。平面に並べてカメラが移る。下の「impress モード」 |
 | Shower | `src/modes/shower/` | `?mode=shower`。一覧と全画面を行き来する。下の「Shower モード」 |
 | Spectacle | `src/modes/spectacle/` | `?mode=spectacle`。React の部品のデッキ。下の「Spectacle モード」 |

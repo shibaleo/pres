@@ -13,7 +13,10 @@ export type SwiperEffect = (typeof SWIPER_EFFECTS)[number]
 
 /** 一覧ページに並べる、モードごとの開き方の変わり種(URL に足す検索の部分と、その名前) */
 export const MODE_VARIANTS: Record<ModeName, { query: string; label: string }[]> = {
-  reveal: [{ query: 'print-pdf', label: 'PDF 用' }],
+  reveal: [
+    { query: 'presenter', label: '発表者' },
+    { query: 'print-pdf', label: 'PDF 用' },
+  ],
   impress: [],
   shower: [{ query: 'full', label: '全画面から' }],
   spectacle: [
