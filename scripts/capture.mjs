@@ -10,7 +10,8 @@ import { chromium } from '@playwright/test'
 /** PDF 用の表示を開き、reveal がページを組み終えるまで待つ */
 async function openPrint(browser, html, handout) {
   const page = await browser.newPage()
-  await page.goto(pathToFileURL(html).href + (handout ? '?print-pdf&handout' : '?print-pdf'))
+  // PDF 用の表示は reveal モードのもの(デッキの既定のモードが別でも reveal で開く)
+  await page.goto(pathToFileURL(html).href + (handout ? '?print-pdf&handout&mode=reveal' : '?print-pdf&mode=reveal'))
   await page.waitForFunction(() => document.querySelectorAll('.pdf-page .slide-number-pdf').length > 0)
   await page.evaluate(() => document.fonts.ready)
   await page.waitForTimeout(500) // reveal がページを組み終え、番号を書き直すまで(e2e/print.spec.ts と同じ)

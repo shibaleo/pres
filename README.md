@@ -73,6 +73,7 @@ decks/                 デッキ(1 フォルダ = 1 デッキ。vite/decks.js)�
     deck.mdx           原稿の主ファイル(--- で横、-- で縦に区切る。必須)
     style.css          このデッキの見た目の特化(プリセットの読み込み・トークンの上書き・このデッキの図の規則。必須)
     references.bib     BibTeX 文献データ(\cite を使うデッキだけ)
+    motion.ts          動きの設定(モード・スライドごとの遷移。無ければ reveal。「動きの設定」)
     slides/ img/       \input{…} で取り込む原稿 / このデッキの画像(原稿から ./img/… で import する)
     components/        このデッキだけの部品(図など。原稿から ./components/… で import する)
   components/          (必要になったら)いくつかのデッキで共有するが、土台にするほど汎用ではない部品。デッキの名前には使えない
@@ -336,6 +337,34 @@ $f$ が凸なら …
 図を作る道具は `src/figure/`（`@/figure/…` で import）。ドラッグは `useSvgDrag.ts`（モードの拡大縮小があっても図の座標で受け取れる）。
 SVG なので拡大しても鮮明で、印刷・PDF にもそのまま残る。色は `theme/base.css` の `.figure-*`（点・取っ手・ラベル・軸・系列など、図に共通の語彙）でトークンから決め、1 つの図に固有の色はデッキの `style.css` に書く。
 
+## 動きの設定（モードと遷移）
+
+原稿（本文）には動きの指定を書きません。原稿は内容の意味だけを書き、スライドをどう動かすか（モード・遷移）は
+デッキのフォルダの `motion.ts` に置きます（無ければ reveal で、遷移も reveal の既定のまま）。
+
+```ts
+// decks/<名前>/motion.ts
+import type { MotionConfig } from '@/modes/motion'
+
+export default {
+  mode: 'spectacle', // このデッキの既定のモード(reveal・impress・shower・spectacle・swiper。docs/motion.md)
+  transition: 'slide', // 既定の遷移
+  transitions: {
+    // そのスライドへ入るときの遷移。スライドは題で指す(先頭の見出しの文字。節番号は除き、数式は $…$ の形)
+    '主定理の紹介': 'cube',
+    '主定理の解釈': 'cards',
+  },
+} satisfies MotionConfig
+```
+
+- 遷移の名前は none・slide・fade・zoom・cube・cards・flip。モードごとに使えるものが違います
+  （Spectacle はすべて、reveal は none・slide・fade・zoom、Swiper はデッキの既定だけ。`src/modes/names.ts` の `MODE_TRANSITIONS`）。
+- 見つからない題・2 枚に当たる題・そのモードで使えない遷移は、原稿の警告と同じく `motion.ts` の行付きで報告されます
+  （開発時は画面右上の一覧、本番のビルドは失敗）。名前の書き間違いは型検査でも分かります。
+- モードは URL の `?mode=<名前>` で一時的に替えられます（そのタブの中で覚える。開発サーバーの一覧ページから選べる）。
+  `motion.ts` を直すと、開発サーバーはページを読み直します。
+- `motion.ts` は Node がそのまま読むので（型の注釈を外して読む）、import は型だけ（`import type`）にします。
+
 ## 見た目のカスタマイズ
 
 見た目は 3 層で、後のものが前のものを上書きします。
@@ -393,7 +422,8 @@ SVG なので拡大しても鮮明で、印刷・PDF にもそのまま残る。
 `npm run pdf -- <名前>` で、ビルドから PDF まで書き出します（`pdf/<名前>.pdf` と、配布用の `pdf/<名前>-handout.pdf`。
 名前を省くと全デッキ。git には入れない）。
 
-手で書き出すときは、URL に `?print-pdf` を付けて開き、ブラウザの印刷 → PDF に保存。
+手で書き出すときは、URL に `?print-pdf` を付けて開き、ブラウザの印刷 → PDF に保存（PDF 用の表示は reveal モードのものなので、
+既定のモードが reveal でないデッキは `?print-pdf&mode=reveal`。`npm run pdf` と `npm run shots` は自動で reveal にします）。
 印刷設定は **余白=なし / 背景のグラフィック=ON** を推奨（フレームの色を出すため）。
 
 ページの大きさは紙の大きさで、既定は **A4 横**。`src/modes/reveal/slide-size.ts` の `PRINT_PAPER`（mm）で変えられます

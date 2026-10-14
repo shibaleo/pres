@@ -25,18 +25,18 @@ const MODES: Record<ModeName, ComponentType<DeckSource>> = {
 }
 
 /**
- * 使うモードの名前。?mode=<名前> で選んだモードは、そのタブの中で覚える(sessionStorage。デッキごと)。
- * ライブラリが URL を書き換えて ?mode を消しても(Shower は ?full#番号 にする)、読み直したときに同じモードで開くため。
- * reveal に戻すには ?mode=reveal
+ * 使うモードの名前。優先順: URL の ?mode=<名前> → そのタブの中で覚えたもの → デッキの動きの設定(motion.ts の mode)→ reveal。
+ * ?mode= で選んだモードは、そのタブの中で覚える(sessionStorage。デッキごと)。ライブラリが URL を書き換えて ?mode を消しても
+ * (Shower は ?full#番号 にする)、読み直したときに同じモードで開くため。デッキの既定に戻すには ?mode=<デッキの既定>
  */
-function modeName(): string {
+function modeName(deckDefault: string): string {
   const key = `deck-mode:${location.pathname}`
   const chosen = new URLSearchParams(location.search).get('mode')
   try {
     if (chosen) sessionStorage.setItem(key, chosen)
-    return chosen ?? sessionStorage.getItem(key) ?? 'reveal'
+    return chosen ?? sessionStorage.getItem(key) ?? deckDefault
   } catch {
-    return chosen ?? 'reveal' // sessionStorage が使えないとき(プライベートモードなど)
+    return chosen ?? deckDefault // sessionStorage が使えないとき(プライベートモードなど)
   }
 }
 
@@ -56,7 +56,7 @@ export function startDeck(deck: DeckSource): (next: DeckSource) => void {
   // はみ出しの検査は開発時と、ビルドしたデッキを ?check-overflow で開いたとき(e2e/overflow.spec.ts)。
   // 印刷用の表示(?print-pdf)はページの大きさが最小サイズと違うので検査しない
   const check = (import.meta.env.DEV || new URLSearchParams(location.search).has('check-overflow')) && !isPrint
-  const name = modeName()
+  const name = modeName(deck.motion?.mode ?? 'reveal')
   if (!(name in MODES)) console.warn(`[deck] モード「${name}」はありません(${Object.keys(MODES).join('・')})。reveal で開きます`)
   const Mode = MODES[name as ModeName] ?? RevealApp
   const root = createRoot(document.getElementById('root')!)

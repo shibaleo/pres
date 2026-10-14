@@ -50,13 +50,22 @@ function rehypeCitationPerFile(this: Processor, { bibliography }: { bibliography
   }
 }
 
-export function mdxOptions({ bibliography, strict }: { bibliography: Bibliography; strict: boolean }): CompileOptions {
+export function mdxOptions({
+  bibliography,
+  strict,
+  motion,
+}: {
+  bibliography: Bibliography
+  strict: boolean
+  /** デッキの動きの設定(decks/<名前>/motion.ts)。原稿の主ファイルのパスから決める */
+  motion?: (file: string) => string | undefined
+}): CompileOptions {
   return {
     remarkPlugins: [
       remarkMath,
       // Beamer / LaTeX 風記法(スライド分割・定理環境・\ref・\cite・段階表示)。詳細は vite/remark-beamer/
       // strict では警告(参照先なし・未登録の文献)も失敗扱い
-      [remarkBeamer, { bibliography, strict }],
+      [remarkBeamer, { bibliography, strict, motion }],
     ],
     rehypePlugins: [
       rehypeMathPositions,

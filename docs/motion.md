@@ -93,10 +93,25 @@ impress の substep と Shower の `.next` は、要素を文書順に 1 つず�
 - まだ無いもの: ページ番号、一覧、PDF 出力、発表者ビュー、原稿の中のリンク `#/4`、原稿を直したときの描き直し（React が class を
   描き直すと Swiper の付けた class が消える）
 
+### デッキの動きの設定（motion.ts）
+
+動きの指定は本文に書かない（本文は意味だけ。命令で動きを書かない）。デッキのフォルダの `motion.ts` に、既定のモード・既定の遷移・
+スライドごとの遷移を書く（型は `src/modes/motion.ts`。書き方は README の「動きの設定」）。
+
+- スライドは題で指す（先頭の見出しの文字。節番号は除く）。番号で指すと原稿を足し引きしたときにずれ、原稿にラベルを足すと
+  本文に動きのための印が入るため
+- 照合はビルドのときに原稿の変換（vite/remark-beamer）が行い、指したスライドに `<Slide transition>` を付ける。モードはその名前を
+  自分の演出に対応させるだけ。見つからない題・2 枚に当たる題・そのモードで使えない遷移は原稿の警告と同じ扱い（本番のビルドは失敗）
+- 遷移の語彙は `src/modes/names.ts` の `TRANSITIONS`（none・slide・fade・zoom・cube・cards・flip）、モードごとに使えるものは
+  `MODE_TRANSITIONS`。Spectacle はすべて（`src/modes/spectacle/transitions.ts`。from・enter・leave の 3 つの形を transform で書く）、
+  reveal は reveal の名前と同じもの（data-transition）、Swiper はデッキの既定だけ（演出を作るときに 1 つだけ決める作り）
+- Spectacle では、そのスライドの遷移で入り、出るときもそのスライドの遷移で出る（前のスライドの leave と、次のスライドの from・enter が同時に動く）
+- 見本: `decks/legendre/motion.ts`（Spectacle で zoom・cube・cards・flip）
+
 ### 次にやること
 
-1. デッキがモードを選べるようにする（`decks/<名前>/` の設定のファイル。impress の座標の決め方もそこに）
-2. 各モードの足りないもの（上）を埋める
+1. 各モードの足りないもの（上）を埋める
+2. impress の座標の決め方（格子・螺旋・手で指定）も動きの設定に持たせる
 
 ### 決めたこと
 

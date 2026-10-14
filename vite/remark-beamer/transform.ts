@@ -10,8 +10,9 @@
  * 引用は rehype-citation の入力形式([@a; @b])に変換して、番号付け・整形はそちらに任せる。
  * エラーは file.fail、警告は file.message(unified の標準)。位置は構文解析器が付けた元の行。
  */
-import { readFileSync } from 'node:fs'
+import { readFileSync, statSync } from 'node:fs'
 import { dirname, relative, resolve, sep } from 'node:path'
+import { pathToFileURL } from 'node:url'
 import { parse as parseJs } from 'acorn'
 import { VFile as VFileCtor } from 'vfile'
 import type { Paragraph, Parent, PhrasingContent, Root, RootContent, Text } from 'mdast'
@@ -24,6 +25,8 @@ import type { Point, Position } from 'unist'
 import { MATH_ENVS } from './syntax.ts'
 import { findInclude, parseInclude, resolveInclude, type IncludeContext } from './inputs.js'
 import type { LatexCommand, LatexLine } from './mdast.ts'
+import { MODE_NAMES, MODE_TRANSITIONS, TRANSITIONS, type ModeName, type TransitionName } from '../../src/modes/names.ts'
+import type { MotionConfig } from '../../src/modes/motion.ts'
 
 export type BeamerOptions = {
   /**
@@ -33,6 +36,23 @@ export type BeamerOptions = {
   bibliography?: string | ((file: string) => string | undefined)
   /** 警告もエラーとして扱う(本番ビルド用) */
   strict?: boolean
+  /**
+   * デッキの動きの設定のファイル(decks/<名前>/motion.ts。src/modes/motion.ts)。関数なら変換する主ファイルのパスから決める。
+   * 題で指したスライドに遷移の名前(<Slide transition>)を付け、書き間違いを警告にする
+   */
+  motion?: string | ((file: string) => string | undefined)
+}
+
+/** 読み込んだ動きの設定と、そのファイルの場所・中身(警告の行を求めるため) */
+type LoadedMotion = { config: MotionConfig; path: string; text: string }
+
+/**
+ * 動きの設定を読む。Node が TypeScript の型の注釈を外して読む(motion.ts の import は型だけにする)。
+ * 開発中に書き換えても読み直すよう、更新時刻を URL に付ける
+ */
+async function loadMotion(path: string): Promise<LoadedMotion> {
+  const mod = (await import(`${pathToFileURL(path).href}?v=${statSync(path).mtimeMs}`)) as { default?: MotionConfig }
+  return { config: mod.default ?? {}, path, text: readFileSync(path, 'utf8') }
 }
 
 /**
@@ -179,7 +199,12 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
     ? (unravelAttacher[0].call(processor, ...unravelAttacher.slice(1)) as unknown as (tree: Root) => void)
     : () => {}
 
-  return function (tree: Root, file: VFile) {
+  return async function (tree: Root, file: VFile) {
+    const motionPath = typeof options.motion === 'function' ? options.motion(file.path) : options.motion
+    run(tree, file, motionPath ? await loadMotion(motionPath) : undefined)
+  }
+
+  function run(tree: Root, file: VFile, motion: LoadedMotion | undefined) {
     // 文献ファイルは変換のたびに読む(開発中に .bib を書き換えても、読み直した原稿に反映されるように)
     const bibliography = typeof options.bibliography === 'function' ? options.bibliography(file.path) : options.bibliography
     const bibKeys = bibliography ? readBibKeys(bibliography) : null
@@ -470,6 +495,8 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
     )
 
     // (4)(5) 文中の命令と段階表示(スライドごと・文書順)
+    /** 各スライドの題と要素(動きの設定で題からスライドを指すため) */
+    const slideList: { title: string; el: MdxJsxFlowElement }[] = []
     const slideElements: RootContent[] = built.map((stack, h) => {
       const els = stack.map((nodes, v) => {
         const steps = new Steps()
@@ -485,12 +512,14 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
         // h・v はスライドの並び(横の位置と、縦の続き(--)の中の位置。モードがスライドを置く場所を決めるのに使う)、
         // steps は段の数(Beamer と同じ数え方。段階表示の無いスライドは 1)。
         // data-slide-line / data-slide-file は開発時のはみ出し警告で原稿の位置を示すため(\input で取り込んだスライドはそのファイル)
-        return jsxFlow(
+        const el = jsxFlow(
           'Slide',
           { h, v, steps: steps.max, 'data-slide-line': line, 'data-slide-file': sourceOf(nodes[0])?.file },
           root.children,
           nodes[0]?.position,
         )
+        slideList.push({ title: slideTitleOf(root.children as AnyNode[]), el })
+        return el
       })
       return els.length === 1 ? els[0] : jsxFlow('Stack', {}, els)
     })
@@ -620,6 +649,57 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
 
     tree.children = [...esm, ...slideElements]
 
+    // (6) 動きの設定(decks/<名前>/motion.ts): 題で指したスライドに遷移の名前を付ける。動きの指定は本文に書かない
+    if (motion) applyMotion(motion)
+
+    function applyMotion({ config, path, text }: LoadedMotion) {
+      const file = rel(path)
+      /** 設定のファイルの中で、その文字列が最初に現れる行(警告の位置) */
+      const lineIn = (needle: string) => {
+        const i = text.indexOf(needle)
+        return i < 0 ? undefined : text.slice(0, i).split('\n').length
+      }
+      const motionWarn = (message: string, needle: string) => {
+        const line = lineIn(needle)
+        warnings.push({ message: `${file}:${line ?? '?'}: ${message}`, raw: message, file, line })
+      }
+      const mode: ModeName = config.mode ?? 'reveal'
+      if (!MODE_NAMES.includes(mode)) {
+        motionWarn(`モード "${config.mode}" はありません(${MODE_NAMES.join('・')})`, 'mode')
+        return
+      }
+      const known = (t: string): t is TransitionName => (TRANSITIONS as readonly string[]).includes(t)
+      const allowed = MODE_TRANSITIONS[mode]
+      if (config.transition !== undefined) {
+        if (!known(config.transition)) motionWarn(`遷移 "${config.transition}" はありません(${TRANSITIONS.join('・')})`, 'transition')
+        else if (!allowed.deck.includes(config.transition)) {
+          motionWarn(`モード ${mode} では既定の遷移に ${config.transition} を使えません(使えるもの: ${allowed.deck.join('・') || 'なし'})`, 'transition')
+        }
+      }
+      const normalize = (t: string) => t.replace(/\s+/g, ' ').trim()
+      for (const [title, transition] of Object.entries(config.transitions ?? {})) {
+        if (!known(transition)) {
+          motionWarn(`遷移 "${transition}" はありません(${TRANSITIONS.join('・')})`, title)
+          continue
+        }
+        const hits = slideList.filter((s) => normalize(s.title) === normalize(title))
+        if (hits.length === 0) {
+          motionWarn(`題が「${title}」のスライドがありません(スライドの先頭の見出しの文字。節番号は除く)`, title)
+          continue
+        }
+        if (hits.length > 1) {
+          const lines = hits.map((s) => getAttr(s.el, 'data-slide-line')).join('・')
+          motionWarn(`題が「${title}」のスライドが ${hits.length} 枚あります(原稿の ${lines} 行目)。題で 1 枚に決まりません`, title)
+          continue
+        }
+        if (!allowed.slide.includes(transition)) {
+          motionWarn(`モード ${mode} ではスライドごとの遷移に ${transition} を使えません(使えるもの: ${allowed.slide.join('・') || 'なし'})`, title)
+        }
+        // 別のモードで開いたときに使えるよう、使えない遷移でも名前は付ける(警告は出る)
+        setAttr(hits[0].el, 'transition', transition)
+      }
+    }
+
     // 開発時の画面表示用に、警告を deck の export として出す
     const list = warnings.map((w) => ({ file: w.file, line: w.line, message: w.raw }))
     const code = `export const deckWarnings = ${JSON.stringify(list)}`
@@ -654,4 +734,29 @@ function setPosition(nodes: AnyNode[], position?: Position) {
     n.position = position
     if ('children' in n) setPosition(n.children as AnyNode[], position)
   }
+}
+
+/**
+ * スライドの題: スライドの中の最初の見出しの文字(節番号 <span class="secnum"> は除く。数式は原稿と同じ $…$ の形)
+ */
+function slideTitleOf(nodes: AnyNode[]): string {
+  const heading = findHeading(nodes)
+  return heading ? plainText(heading).trim() : ''
+}
+function findHeading(nodes: AnyNode[]): AnyNode | undefined {
+  for (const n of nodes) {
+    if (n.type === 'heading') return n
+    if ('children' in n) {
+      const found = findHeading(n.children as AnyNode[])
+      if (found) return found
+    }
+  }
+  return undefined
+}
+function plainText(node: AnyNode): string {
+  if (isJsx(node, 'span') && getAttr(node, 'className') === 'secnum') return ''
+  if (node.type === 'inlineMath') return `$${node.value}$`
+  if ('value' in node && typeof node.value === 'string' && (node.type === 'text' || node.type === 'inlineCode')) return node.value
+  if ('children' in node) return (node.children as AnyNode[]).map(plainText).join('')
+  return ''
 }

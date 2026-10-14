@@ -3,6 +3,7 @@
  *   deck.mdx        原稿の主ファイル(必須。\input で取り込むファイルはこのフォルダからの相対パス)
  *   style.css       このデッキの見た目の特化(必須。プリセットの読み込み・トークンの上書き)
  *   references.bib  文献(\cite を使うときだけ)
+ *   motion.ts       動きの設定(モード・スライドごとの遷移。無ければ reveal で既定の遷移。src/modes/motion.ts)
  * と、原稿が import する画像や部品(img/・components/)。文書の部品(src/components)・土台の見た目(src/theme)・
  * 記法の処理(vite/)はすべてのデッキで共有する。decks/components/ はいくつかのデッキで共有する部品の置き場所なので、
  * デッキの名前には使えない(RESERVED_NAMES)。
@@ -34,7 +35,7 @@ export function listDecks() {
 }
 
 /**
- * @typedef {{ name: string; dir: string; main: string; style: string; bibliography: string | undefined; outDir: string }} Deck
+ * @typedef {{ name: string; dir: string; main: string; style: string; bibliography: string | undefined; motion: string | undefined; outDir: string }} Deck
  */
 
 /**
@@ -55,6 +56,7 @@ export function resolveDeck(name) {
     main: join(dir, 'deck.mdx'),
     style: join(dir, 'style.css'),
     bibliography: bibliographyOf(dir),
+    motion: motionOf(dir),
     outDir: join(ROOT, 'dist', name),
   }
 }
@@ -66,6 +68,15 @@ export function resolveDeck(name) {
 function bibliographyOf(dir) {
   const bib = join(dir, 'references.bib')
   return existsSync(bib) ? bib : undefined
+}
+
+/**
+ * デッキのフォルダの動きの設定。無ければ undefined(reveal で既定の遷移)
+ * @param {string} dir
+ */
+function motionOf(dir) {
+  const motion = join(dir, 'motion.ts')
+  return existsSync(motion) ? motion : undefined
 }
 
 /**
@@ -95,4 +106,13 @@ export function bibliographyFor(file) {
 export function deckTitle(deck) {
   const m = readFileSync(deck.main, 'utf8').match(/^# +(.+?)\s*$/m)
   return m ? m[1] : deck.name
+}
+
+/**
+ * 原稿のファイルが属するデッキの動きの設定
+ * @param {string} file
+ */
+export function motionFor(file) {
+  const dir = deckDirOf(file)
+  return dir ? motionOf(dir) : undefined
 }

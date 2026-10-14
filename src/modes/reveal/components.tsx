@@ -1,16 +1,24 @@
 import { Slide as RevealSlide, Stack } from '@revealjs/react'
 import { documentComponents } from '../../components'
+import { MODE_TRANSITIONS, type TransitionName } from '../names'
 import { slideAttributes, stepsOf, type SlideProps } from '../structure'
 import { Overlay, OverlaySteps } from './Overlay'
 
+/** 共通の遷移の名前を reveal の遷移にする(reveal にあるものだけ。名前は同じ)。無ければ undefined */
+export function revealTransition(t: TransitionName | undefined): 'none' | 'slide' | 'fade' | 'zoom' | undefined {
+  return t && MODE_TRANSITIONS.reveal.slide.includes(t) ? (t as 'none' | 'slide' | 'fade' | 'zoom') : undefined
+}
+
 /**
  * reveal モードのスライド 1 枚(theme/base.css の .deck .slide)。h・v は使わない(reveal は並びを DOM の入れ子(<Stack>)から数える)。
- * 段の数だけ見えない fragment を末尾に置き、reveal のステップ数を Beamer と揃える
+ * 段の数だけ見えない fragment を末尾に置き、reveal のステップ数を Beamer と揃える。
+ * 遷移(motion.ts)は reveal のスライドごとの遷移(data-transition)にする。reveal に無い遷移(cube など)は付けない
  */
 function Slide(props: SlideProps) {
   const steps = stepsOf(props)
+  const transition = revealTransition(props.transition)
   return (
-    <RevealSlide className="slide" {...slideAttributes(props)}>
+    <RevealSlide className="slide" transition={transition} {...slideAttributes(props)}>
       {props.children}
       {steps >= 2 && <OverlaySteps steps={steps} />}
     </RevealSlide>

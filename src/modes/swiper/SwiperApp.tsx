@@ -13,7 +13,7 @@ import type { DeckSource } from '../../deck/source'
 import { documentComponents } from '../../components'
 import { announcePresent, markReady, registerGoTo, watchFitScale } from '../../deck/mode'
 import { Overlay, applyStep } from '../marker-steps'
-import type { SwiperEffect } from '../names'
+import { MODE_TRANSITIONS, type SwiperEffect } from '../names'
 import { FlatStack, slideAttributes, stepsOf, type SlideProps } from '../structure'
 import './swiper.css'
 
@@ -60,7 +60,7 @@ const EFFECTS: Record<SwiperEffect, SwiperOptions> = {
  * キー(→ ↓ Space PageDown で次、← ↑ PageUp で前、Home / End)は、段が残っていれば段を進め、無ければスライドを移る。
  * 前のスライドへ戻ると最後の段、先へ進むと 1 段目から(reveal・Beamer と同じ)。スワイプ・ドラッグはスライドを移る。
  */
-export default function SwiperApp({ Slides }: DeckSource) {
+export default function SwiperApp({ Slides, motion }: DeckSource) {
   const container = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -68,7 +68,9 @@ export default function SwiperApp({ Slides }: DeckSource) {
     // 全体の倍率: 最小サイズのスライドがウィンドウに収まる最大(Swiper は倍率をかける前の大きさで組む)
     const stopFit = watchFitScale()
 
-    const effect = new URLSearchParams(location.search).get('effect') ?? 'slide'
+    // URL の &effect= が無ければ、デッキの動きの設定の既定の遷移(Swiper にあるもの)
+    const fromMotion = motion?.transition && MODE_TRANSITIONS.swiper.deck.includes(motion.transition) ? motion.transition : undefined
+    const effect = new URLSearchParams(location.search).get('effect') ?? fromMotion ?? 'slide'
     if (!(effect in EFFECTS)) console.warn(`[deck] 演出「${effect}」はありません(${Object.keys(EFFECTS).join('・')})`)
     const step = new Map<number, number>()
     const swiper = new Swiper(el, {

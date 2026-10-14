@@ -378,3 +378,42 @@ describe('変換しない場所', () => {
     expect(jsx(tree, 'Overlay')).toHaveLength(0)
   })
 })
+
+describe('動きの設定(motion.ts)', () => {
+  // 一時ディレクトリに motion.ts を置く(Node が型の注釈を外して読む)
+  const dir = mkdtempSync(join(tmpdir(), 'beamer-motion-'))
+  const motionFile = (name: string, body: string) => {
+    const path = join(dir, `${name}.ts`)
+    writeFileSync(path, `export default ${body}\n`)
+    return path
+  }
+  const src = ['# 表紙', '', '---', '', '## 導入', '', 'a', '', '---', '', '## 主定理と $\alpha$', '', 'b', '', '--', '', '## 導入', '', 'c'].join('\n')
+
+  it('題で指したスライドに遷移の名前を付ける(節番号は除き、数式は $…$ の形で指す)', async () => {
+    const motion = motionFile('ok', `{ mode: 'spectacle', transitions: { '表紙': 'fade', '主定理と $\\alpha$': 'cube' } }`)
+    const { tree, file } = await run(src.replace('## 導入\n\nc', '## 補足\n\nc'), { motion })
+    const slides = jsx(tree, 'Slide')
+    expect(slides.map((s) => attr(s, 'transition'))).toEqual(['fade', undefined, 'cube', undefined])
+    expect(file.messages).toEqual([])
+  })
+
+  it('見つからない題・2 枚に当たる題・そのモードで使えない遷移は警告(位置は motion.ts の行)', async () => {
+    const motion = motionFile('bad', `{\n  mode: 'reveal',\n  transitions: {\n    '無い題': 'fade',\n    '導入': 'fade',\n    '表紙': 'cube',\n  },\n}`)
+    const { tree, file } = await run(src, { motion })
+    const reasons = file.messages.map((m) => m.reason)
+    expect(reasons[0]).toMatch(/bad\.ts:4: 題が「無い題」のスライドがありません/)
+    expect(reasons[1]).toMatch(/bad\.ts:5: 題が「導入」のスライドが 2 枚あります/)
+    expect(reasons[2]).toMatch(/bad\.ts:6: モード reveal ではスライドごとの遷移に cube を使えません/)
+    // 使えない遷移でも名前は付ける(別のモードで開いたときに使う)
+    expect(attr(jsx(tree, 'Slide')[0], 'transition')).toBe('cube')
+    expect((await fails(src, { motion, strict: true })).message).toContain('警告が 3 件')
+  })
+
+  it('既定の遷移がそのモードで使えなければ警告', async () => {
+    const motion = motionFile('deck', `{ mode: 'swiper', transition: 'zoom' }`)
+    const { file } = await run(src, { motion })
+    expect(file.messages.map((m) => m.reason)).toEqual([
+      expect.stringMatching(/モード swiper では既定の遷移に zoom を使えません\(使えるもの: slide・fade・cube・cards・flip\)/),
+    ])
+  })
+})

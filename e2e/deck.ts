@@ -16,7 +16,16 @@ export const isBuilt = (deck: string) => existsSync(join('dist', deck, 'index.ht
 
 /** ビルドしたデッキの単一 HTML(dist/<デッキ>/index.html)の URL(hash でスライドを指定する。例: '#/7/2') */
 export const deckUrl = (deck: string, hash = '', query = '') =>
-  pathToFileURL(resolve('dist', deck, 'index.html')).href + query + hash
+  pathToFileURL(resolve('dist', deck, 'index.html')).href + withRevealMode(query) + hash
+
+/**
+ * テストは reveal モードで開く(reveal の並び・hash・PDF 用の表示を使うテストがあり、デッキの動きの設定(motion.ts)で
+ * 既定のモードが別のデッキもあるため)。query に mode= があればそのまま
+ */
+function withRevealMode(query: string) {
+  if (/[?&]mode=/.test(query)) return query
+  return query ? `${query}&mode=reveal` : '?mode=reveal'
+}
 
 /**
  * 題に text を含むスライドへ移動する(スライドの番号は原稿を足し引きすると変わるので、題で探す)。

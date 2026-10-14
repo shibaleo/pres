@@ -5,6 +5,7 @@ import { documentComponents } from '../../components'
 import { announcePresent, deckSlides, markReady, registerGoTo } from '../../deck/mode'
 import { MIN_WIDTH, SLIDE_HEIGHT } from '../../deck/slide-metrics'
 import { FlatStack, isShown, overlayClass, slideAttributes, stepsOf, type OverlayProps, type SlideProps } from '../structure'
+import { SPECTACLE_TRANSITIONS } from './transitions'
 import './spectacle.css'
 
 /**
@@ -21,9 +22,13 @@ function Slide(props: SlideProps) {
       {props.children}
     </Body>
   )
-  // padding は Spectacle のテーマの間隔の段階の番号として読まれるので、値で渡す
+  // padding は Spectacle のテーマの間隔の段階の番号として読まれるので、値で渡す。遷移(motion.ts)はそのスライドの遷移に
   return (
-    <SpectacleSlide padding="0px" backgroundColor="var(--color-canvas)">
+    <SpectacleSlide
+      padding="0px"
+      backgroundColor="var(--color-canvas)"
+      transition={props.transition ? SPECTACLE_TRANSITIONS[props.transition] : undefined}
+    >
       {steps >= 2 ? <SteppedBody steps={steps} body={body} /> : body(1)}
     </SpectacleSlide>
   )
@@ -97,9 +102,11 @@ const theme = {
  * Spectacle の機能はそのまま使える: 一覧(?overviewMode=true)、発表者ビュー(?presenterMode=true)、PDF 用の表示(?exportMode=true)。
  * 縦の続き(--)は横一列に並べる。まわりとの約束は deck/mode.ts。
  */
-export default function SpectacleApp({ Slides }: DeckSource) {
+export default function SpectacleApp({ Slides, motion }: DeckSource) {
+  // 既定の遷移(デッキの動きの設定 motion.ts)。無ければ Spectacle の既定(横に滑る)
+  const transition = motion?.transition ? SPECTACLE_TRANSITIONS[motion.transition] : undefined
   return (
-    <Deck theme={theme} template={() => null}>
+    <Deck theme={theme} template={() => null} transition={transition}>
       <Slides components={spectacleComponents} />
       <RegisterGoTo />
     </Deck>

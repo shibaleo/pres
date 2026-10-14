@@ -3,7 +3,7 @@ import { Deck, useReveal } from '@revealjs/react'
 import RevealNotes from 'reveal.js/plugin/notes'
 import { announcePresent, markReady, registerGoTo } from '../../deck/mode'
 import type { DeckSource } from '../../deck/source'
-import { revealComponents } from './components'
+import { revealComponents, revealTransition } from './components'
 import Menu from './Menu'
 import { isHandout, isPrint, useSlideSize } from './slide-size'
 import './reveal.css'
@@ -20,7 +20,7 @@ const SLIDE_KEY = `deck-slide-index:${location.pathname}`
  * スライドの中身はデッキの decks/<名前>/deck.mdx(--- / -- で区切った原稿。<Slide> / <Stack> への変換は
  * vite/remark-beamer が行い、その実体は modes/reveal/components.tsx)。まわりとの約束は deck/mode.ts。
  */
-export default function RevealApp({ Slides }: DeckSource) {
+export default function RevealApp({ Slides, motion }: DeckSource) {
   const deckRef = useRef<RevealApi | null>(null)
   const { width, height } = useSlideSize()
 
@@ -44,6 +44,8 @@ export default function RevealApp({ Slides }: DeckSource) {
         // 縦スライド(原稿の --)の進め方。'linear' にすると ←→ だけで縦も含めて順に進む
         // (見た目の切り替わり方は変わらない)。'grid' は縦の位置を保って列を移る
         navigationMode: 'default',
+        // 既定の遷移(デッキの動きの設定 motion.ts。reveal に無いものは使わない。スライドごとの遷移は components.tsx)
+        ...(revealTransition(motion?.transition) ? { transition: revealTransition(motion?.transition) } : {}),
         // 番号(節・定理・式・文献)はすべてビルド時に振るので、reveal の既定どおり
         // 近くのスライドだけを描けばよい(viewDistance は既定のまま)
       }}
