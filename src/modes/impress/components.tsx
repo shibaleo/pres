@@ -7,13 +7,13 @@ import { FlatStack, slideAttributes, stepsOf, type SlideProps } from '../structu
  * impress モードの部品: 文書の部品 + 構造の部品(impress.js の .step と .substep)。
  */
 
-/** スライドを置く間隔(論理座標の px)。横の並び(h)は右へ、縦の続き(v)は下へ並べる */
-export const GAP = { x: 1200, y: 900 }
-
-/** スライド 1 枚 = impress の step。座標は並び(h・v)から決める。段の印は impress の substep(文書順に 1 つずつ substep-visible が付く) */
+/**
+ * スライド 1 枚 = impress の step。並び(h・v)を data-h・data-v に置き、置き場所(data-x など)は ImpressApp が
+ * デッキの動きの設定から決めて書く(layout.ts)。段の印は impress の substep(文書順に 1 つずつ substep-visible が付く)
+ */
 function Slide(props: SlideProps) {
   return (
-    <div className="step slide" data-x={Number(props.h ?? 0) * GAP.x} data-y={Number(props.v ?? 0) * GAP.y} {...slideAttributes(props)}>
+    <div className="step slide" data-h={Number(props.h ?? 0)} data-v={Number(props.v ?? 0)} {...slideAttributes(props)}>
       {props.children}
       <PageNumber />
       <StepMarkers steps={stepsOf(props)} markerClass="substep" />

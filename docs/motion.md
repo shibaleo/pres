@@ -50,8 +50,10 @@ impress の substep と Shower の `.next` は、要素を文書順に 1 つず�
 
 ### impress モード（試作）
 
-- スライドは impress の step。最小サイズ（933×700）の固定の大きさで、横の並び（h）は右へ、縦の続き（v）は下へ置く。
-  最後に全体を見渡す step（`#overview`）を足す
+- スライドは impress の step。最小サイズ（933×700）の固定の大きさ。置き方は motion.ts の `impress`（`src/modes/impress/layout.ts`）:
+  `layout` が `grid`（既定。横の並び（h）は右へ、縦の続き（v）は下へ）か `spiral`（文書の順に、外へ広がる螺旋に沿って。
+  スライドは螺旋の進む向きに傾け、隣とも隣の周とも対角線より離す）、`positions` でラベルのスライドだけ置き直す（書いた項目だけ）。
+  最後に全体を見渡す step（`#overview`）を、全スライドが収まる所に足す
 - 段階表示は段の印（substep）
 - まだ無いもの: 一覧、
   PDF 出力（reveal モードで作る）、発表者ビュー（impress の impressConsole は CSS を URL で読むので単一 HTML では使えない）、
@@ -112,12 +114,11 @@ impress の substep と Shower の `.next` は、要素を文書順に 1 つず�
   `MODE_TRANSITIONS`。Spectacle はすべて（`src/modes/spectacle/transitions.ts`。from・enter・leave の 3 つの形を transform で書く）、
   reveal は reveal の名前と同じもの（data-transition）、Swiper はデッキの既定だけ（演出を作るときに 1 つだけ決める作り）
 - Spectacle では、そのスライドの遷移で入り、出るときもそのスライドの遷移で出る（前のスライドの leave と、次のスライドの from・enter が同時に動く）
-- 見本: `decks/legendre/motion.ts`（Spectacle。新しい節は cube、節の中の続きは cards、主定理 `sec:main` は zoom）
+- 見本: `decks/legendre/motion.ts`（Spectacle。新しい節は cube、節の中の続きは cards、主定理 `sec:main` は zoom。impress では螺旋）
 
 ### 次にやること
 
 1. 各モードの足りないもの（上）を埋める
-2. impress の座標の決め方（格子・螺旋・手で指定）も動きの設定に持たせる
 
 ### 決めたこと
 

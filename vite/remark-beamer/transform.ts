@@ -25,7 +25,7 @@ import type { Point, Position } from 'unist'
 import { MATH_ENVS } from './syntax.ts'
 import { findInclude, parseInclude, resolveInclude, type IncludeContext } from './inputs.js'
 import type { LatexCommand, LatexLine } from './mdast.ts'
-import { MODE_NAMES, MODE_TRANSITIONS, TRANSITIONS, type ModeName, type TransitionName } from '../../src/modes/names.ts'
+import { IMPRESS_LAYOUTS, MODE_NAMES, MODE_TRANSITIONS, TRANSITIONS, type ModeName, type TransitionName } from '../../src/modes/names.ts'
 import type { MotionConfig } from '../../src/modes/motion.ts'
 
 export type BeamerOptions = {
@@ -694,13 +694,17 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
 
     function applyMotion({ config, path, text }: LoadedMotion) {
       const file = rel(path)
-      /** 設定のファイルの中で、その文字列が最初に現れる行(警告の位置) */
-      const lineIn = (needle: string) => {
-        const i = text.indexOf(needle)
+      /**
+       * 設定のファイルの中で、その文字列が最初に現れる行(警告の位置)。after があれば、その文字列より後で探す
+       * (同じラベルを transitions と impress.positions の両方に書いたとき、それぞれの行を指すため)
+       */
+      const lineIn = (needle: string, after?: string) => {
+        const from = after ? Math.max(text.indexOf(after), 0) : 0
+        const i = text.indexOf(needle, from)
         return i < 0 ? undefined : text.slice(0, i).split('\n').length
       }
-      const motionWarn = (message: string, needle: string) => {
-        const line = lineIn(needle)
+      const motionWarn = (message: string, needle: string, after?: string) => {
+        const line = lineIn(needle, after)
         warnings.push({ message: `${file}:${line ?? '?'}: ${message}`, raw: message, file, line })
       }
       const mode: ModeName = config.mode ?? 'reveal'
@@ -744,19 +748,31 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
           motionWarn(`遷移 "${transition}" はありません(${TRANSITIONS.join('・')})`, key)
           continue
         }
+        const target = slideLabeled(key)
+        if (!target) continue
+        checkSlide(transition, key)
+        setAttr(target.el, 'transition', transition)
+      }
+      // impress モードでの置き方(置き場所は impress モードが決める。ここでは名前とラベルを確かめるだけ)
+      const impress = config.impress
+      if (impress?.layout !== undefined && !(IMPRESS_LAYOUTS as readonly string[]).includes(impress.layout)) {
+        motionWarn(`impress の並べ方 "${impress.layout}" はありません(${IMPRESS_LAYOUTS.join('・')})`, 'layout')
+      }
+      for (const key of Object.keys(impress?.positions ?? {})) slideLabeled(key, 'positions')
+
+      /** 題にそのラベルを書いたスライド。無ければ警告(after は警告の行を探し始める所) */
+      function slideLabeled(key: string, after?: string) {
         const target = slideList.find((s) => getAttr(s.el, 'id') === key)
         if (!target) {
-          const other = labels.get(key)
           motionWarn(
-            other
+            labels.has(key)
               ? `ラベル ${key} はスライドの題のラベルではありません(スライドは題に \\label を書いて指す)`
               : `ラベル ${key} のスライドがありません(スライドの題に \\label{${key}} を書いて指す)`,
             key,
+            after,
           )
-          continue
         }
-        checkSlide(transition, key)
-        setAttr(target.el, 'transition', transition)
+        return target
       }
     }
 

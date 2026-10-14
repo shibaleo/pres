@@ -11,4 +11,6 @@ export default {
     // 主定理(題に \label{sec:main})は寄って見せる
     'sec:main': 'zoom',
   },
+  // impress モード(?mode=impress)では、文書の順に螺旋に沿って置く
+  impress: { layout: 'spiral' },
 } satisfies MotionConfig

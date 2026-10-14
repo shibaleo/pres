@@ -5,6 +5,7 @@ import { announcePresent, markReady, registerGoTo } from '../../deck/mode'
 import { applyStep, currentStep } from '../marker-steps'
 import { watchPageNumbers } from '../page-number'
 import { impressComponents } from './components'
+import { applyPlace, overviewOf, placeSlides } from './layout'
 import './impress.css'
 
 declare global {
@@ -18,10 +19,11 @@ const syncOverlays = (step: Element) => applyStep(step, currentStep(step, '.subs
 
 /**
  * impress モード: スライドを平面に並べ、カメラが移って拡大・縮小する(impress.js)。
- * 横の並びは右へ、縦の続き(--)は下へ置き、最後に全体を見渡す step を足す。
+ * 置き方はデッキの動きの設定(motion.ts の impress。既定は横の並びを右へ、縦の続き(--)を下へ。layout.ts)で、
+ * 最後に全体を見渡す step を足す。
  * 段階表示は段の印(impress の substep。components.tsx)で進める。まわりとの約束は deck/mode.ts。
  */
-export default function ImpressApp({ Slides }: DeckSource) {
+export default function ImpressApp({ Slides, motion }: DeckSource) {
   useEffect(() => {
     const onChange = (e: Event) => {
       const step = (e.target as Element).closest('.step')
@@ -33,15 +35,14 @@ export default function ImpressApp({ Slides }: DeckSource) {
     for (const name of events) document.addEventListener(name, onChange)
     const stopPageNumbers = watchPageNumbers()
 
-    // 全体を見渡す step: 全スライドの範囲の中央に置き、範囲が画面に収まる倍率にする
+    // スライドの置き場所(impress は初期化のときに data-x などを読む)と、全体を見渡す step(全スライドが画面に収まる所)
     const slides = [...document.querySelectorAll<HTMLElement>('#impress .step.slide')]
-    const xs = slides.map((s) => Number(s.dataset.x))
-    const ys = slides.map((s) => Number(s.dataset.y))
-    const overview = document.getElementById('overview')!
-    const [minX, maxX, minY, maxY] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)]
-    overview.dataset.x = String((minX + maxX) / 2)
-    overview.dataset.y = String((minY + maxY) / 2)
-    overview.dataset.scale = String(1.1 * Math.max((maxX - minX + MIN_WIDTH) / MIN_WIDTH, (maxY - minY + SLIDE_HEIGHT) / SLIDE_HEIGHT))
+    const places = placeSlides(
+      slides.map((s) => ({ h: Number(s.dataset.h), v: Number(s.dataset.v), id: s.id || undefined })),
+      motion?.impress,
+    )
+    slides.forEach((s, i) => applyPlace(s, places[i]))
+    applyPlace(document.getElementById('overview')!, overviewOf(places))
 
     slides.forEach(syncOverlays)
     // impress.js は読み込むとグローバルの impress を作る(このモードのときだけ読み込む)

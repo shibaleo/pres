@@ -446,4 +446,17 @@ describe('動きの設定(motion.ts)', () => {
       expect.stringMatching(/モード swiper では既定の遷移に zoom を使えません\(使えるもの: slide・fade・cube・cards・flip\)/),
     ])
   })
+
+  it('impress の置き方: 無い並べ方と、スライドの題のものではないラベルは警告(同じラベルが transitions にあっても positions の行を指す)', async () => {
+    const motion = motionFile(
+      'impress',
+      `{\n  mode: 'impress',\n  transitions: { 'sec:none': 'none' },\n  impress: {\n    layout: 'circle',\n    positions: {\n      'sec:main': { z: -1000 },\n      'sec:none': { x: 0 },\n    },\n  },\n}`,
+    )
+    const { file } = await run(src, { motion })
+    expect(file.messages.map((m) => m.reason)).toEqual([
+      expect.stringMatching(/impress\.ts:3: ラベル sec:none のスライドがありません/),
+      expect.stringMatching(/impress\.ts:5: impress の並べ方 "circle" はありません\(grid・spiral\)/),
+      expect.stringMatching(/impress\.ts:8: ラベル sec:none のスライドがありません/),
+    ])
+  })
 })

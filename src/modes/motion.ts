@@ -1,4 +1,4 @@
-import type { ModeName, TransitionName } from './names'
+import type { ImpressLayout, ModeName, TransitionName } from './names'
 
 /**
  * デッキの動きの設定(decks/<名前>/motion.ts の default export)。原稿(本文)には動きの指定を書かず、ここに書く。
@@ -32,4 +32,35 @@ export type MotionConfig = {
    *   ## 主定理の紹介 \label{sec:main}   →   transitions: { 'sec:main': 'cube' }
    */
   transitions?: Record<string, TransitionName>
+  /** impress モードでのスライドの置き方(impress は平面・空間にスライドを置き、カメラが移る) */
+  impress?: ImpressMotion
+}
+
+/**
+ * impress モードでのスライドの置き方。layout で全体を並べ、positions でラベルのスライドだけ置き直す:
+ *   impress: { layout: 'spiral', positions: { 'sec:main': { z: -1500, scale: 2 } } }
+ */
+export type ImpressMotion = {
+  /** 全体の並べ方(grid: 横の並びを右へ・縦の続きを下へ(既定)、spiral: 文書の順に螺旋に沿って) */
+  layout?: ImpressLayout
+  /**
+   * 個別のスライドの置き場所。スライドは題に書いた \label の名前で指す。書いた項目だけが layout の値を置き換える
+   * (書かない項目は layout のまま)
+   */
+  positions?: Record<string, ImpressPlace>
+}
+
+/**
+ * impress の step の置き場所(impress の data-x などと同じ意味)。x・y・z はスライドの中心の座標(論理座標の px。
+ * スライドは 933×700、y は下向き)、rotate は画面の面の中での回転(度。時計回り)、rotateX・rotateY は奥行きの方向の傾き(度)、
+ * scale は大きさの倍率
+ */
+export type ImpressPlace = {
+  x?: number
+  y?: number
+  z?: number
+  rotate?: number
+  rotateX?: number
+  rotateY?: number
+  scale?: number
 }

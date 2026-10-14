@@ -361,6 +361,13 @@ export default {
     // 個別のスライドへ入るとき。スライドは題に書いた \label の名前で指す(## 主定理の紹介 \label{sec:main})
     'sec:main': 'zoom',
   },
+  impress: {
+    // impress モードでの置き方。layout は grid(横の並びを右へ・縦の続きを下へ。既定)か spiral(文書の順に螺旋に沿って)
+    layout: 'spiral',
+    // 個別のスライドの置き場所(ラベルで指す)。書いた項目だけが layout の値を置き換える
+    // (x・y・z は中心の座標(px。スライドは 933×700)、rotate・rotateX・rotateY は回転(度)、scale は倍率)
+    positions: { 'sec:main': { z: -1500, scale: 2 } },
+  },
 } satisfies MotionConfig
 ```
 
@@ -368,7 +375,7 @@ export default {
   （Spectacle はすべて、reveal は none・slide・fade・zoom、Swiper はデッキの既定だけ。`src/modes/names.ts` の `MODE_TRANSITIONS`）。
 - 優先は ラベル → 構造の規則（`section`・`continuation`）→ 既定（`transition`）。ほとんどのデッキは構造の規則だけで足ります。
   本文の文字（題）では指しません（題は内容の都合で直すので）。`\label` は動きの命令ではなく、そのスライドの名前（`\ref` やリンクにも使う）です。
-- 無いラベル・スライドの題のものではないラベル・そのモードで使えない遷移は、原稿の警告と同じく `motion.ts` の行付きで報告されます
+- 無いラベル・スライドの題のものではないラベル・そのモードで使えない遷移・無い並べ方は、原稿の警告と同じく `motion.ts` の行付きで報告されます
   （開発時は画面右上の一覧、本番のビルドは失敗）。名前の書き間違いは型検査でも分かります。
 - モードは URL の `?mode=<名前>` で一時的に替えられます（そのタブの中で覚える。開発サーバーの一覧ページから選べる）。
   `motion.ts` を直すと、開発サーバーはページを読み直します。
