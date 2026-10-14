@@ -596,6 +596,23 @@ html.reveal-print .reveal .figure-buttons {
 .deck .fragment.only.fade-out.visible {
   display: none;
 }
+/* 段の印で段階表示をするモード(modes/marker-steps.tsx。impress・Shower)と Spectacle モード。
+   非表示の間も場所は残し、\only は場所も取らない。段を進める印(空の要素)は見せない */
+.deck .overlay {
+  transition:
+    opacity 0.2s ease,
+    visibility 0.2s ease;
+}
+.deck .overlay.overlay-hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+.deck .overlay.only.overlay-hidden {
+  display: none;
+}
+.deck .overlay-step {
+  display: none;
+}
 
 /* ========== 5. デッキの外側の UI と開発時の表示 ========== */
 

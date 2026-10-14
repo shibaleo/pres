@@ -1,0 +1,10 @@
+/* Spectacle モード(SpectacleApp.tsx)。本文の見た目は theme/ の .deck の規則がそのまま効く。
+   Spectacle のスライドの中で、本文の範囲(.deck)と 1 枚(.slide)をスライドいっぱいに広げる */
+.spectacle-body,
+.spectacle-body > .slide {
+  width: 100%;
+  height: 100%;
+}
+.spectacle-body > .slide {
+  overflow: hidden;
+}

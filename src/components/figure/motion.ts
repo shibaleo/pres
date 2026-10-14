@@ -1,6 +1,16 @@
 import { useEffect, useState, type RefObject } from 'react'
 import { useReveal } from '@revealjs/react'
 
+/**
+ * reveal 以外のモード(modes/)が、今のスライドが変わったときに document に送る出来事の名前。detail は今のスライドの要素
+ */
+export const PRESENT_EVENT = 'deck:present'
+
+/** モードが今のスライドを知らせる(PRESENT_EVENT) */
+export function announcePresent(slide: Element) {
+  document.dispatchEvent(new CustomEvent<Element>(PRESENT_EVENT, { detail: slide }))
+}
+
 /** OS で動きを控える設定(prefers-reduced-motion)になっているか。動く図はこのとき一時停止の状態で始める */
 export function prefersReducedMotion(): boolean {
   return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -16,10 +26,10 @@ export function useOnPresentSlide(ref: RefObject<Element | null>): boolean {
   const [present, setPresent] = useState(false)
   useEffect(() => {
     if (!deck) {
-      // impress モード(modes/impress): 今の step に入ったときに知らせる
-      const onEnter = (e: Event) => setPresent(!!ref.current && (e.target as Element).contains(ref.current))
-      document.addEventListener('impress:stepenter', onEnter)
-      return () => document.removeEventListener('impress:stepenter', onEnter)
+      // reveal 以外のモード(modes/)は、今のスライドが変わると PRESENT_EVENT を送る
+      const onPresent = (e: Event) => setPresent(!!ref.current && (e as CustomEvent<Element>).detail.contains(ref.current))
+      document.addEventListener(PRESENT_EVENT, onPresent)
+      return () => document.removeEventListener(PRESENT_EVENT, onPresent)
     }
     const update = () => {
       const slide = deck.getCurrentSlide() as Element | undefined

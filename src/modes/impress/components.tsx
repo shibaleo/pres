@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { mdxComponents } from '../../deck/mdx-components'
+import { Overlay, markerSteps } from '../marker-steps'
 
 /**
  * impress モードの部品。原稿の変換結果(vite/remark-beamer の Slide / Stack / Overlay / OverlaySteps)を
@@ -23,47 +24,10 @@ function Stack({ children }: { children?: ReactNode }) {
   return <>{children}</>
 }
 
-/**
- * Beamer の overlay(\pause・<2->・\only<2>{…} など)。表示するかは今の段で決める(ImpressApp の syncOverlays)。
- * from・to は Beamer の段の番号(1 枚目が 1)、only は非表示の間に場所も取らない(\only)
- */
-function Overlay({
-  from,
-  to,
-  as: Tag = 'div',
-  only = false,
-  children,
-}: {
-  from: number | string
-  to?: number | string
-  as?: 'div' | 'span'
-  only?: boolean
-  children?: ReactNode
-}) {
-  return (
-    <Tag className={only ? 'overlay only' : 'overlay'} data-from={from} data-to={to}>
-      {children}
-    </Tag>
-  )
-}
-
-/**
- * スライドの段の数だけ、空の substep を置く。impress の substep は要素を文書順に 1 つずつ見せるだけで、
- * 段の番号の指定も「消える」も無いので、段を進める印としてだけ使い、今の段 = 見えている印の数 + 1 とする
- */
-function OverlaySteps({ max }: { max: number | string }) {
-  return (
-    <>
-      {Array.from({ length: Number(max) - 1 }, (_, i) => (
-        <span key={i} className="substep overlay-step" aria-hidden />
-      ))}
-    </>
-  )
-}
-
 /** reveal の Fragment に当たるもの。impress モードではまだ段に数えず、常に表示する */
 function Fragment({ children }: { children?: ReactNode }) {
   return <div>{children}</div>
 }
 
-export const impressComponents = { ...mdxComponents, Slide, Stack, Overlay, OverlaySteps, Fragment }
+/** 段の印は impress の substep(文書順に 1 つずつ substep-visible が付く) */
+export const impressComponents = { ...mdxComponents, Slide, Stack, Overlay, OverlaySteps: markerSteps('substep'), Fragment }

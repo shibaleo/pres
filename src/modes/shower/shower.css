@@ -1,0 +1,54 @@
+/* Shower モード(ShowerApp.tsx)の配置。本文の見た目は theme/ の .deck の規則がそのまま効く。
+   Shower は容器(body.shower)に一覧なら list、全画面なら full を付け、今のスライドに active を付ける */
+
+body.shower {
+  background: var(--color-surface);
+}
+/* スライド 1 枚は最小サイズ(deck/slide-metrics.ts。原稿が当てにしてよい大きさ)の固定の大きさ */
+.shower .slide {
+  width: var(--shower-slide-width);
+  height: var(--shower-slide-height);
+  overflow: hidden;
+  background: var(--color-canvas);
+}
+
+/* 読み上げ用の領域(Shower が body の末尾に置く section.region。今のスライドの複製)は、画面には出さない
+   (Shower のテーマと同じく、読み上げには残したまま見た目だけ隠す) */
+.shower > .region {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* 一覧: 縮小したスライドを左上から並べる。今のスライドはアクセントの枠 */
+.shower.list .shower-slides {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(2 * var(--ui-space));
+  padding: calc(4 * var(--ui-space));
+}
+.shower.list .slide {
+  zoom: 0.3;
+  cursor: pointer;
+}
+.shower.list .slide.active {
+  outline: calc(var(--rule) / 0.3) solid var(--color-brand);
+}
+
+/* 全画面: 今のスライドだけを、ウィンドウの中央に収まる大きさで(--shower-scale は ShowerApp.tsx が決める) */
+.shower.full {
+  overflow: hidden;
+}
+.shower.full .slide:not(.active) {
+  display: none;
+}
+.shower.full .slide.active {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  scale: var(--shower-scale);
+}

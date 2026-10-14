@@ -1,6 +1,8 @@
 import { useEffect, type CSSProperties } from 'react'
 import type { DeckSource } from '../../App'
 import { MIN_WIDTH, SLIDE_HEIGHT } from '../../deck/slide-metrics'
+import { announcePresent } from '../../components/figure/motion'
+import { applyStep, currentStep } from '../marker-steps'
 import { impressComponents } from './components'
 import './impress.css'
 
@@ -10,15 +12,8 @@ declare global {
   }
 }
 
-/** step(スライド)の今の段: 見えている段の印(OverlaySteps の substep)の数 + 1 */
-function syncOverlays(step: Element) {
-  const k = step.querySelectorAll('.overlay-step.substep-visible').length + 1
-  for (const el of step.querySelectorAll<HTMLElement>('.overlay')) {
-    const from = Number(el.dataset.from)
-    const to = el.dataset.to === undefined ? Infinity : Number(el.dataset.to)
-    el.classList.toggle('overlay-hidden', k < from || k > to)
-  }
-}
+/** step(スライド)を今の段の状態にする。段の印は substep で、見えている印(substep-visible)が進んだ印 */
+const syncOverlays = (step: Element) => applyStep(step, currentStep(step, '.substep-visible'))
 
 /**
  * impress モード: スライドを平面に並べ、カメラが移って拡大・縮小する(impress.js)。
@@ -30,7 +25,9 @@ export default function ImpressApp({ Slides }: DeckSource) {
   useEffect(() => {
     const onChange = (e: Event) => {
       const step = (e.target as Element).closest('.step')
-      if (step) syncOverlays(step)
+      if (!step) return
+      syncOverlays(step)
+      if (e.type === 'impress:stepenter') announcePresent(step)
     }
     const events = ['impress:stepenter', 'impress:substep:enter', 'impress:substep:leave']
     for (const name of events) document.addEventListener(name, onChange)

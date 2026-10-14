@@ -22,29 +22,62 @@ PDF・操作ボタン・タッチ操作）を作り直すことになり、壊�
 
 ### 今のモード
 
+reveal 以外は試作で、URL の `?mode=<名前>` で選ぶ（選び方は仮）。選んだモードはそのタブの中で覚える（sessionStorage。ライブラリが URL を書き換えて `?mode` を消しても、読み直したときに同じモードで開く。reveal に戻すには `?mode=reveal`）。reveal 以外は選んだときだけ読み込む（`src/main.tsx`）。
+
 | モード | 場所 | 状態 |
 |---|---|---|
 | reveal（既定） | `src/App.tsx`・`src/deck/mdx-components.tsx` | 完成。一覧・ページ番号・はみ出しの検査・PDF・発表者ビュー（reveal のノートのプラグイン） |
-| impress（試作） | `src/modes/impress/` | 開くには URL に `?mode=impress`（選び方は仮）。下の「impress モード」 |
+| impress | `src/modes/impress/` | `?mode=impress`。平面に並べてカメラが移る。下の「impress モード」 |
+| Shower | `src/modes/shower/` | `?mode=shower`。一覧と全画面を行き来する。下の「Shower モード」 |
+| Spectacle | `src/modes/spectacle/` | `?mode=spectacle`。React の部品のデッキ。下の「Spectacle モード」 |
+
+共通の部品: 段の印（`src/modes/marker-steps.tsx`。impress と Shower）と、今のスライドの知らせ（`deck:present` の出来事。
+reveal 以外のモードが送り、動く図が受ける。`src/components/figure/motion.ts`）。段階表示の見た目（`.overlay-hidden`）は theme/base.css。
+
+### 段の印（impress・Shower）
+
+impress の substep と Shower の `.next` は、要素を文書順に 1 つずつ現すだけで、段の番号の指定も「消える」も無い。
+そこで段の数だけ空の要素（印）を `OverlaySteps` の位置に置き、ライブラリには印だけを進めさせる。今の段 = 進んだ印の数 + 1 とし、
+各 `Overlay` の表示をそこから決める。`\only`・`<2-3>` も Beamer どおりに出る。
 
 ### impress モード（試作）
 
 - スライドは impress の step。最小サイズ（933×700）の固定の大きさで、横の並び（h）は右へ、縦の続き（v）は下へ置く。
   最後に全体を見渡す step（`#overview`）を足す
-- 段階表示: impress 1.1.0 の substep は要素を文書順に 1 つずつ見せるだけで、段の番号の指定も「消える」も無い。
-  そこで段の数だけ空の substep（`OverlaySteps`）を置いて段を進める印にし、今の段（見えている印の数 + 1）から
-  各 `Overlay` の表示を決める。`\only`・`<2-3>` も Beamer どおりに出る
-- 図の動き（表示中のスライドだけで回す）は `impress:stepenter` で知る
+- 段階表示は段の印（substep）
 - まだ無いもの: `<Fragment>` を段に数えること（今は常に表示）、一覧・ページ番号・はみ出しの検査・開発時の警告の表示、
   PDF 出力（reveal モードで作る）、発表者ビュー（impress の impressConsole は CSS を URL で読むので単一 HTML では使えない）、
   原稿の中のリンク `#/4`（impress の hash は step の id）、原稿を直したときの描き直し（impress は初期化のときの step しか知らない）
 
+### Shower モード（試作）
+
+- `@shower/core` 3.6.0 の本体（`lib/shower.js`）を直に読む（入口の `lib/index.js` は `document.currentScript` を読んで自動で始めるので、
+  まとめて読み込むと壊れる）。容器は body（Shower はキー操作を容器で受ける）
+- 一覧（縮小したスライドを並べる）と全画面。Shower の作りのまま一覧で始まり（URL に `full` があれば全画面。`?mode=shower&full` で開くと全画面から）、一覧でスライドを押すと全画面、Esc で一覧に戻る。Enter・Space・矢印は次へ。
+  全画面に入るキーは Shift+F5（Mac は Cmd+Enter）。見た目のテーマ（ribbon など）は使わず、配置だけを `shower.css` で決める
+- 段階表示は段の印（`.next`）。一覧ではどのスライドも最後の段の状態
+- 読み上げ用の領域（Shower が置く `section.region`。今のスライドの複製）は、見た目だけ隠す
+- まだ無いもの: `<Fragment>` を段に数えること、ページ番号、PDF 出力、発表者ビュー、原稿の中のリンク `#/4`。
+  Shower は URL を `?full#番号` に書き換えるので `?mode=shower` は消える（モードはタブの中で覚えているので、読み直しても Shower のまま）
+
+### Spectacle モード（試作）
+
+- `spectacle` 10.2.3。React 19 の下で動く（依存の styled-components 5・`react-is@18` も問題なかった）。スライドの大きさは
+  `theme.size` で最小サイズ（933×700）
+- 段階表示は Spectacle の仕組みそのもの: 段のあるスライドが `useSteps(段の数 - 1)` で段を登録し、返る step（-1〜）+ 2 を
+  今の段として部品に配る。段の印は要らない
+- Spectacle の機能がそのまま使える: 一覧（`?overviewMode=true`）、発表者ビュー（`?presenterMode=true`。時計と今・次のスライド）、
+  PDF 用の表示（`?exportMode=true`）。キーは矢印（Space は使わない）
+- 注意: テーマの `backdropStyle` は Spectacle の既定（ウィンドウいっぱいに固定）を丸ごと置き換えるので、既定の値も書く
+  （無いと拡大と中央寄せが効かない）。Slide の `padding` はテーマの間隔の段階の番号として読まれるので、値（`"0px"`）で渡す
+- まだ無いもの: `<Fragment>` を段に数えること、ページ番号、原稿の中のリンク `#/4`。縦の続き（`--`）は横一列に並べる
+
 ### 次にやること
 
 1. reveal モードを `src/modes/reveal/` にまとめる（今の `App.tsx`・`mdx-components.tsx`・reveal に固有の CSS）
-2. デッキがモードを選べるようにする（`decks/<名前>/` の設定のファイル。impress の座標の決め方もそこに）
-3. impress モードの足りないもの（上）を埋める
-4. 3 つ目のモード（Shower など）。共通の書き方をそこで見直す
+2. デッキがモードを選べるようにする（`decks/<名前>/` の設定のファイル。impress の座標の決め方もそこに）。
+3. `<Fragment>` を変換で段に数える（`\uncover<+->{…}` と同じ数え方の `Overlay` にする。どのモードでも同じに出る）
+4. 各モードの足りないもの（上）を埋める。モードに共通の書き方（今は Slide・Stack・Overlay・OverlaySteps・Notes）を見直す
 
 ### 決めたこと
 

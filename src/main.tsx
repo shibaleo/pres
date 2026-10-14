@@ -1,7 +1,33 @@
-import React from 'react'
+import React, { lazy, Suspense, type ComponentType } from 'react'
 import { createRoot } from 'react-dom/client'
 import App, { type DeckSource } from './App'
-import ImpressApp from './modes/impress/ImpressApp'
+
+/**
+ * モード(スライドを動かすライブラリ。docs/motion.md)。既定は reveal。ほかは試作で、URL の ?mode=<名前> で選ぶ(選び方は仮)。
+ * reveal 以外は選んだときだけ読み込む
+ */
+const MODES: Record<string, ComponentType<DeckSource>> = {
+  reveal: App,
+  impress: lazy(() => import('./modes/impress/ImpressApp')),
+  shower: lazy(() => import('./modes/shower/ShowerApp')),
+  spectacle: lazy(() => import('./modes/spectacle/SpectacleApp')),
+}
+
+/**
+ * 使うモードの名前。?mode=<名前> で選んだモードは、そのタブの中で覚える(sessionStorage。デッキごと)。
+ * ライブラリが URL を書き換えて ?mode を消しても(Shower は ?full#番号 にする)、読み直したときに同じモードで開くため。
+ * reveal に戻すには ?mode=reveal
+ */
+function modeName(): string {
+  const key = `deck-mode:${location.pathname}`
+  const chosen = new URLSearchParams(location.search).get('mode')
+  try {
+    if (chosen) sessionStorage.setItem(key, chosen)
+    return chosen ?? sessionStorage.getItem(key) ?? 'reveal'
+  } catch {
+    return chosen ?? 'reveal' // sessionStorage が使えないとき(プライベートモードなど)
+  }
+}
 
 // reveal.js の本体の CSS(スライドの配置と遷移・UI)。本文の見た目は theme/ が持ち、reveal のテーマは使わない
 import 'reveal.js/reveal.css'
@@ -18,13 +44,16 @@ export function startDeck(deck: DeckSource): (next: DeckSource) => void {
   const preset = getComputedStyle(document.documentElement).getPropertyValue('--deck-preset').trim()
   if (preset) document.documentElement.dataset.preset = preset
 
-  // モード(スライドを動かすライブラリ)。既定は reveal。?mode=impress で impress.js(試作。選び方は仮)
-  const Mode = new URLSearchParams(location.search).get('mode') === 'impress' ? ImpressApp : App
+  const name = modeName()
+  if (!(name in MODES)) console.warn(`[deck] モード「${name}」はありません(${Object.keys(MODES).join('・')})。reveal で開きます`)
+  const Mode = MODES[name] ?? App
   const root = createRoot(document.getElementById('root')!)
   const render = (d: DeckSource) =>
     root.render(
       <React.StrictMode>
-        <Mode {...d} />
+        <Suspense>
+          <Mode {...d} />
+        </Suspense>
       </React.StrictMode>,
     )
   render(deck)

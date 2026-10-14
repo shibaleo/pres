@@ -22,21 +22,3 @@ body.impress-enabled {
 .impress-enabled #impress .step {
   transition: opacity 1s;
 }
-
-/* 段階表示(components.tsx の Overlay)。非表示の間も場所は残す(\uncover)。\only は場所も取らない */
-#impress .overlay {
-  transition:
-    opacity 0.2s ease,
-    visibility 0.2s ease;
-}
-#impress .overlay.overlay-hidden {
-  opacity: 0;
-  visibility: hidden;
-}
-#impress .overlay.only.overlay-hidden {
-  display: none;
-}
-/* 段を進める印(空の substep) */
-#impress .overlay-step {
-  display: none;
-}
