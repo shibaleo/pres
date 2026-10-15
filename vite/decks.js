@@ -6,7 +6,8 @@
  *   motion.ts       動きの設定(モード・スライドごとの遷移。無ければ reveal で既定の遷移。src/modes/motion.ts)
  * と、原稿が import する画像や部品(img/・components/)。文書の部品(src/components)・土台の見た目(src/theme)・
  * 記法の処理(vite/)はすべてのデッキで共有する。decks/components/ はいくつかのデッキで共有する部品の置き場所なので、
- * デッキの名前には使えない(RESERVED_NAMES)。
+ * デッキの名前には使えない(RESERVED_NAMES)。モードの名前(reveal など)も、URL とビルドのフォルダの /<デッキ>/<モード>/ と
+ * 取り違えるので使えない。
  *
  * 開発サーバーは 1 つで全デッキを配信し(URL の /<名前>/ でデッキを選ぶ)、ビルドはデッキごとに行う
  * (scripts/deck.mjs がデッキの名前を引数で受け取り、vite.config.ts の deckConfig に渡す)。
@@ -15,6 +16,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { dirname, join, relative, sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
+import { MODE_NAMES } from '../src/modes/names.ts'
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 export const DECKS_DIR = join(ROOT, 'decks')
@@ -22,8 +24,12 @@ export const DECKS_DIR = join(ROOT, 'decks')
 /** デッキの名前に使える文字(フォルダ名・URL・出力先にそのまま使うため) */
 export const DECK_NAME = /^[a-z0-9][a-z0-9-]*$/
 
-/** デッキの名前に使えない名前(decks/ の下の、デッキではないフォルダ) */
-export const RESERVED_NAMES = ['components']
+/**
+ * デッキの名前に使えない名前: decks/ の下の、デッキではないフォルダ(components)と、モードの名前
+ * (開発サーバーの /<デッキ>/<モード>/ と、--mode でビルドした dist/<デッキ>/<モード>/ と取り違える。
+ * ほかのデッキを埋め込む部品(decks/demonstration/components/LiveDeck)も、フォルダの名前でモードのフォルダかを見分ける)
+ */
+export const RESERVED_NAMES = ['components', ...MODE_NAMES]
 
 /** デッキの名前の一覧(decks/ の下で deck.mdx を持つフォルダ。名前順) */
 export function listDecks() {
@@ -45,6 +51,7 @@ export function listDecks() {
  */
 export function resolveDeck(name) {
   if (!DECK_NAME.test(name)) throw new Error(`デッキの名前 "${name}" は英小文字・数字・ハイフンだけで書いてください`)
+  if (RESERVED_NAMES.includes(name)) throw new Error(`"${name}" はデッキの名前に使えません(使えない名前: ${RESERVED_NAMES.join(', ')})`)
   const dir = join(DECKS_DIR, name)
   if (!existsSync(join(dir, 'deck.mdx'))) {
     throw new Error(`デッキ "${name}" がありません(decks/${name}/deck.mdx)。あるデッキ: ${listDecks().join(', ') || 'なし'}`)

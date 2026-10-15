@@ -69,7 +69,13 @@ const commands = {
   new() {
     const [name] = names
     if (!name || !DECK_NAME.test(name)) throw new Error('npm run new -- <名前>(英小文字・数字・ハイフン)で指定してください')
-    if (RESERVED_NAMES.includes(name)) throw new Error(`decks/${name}/ はデッキで共有する部品の置き場所なので、デッキの名前には使えません`)
+    if (RESERVED_NAMES.includes(name)) {
+      throw new Error(
+        name === 'components'
+          ? `decks/${name}/ はデッキで共有する部品の置き場所なので、デッキの名前には使えません`
+          : `"${name}" はモードの名前なので、デッキの名前には使えません(/<デッキ>/<モード>/ と取り違える)`,
+      )
+    }
     const dir = join(DECKS_DIR, name)
     if (existsSync(dir)) throw new Error(`decks/${name}/ はもうあります`)
     mkdirSync(dir, { recursive: true })
