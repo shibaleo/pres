@@ -27,6 +27,18 @@ export const SPECTACLE_TRANSITIONS: Record<TransitionName, SlideTransition> = {
     enter: { transform: `${PERSPECTIVE} translateX(0%) rotateY(0deg) translateX(0%)`, opacity: 1 },
     leave: { transform: `${PERSPECTIVE} translateX(-50%) rotateY(-90deg) translateX(-50%)`, opacity: 1 },
   },
+  // 立体的に外向きに回り込む(reveal の convex と同じ形)
+  convex: {
+    from: { transform: `${PERSPECTIVE} translateX(100%) rotateY(90deg) translateX(100%)`, opacity: 1 },
+    enter: { transform: `${PERSPECTIVE} translateX(0%) rotateY(0deg) translateX(0%)`, opacity: 1 },
+    leave: { transform: `${PERSPECTIVE} translateX(-100%) rotateY(-90deg) translateX(-100%)`, opacity: 1 },
+  },
+  // 立体的に内向きに回り込む(reveal の concave と同じ形)
+  concave: {
+    from: { transform: `${PERSPECTIVE} translateX(100%) rotateY(-90deg) translateX(100%)`, opacity: 1 },
+    enter: { transform: `${PERSPECTIVE} translateX(0%) rotateY(0deg) translateX(0%)`, opacity: 1 },
+    leave: { transform: `${PERSPECTIVE} translateX(-100%) rotateY(90deg) translateX(-100%)`, opacity: 1 },
+  },
   // 下からカードが重なってきて、前のカードは奥に下がって消える
   cards: {
     from: { transform: 'translateY(110%) scale(1) rotate(4deg)', opacity: 1 },
@@ -38,6 +50,18 @@ export const SPECTACLE_TRANSITIONS: Record<TransitionName, SlideTransition> = {
     from: { transform: `${PERSPECTIVE} rotateY(180deg)`, opacity: 1, backfaceVisibility: 'hidden' },
     enter: { transform: `${PERSPECTIVE} rotateY(0deg)`, opacity: 1, backfaceVisibility: 'hidden' },
     leave: { transform: `${PERSPECTIVE} rotateY(-180deg)`, opacity: 1, backfaceVisibility: 'hidden' },
+  },
+  // 傾いたカードが横に並んで流れる(Swiper の coverflow)
+  coverflow: {
+    from: { transform: `${PERSPECTIVE} translateX(80%) rotateY(-45deg) scale(0.8)`, opacity: 1 },
+    enter: { transform: `${PERSPECTIVE} translateX(0%) rotateY(0deg) scale(1)`, opacity: 1 },
+    leave: { transform: `${PERSPECTIVE} translateX(-80%) rotateY(45deg) scale(0.8)`, opacity: 1 },
+  },
+  // 奥へ下がりながら傾いて出入りする(Swiper の creative。このリポジトリの Swiper モードと同じ形)
+  creative: {
+    from: { transform: `${PERSPECTIVE} translate3d(120%, 0px, -500px) rotateZ(15deg)`, opacity: 1 },
+    enter: { transform: `${PERSPECTIVE} translate3d(0%, 0px, 0px) rotateZ(0deg)`, opacity: 1 },
+    leave: { transform: `${PERSPECTIVE} translate3d(-120%, 0px, -500px) rotateZ(-15deg)`, opacity: 1 },
   },
 }
 

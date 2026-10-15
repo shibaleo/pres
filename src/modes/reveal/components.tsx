@@ -5,8 +5,9 @@ import { slideAttributes, stepsOf, type SlideProps } from '../structure'
 import { Overlay, OverlaySteps } from './Overlay'
 
 /** 共通の遷移の名前を reveal の遷移にする(reveal にあるものだけ。名前は同じ)。無ければ undefined */
-export function revealTransition(t: TransitionName | undefined): 'none' | 'slide' | 'fade' | 'zoom' | undefined {
-  return t && MODE_TRANSITIONS.reveal.slide.includes(t) ? (t as 'none' | 'slide' | 'fade' | 'zoom') : undefined
+type RevealTransition = 'none' | 'slide' | 'fade' | 'zoom' | 'convex' | 'concave'
+export function revealTransition(t: TransitionName | undefined): RevealTransition | undefined {
+  return t && MODE_TRANSITIONS.reveal.slide.includes(t) ? (t as RevealTransition) : undefined
 }
 
 /**

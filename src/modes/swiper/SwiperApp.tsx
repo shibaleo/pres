@@ -1,9 +1,11 @@
 import { useEffect, useRef } from 'react'
 import Swiper from 'swiper'
-import { A11y, EffectCards, EffectCube, EffectFade, EffectFlip } from 'swiper/modules'
+import { A11y, EffectCards, EffectCoverflow, EffectCreative, EffectCube, EffectFade, EffectFlip } from 'swiper/modules'
 import type { SwiperOptions } from 'swiper/types'
 import 'swiper/css'
 import 'swiper/css/effect-cards'
+import 'swiper/css/effect-coverflow'
+import 'swiper/css/effect-creative'
 import 'swiper/css/effect-cube'
 import 'swiper/css/effect-fade'
 import 'swiper/css/effect-flip'
@@ -46,6 +48,14 @@ const EFFECTS: Partial<Record<TransitionName, SwiperOptions>> = {
   cube: { effect: 'cube', cubeEffect: { shadow: false, slideShadows: false } },
   flip: { effect: 'flip', flipEffect: { slideShadows: false } },
   cards: { effect: 'cards', cardsEffect: { slideShadows: false } },
+  coverflow: { effect: 'coverflow', coverflowEffect: { slideShadows: false } },
+  creative: {
+    effect: 'creative',
+    creativeEffect: {
+      prev: { translate: ['-120%', 0, -500], rotate: [0, 0, -15] },
+      next: { translate: ['120%', 0, -500], rotate: [0, 0, 15] },
+    },
+  },
 }
 
 /**
@@ -71,7 +81,7 @@ export default function SwiperApp({ Slides, motion }: DeckSource) {
     const effect = motion?.transition && MODE_TRANSITIONS.swiper.deck.includes(motion.transition) ? motion.transition : 'slide'
     const step = new Map<number, number>()
     const swiper = new Swiper(el, {
-      modules: [A11y, EffectCards, EffectCube, EffectFade, EffectFlip],
+      modules: [A11y, EffectCards, EffectCoverflow, EffectCreative, EffectCube, EffectFade, EffectFlip],
       ...EFFECTS[effect],
       speed: 600,
       initialSlide: activeIndex.current,

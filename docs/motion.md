@@ -147,9 +147,13 @@ impress の substep と Shower の `.next` は、要素を文書順に 1 つず�
 - 優先は ラベル → 構造の規則 → 既定。照合はビルドのときに原稿の変換（vite/remark-beamer）が行い、各スライドに `<Slide transition>` を付ける。
   モードはその名前を自分の演出に対応させるだけ。無いラベル・スライドのものではないラベル・そのモードで使えない遷移は原稿の警告と同じ扱い
   （本番のビルドは失敗）
-- 遷移の語彙は `src/modes/names.ts` の `TRANSITIONS`（none・slide・fade・zoom・cube・cards・flip）、モードごとに使えるものは
-  `MODE_TRANSITIONS`。Spectacle はすべて（`src/modes/spectacle/transitions.ts`。from・enter・leave の 3 つの形を transform で書く）、
-  reveal は reveal の名前と同じもの（data-transition）、Swiper はデッキの既定だけ（演出を作るときに 1 つだけ決める作り）
+- 遷移の語彙は `src/modes/names.ts` の `TRANSITIONS`（none・slide・fade・zoom・convex・concave・cube・cards・flip・coverflow・creative。
+  convex・concave は reveal の型、coverflow・creative は Swiper の型から）、モードごとに使えるものは `MODE_TRANSITIONS`。
+  Spectacle はすべて（`src/modes/spectacle/transitions.ts`。from・enter・leave の 3 つの形を transform で書く）、
+  Shower もすべて（入る方だけのアニメーション。`shower.css`）、reveal は reveal の名前と同じもの（data-transition。convex・concave を含む）、
+  Swiper はデッキの既定だけ（演出を作るときに 1 つだけ決める作り。coverflow・creative を含む）
+- 段の現れ方の語彙は `STEP_EFFECTS`（fade・fade-up・fade-down・fade-left・fade-right・zoom-in・blur・none）。motion.ts の `step` で選び、
+  どのモードでも同じに効く（reveal は fragment の型、ほかは theme/base.css の `[data-step-effect]` の規則）
 - Spectacle では、そのスライドの遷移で入り、出るときもそのスライドの遷移で出る（前のスライドの leave と、次のスライドの from・enter が同時に動く）。
   slide だけは向きを文書の構造に合わせる（上の「Spectacle モード」）
 - 入れ子: impress・Shower・Spectacle はページ全体を使う作りなので、スライドの中にはそのまま置けない。そこで、ほかのデッキを

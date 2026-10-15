@@ -443,7 +443,7 @@ describe('動きの設定(motion.ts)', () => {
     const motion = motionFile('deck', `{ mode: 'swiper', transition: 'zoom' }`)
     const { file } = await run(src, { motion })
     expect(file.messages.map((m) => m.reason)).toEqual([
-      expect.stringMatching(/モード swiper では既定の遷移に zoom を使えません\(使えるもの: slide・fade・cube・cards・flip\)/),
+      expect.stringMatching(/モード swiper では既定の遷移に zoom を使えません\(使えるもの: slide・fade・cube・cards・flip・coverflow・creative\)/),
     ])
   })
 

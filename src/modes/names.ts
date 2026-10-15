@@ -54,7 +54,9 @@ export type RevealView = (typeof REVEAL_VIEWS)[number]
  * 遷移(スライドへ入るときの動き)の名前。デッキの動きの設定(decks/<名前>/motion.ts。modes/motion.ts)で使う共通の語彙で、
  * 各モードは持っているものだけを自分の演出に対応させる
  */
-export const TRANSITIONS = ['none', 'slide', 'fade', 'zoom', 'cube', 'cards', 'flip'] as const
+// convex・concave は reveal の型(立体的に外向き・内向きに回り込む)、coverflow・creative は Swiper の型
+// (傾いたカードが並ぶ・奥へ下がりながら傾いて出入りする)
+export const TRANSITIONS = ['none', 'slide', 'fade', 'zoom', 'convex', 'concave', 'cube', 'cards', 'flip', 'coverflow', 'creative'] as const
 export type TransitionName = (typeof TRANSITIONS)[number]
 
 /**
@@ -62,9 +64,9 @@ export type TransitionName = (typeof TRANSITIONS)[number]
  * (Swiper は演出を作るときに 1 つだけ決める作りなので、スライドごとには指定できない)
  */
 export const MODE_TRANSITIONS: Record<ModeName, { slide: readonly TransitionName[]; deck: readonly TransitionName[] }> = {
-  reveal: { slide: ['none', 'slide', 'fade', 'zoom'], deck: ['none', 'slide', 'fade', 'zoom'] },
+  reveal: { slide: ['none', 'slide', 'fade', 'zoom', 'convex', 'concave'], deck: ['none', 'slide', 'fade', 'zoom', 'convex', 'concave'] },
   impress: { slide: [], deck: [] },
   shower: { slide: TRANSITIONS, deck: TRANSITIONS },
   spectacle: { slide: TRANSITIONS, deck: TRANSITIONS },
-  swiper: { slide: [], deck: ['slide', 'fade', 'cube', 'cards', 'flip'] },
+  swiper: { slide: [], deck: ['slide', 'fade', 'cube', 'cards', 'flip', 'coverflow', 'creative'] },
 }

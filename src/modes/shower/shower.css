@@ -91,6 +91,22 @@ body.shower {
 .shower.full[data-deck-transition='flip'] .slide.active:not([data-transition]) {
   animation-name: shower-flip;
 }
+.shower.full .slide.active[data-transition='convex'],
+.shower.full[data-deck-transition='convex'] .slide.active:not([data-transition]) {
+  animation-name: shower-convex;
+}
+.shower.full .slide.active[data-transition='concave'],
+.shower.full[data-deck-transition='concave'] .slide.active:not([data-transition]) {
+  animation-name: shower-concave;
+}
+.shower.full .slide.active[data-transition='coverflow'],
+.shower.full[data-deck-transition='coverflow'] .slide.active:not([data-transition]) {
+  animation-name: shower-coverflow;
+}
+.shower.full .slide.active[data-transition='creative'],
+.shower.full[data-deck-transition='creative'] .slide.active:not([data-transition]) {
+  animation-name: shower-creative;
+}
 /* 位置(translate)と倍率(scale)は個別の指定で決めているので、動きは transform だけで書く(重ねて効く) */
 @keyframes shower-slide {
   from {
@@ -125,5 +141,28 @@ body.shower {
   from {
     opacity: 0;
     transform: perspective(2000px) rotateY(calc(var(--shower-dir) * -90deg));
+  }
+}
+/* 立体的に外向き・内向きに回り込んでくる(reveal の convex・concave の入り方) */
+@keyframes shower-convex {
+  from {
+    transform: perspective(2000px) translateX(calc(var(--shower-dir) * 100%)) rotateY(calc(var(--shower-dir) * 90deg)) translateX(calc(var(--shower-dir) * 100%));
+  }
+}
+@keyframes shower-concave {
+  from {
+    transform: perspective(2000px) translateX(calc(var(--shower-dir) * 100%)) rotateY(calc(var(--shower-dir) * -90deg)) translateX(calc(var(--shower-dir) * 100%));
+  }
+}
+/* 傾いたカードが横から流れてくる(Swiper の coverflow の入り方) */
+@keyframes shower-coverflow {
+  from {
+    transform: perspective(2000px) translateX(calc(var(--shower-dir) * 80%)) rotateY(calc(var(--shower-dir) * -45deg)) scale(0.8);
+  }
+}
+/* 奥から傾きながら出てくる(Swiper の creative の入り方) */
+@keyframes shower-creative {
+  from {
+    transform: perspective(2000px) translate3d(calc(var(--shower-dir) * 120%), 0, -500px) rotateZ(calc(var(--shower-dir) * 15deg));
   }
 }
