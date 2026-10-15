@@ -1,29 +1,186 @@
-/* 見た目の切り替え(devtools/LookSwitcher.tsx。開発時だけ読み込むので、ビルドには入らない)。画面の左上に小さく、操作していないときは薄く。
-   開発時の道具なので配色はテーマに依らない */
+/* 見た目の切り替え(devtools/LookSwitcher.tsx。開発時だけ読み込むので、ビルドには入らない)。
+   開発時の道具なので、デッキの見た目(テーマ)には依らない。Next.js や TanStack の開発表示のように、
+   画面の左下の暗い丸いバッジから、上にパネルが開く。デッキの中身の硬い見た目とは別の、道具としての見た目 */
 .deck-look {
+  --look-bg: rgb(17 17 19 / 92%);
+  --look-border: rgb(255 255 255 / 12%);
+  --look-text: #ededed;
+  --look-muted: #a1a1aa;
+  --look-hover: rgb(255 255 255 / 8%);
+  --look-accent: #3b82f6;
   position: fixed;
-  top: var(--ui-space);
-  left: var(--ui-space);
-  z-index: 60;
-  display: flex;
-  flex-direction: column;
-  gap: calc(var(--ui-space) / 2);
-  padding: calc(var(--ui-space) / 2) var(--ui-space);
-  font: 12px/1.4 var(--font-ui);
-  color: #333;
-  background: #fff;
-  border: 1px solid #ccc;
-  opacity: var(--ui-idle);
-  transition: opacity 0.2s;
+  /* reveal のメニューのボタン(左下)の右に置く */
+  bottom: 12px;
+  left: 56px;
+  z-index: 70;
+  font: 500 12px/1.4 ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Noto Sans JP', sans-serif;
+  color: var(--look-text);
+  letter-spacing: normal;
+  text-transform: none;
+  text-shadow: none;
 }
-.deck-look:hover,
-.deck-look:focus-within {
+.deck-look button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+/* バッジ */
+.deck-look-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px 0 10px;
+  background: var(--look-bg);
+  border: 1px solid var(--look-border);
+  border-radius: 999px;
+  box-shadow:
+    0 8px 24px rgb(0 0 0 / 25%),
+    0 1px 2px rgb(0 0 0 / 30%);
+  backdrop-filter: blur(8px);
+  opacity: 0.55;
+  transition:
+    opacity 0.15s,
+    transform 0.15s;
+}
+.deck-look-badge:hover,
+.deck-look-badge[aria-expanded='true'],
+.deck-look:focus-within .deck-look-badge {
   opacity: 1;
 }
-.deck-look select {
-  font: inherit;
+.deck-look-badge:active {
+  transform: scale(0.97);
 }
-.deck-look code {
-  font-family: var(--font-code);
+/* デッキの設定と違うテーマのときの印 */
+.deck-look-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #f59e0b;
+}
+
+/* パネル */
+.deck-look-panel {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  width: 260px;
+  max-height: min(70vh, 520px);
+  overflow: hidden;
+  background: var(--look-bg);
+  border: 1px solid var(--look-border);
+  border-radius: 12px;
+  box-shadow: 0 16px 40px rgb(0 0 0 / 35%);
+  backdrop-filter: blur(12px);
+  animation: deck-look-in 0.12s ease-out;
+}
+@keyframes deck-look-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+.deck-look-list {
+  overflow-y: auto;
+  padding: 6px;
+}
+.deck-look-group + .deck-look-group {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid var(--look-border);
+}
+.deck-look-group-label {
+  padding: 6px 8px 4px;
+  font-size: 11px;
+  color: var(--look-muted);
+}
+.deck-look-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 6px 8px;
+  text-align: left;
+  background: none;
+  border: none;
+  border-radius: 6px;
+}
+.deck-look-item:hover,
+.deck-look-item:focus-visible {
+  background: var(--look-hover);
+  outline: none;
+}
+.deck-look-name {
+  flex: 1;
+}
+.deck-look-tag {
+  padding: 1px 6px;
+  font-size: 10px;
+  color: var(--look-muted);
+  border: 1px solid var(--look-border);
+  border-radius: 999px;
+}
+.deck-look-check {
+  color: var(--look-accent);
+}
+/* 色見本: テーマの地の円に、文字の色とアクセントの色の点 */
+.deck-look-swatch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 18%);
+}
+.deck-look-swatch > span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+
+/* 下の段: style.css に書く 1 行と、コピー・戻す */
+.deck-look-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border-top: 1px solid var(--look-border);
+}
+.deck-look-footer code {
+  padding: 6px 8px;
+  font: 11px/1.4 ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  color: var(--look-text);
+  white-space: pre-wrap;
+  word-break: break-all;
+  background: rgb(255 255 255 / 6%);
+  border-radius: 6px;
   user-select: all;
+}
+.deck-look-actions {
+  display: flex;
+  gap: 6px;
+}
+.deck-look-actions button {
+  flex: 1;
+  padding: 6px 8px;
+  background: rgb(255 255 255 / 8%);
+  border: 1px solid var(--look-border);
+  border-radius: 6px;
+}
+.deck-look-actions button:hover {
+  background: rgb(255 255 255 / 14%);
+}
+.deck-look-actions button:first-child {
+  color: #fff;
+  background: var(--look-accent);
+  border-color: transparent;
+}
+.deck-look-actions button:first-child:hover {
+  background: #2563eb;
 }
