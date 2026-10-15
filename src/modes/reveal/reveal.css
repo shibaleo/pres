@@ -25,6 +25,28 @@ html.reveal-print .pdf-page:has(> section > h2:first-child) .slide-number {
 .reveal :is(.controls, .progress) {
   color: var(--color-brand);
 }
+/* スクロールビュー(motion.ts の reveal.view。?view=scroll)の右端のバー: スライドごとの区切り・今のスライド・今の位置(丸)。
+   reveal はこれを、テーマが決める色(--r-overlay-element-bg-color。スライドの背景の明暗の判定で替わる)で塗るが、
+   reveal のテーマは使わず、スライドの背景も reveal に渡していないので、白い地の上で見えない明るい灰色のままになる。
+   そこで矢印や進み具合のバーと同じく、アクセント色(区切りは地の色に混ぜた薄い色)で塗る。角はパネルと同じ(--radius) */
+.reveal-viewport.reveal-scroll .scrollbar :is(.scrollbar-inner, .scrollbar-slide, .scrollbar-playhead),
+.reveal-viewport.reveal-scroll .scrollbar .scrollbar-slide .scrollbar-trigger::after {
+  border-radius: var(--radius);
+}
+.reveal-viewport.reveal-scroll .scrollbar .scrollbar-slide {
+  background-color: color-mix(in srgb, var(--color-brand) 20%, transparent);
+  box-shadow: none;
+}
+.reveal-viewport.reveal-scroll .scrollbar .scrollbar-slide:hover,
+.reveal-viewport.reveal-scroll .scrollbar .scrollbar-slide.active,
+.reveal-viewport.reveal-scroll .scrollbar .scrollbar-slide.active.has-triggers {
+  background-color: color-mix(in srgb, var(--color-brand) 40%, transparent);
+}
+.reveal-viewport.reveal-scroll .scrollbar .scrollbar-playhead,
+.reveal-viewport.reveal-scroll .scrollbar .scrollbar-slide.active .scrollbar-trigger::after,
+.reveal-viewport.reveal-scroll .scrollbar .scrollbar-slide.active .scrollbar-trigger ~ .scrollbar-trigger.active::after {
+  background-color: var(--color-brand);
+}
 /* 矢印は内容の邪魔をしないよう普段は薄くし、マウスを乗せたときだけはっきり出す */
 .reveal .controls {
   opacity: var(--ui-idle);

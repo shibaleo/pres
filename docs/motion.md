@@ -54,7 +54,9 @@ impress の substep と Shower の `.next` は、要素を文書順に 1 つず�
 - reveal 6 の `view: 'scroll'`。スライドを縦に並べた 1 ページにし、スクロールで進む（段階表示もスクロールで 1 段ずつ）。
   デッキの motion.ts の `reveal: { view: 'scroll' }` でいつもこの表示に、URL の `?view=scroll`（reveal 自身の約束）で一時的に。
   PDF 用の表示（`?print-pdf`）では使わない。reveal は窓の幅が 435px 以下だと自動でスクロールビューにする（`scrollActivationWidth`）
-- ページ番号は出ない（reveal がスクロールビューでは隠し、代わりにスクロールバーにスライドの区切りを出す）
+- ページ番号は出ない（reveal がスクロールビューでは隠し、代わりに右端のバーにスライドの区切りを出す。バーはスクロール中だけ出る）。
+  バーの色は reveal のテーマの色（スライドの背景の明暗で替わる）なので、テーマを使わないこのリポジトリでは白い地の上で見えなかった。
+  `reveal.css` でアクセント色と `--radius` で塗り直している
 - スクロールビューはスライドの幅と高さを `!important` で決めるので、はみ出しの検査は測る間の幅と高さにも `!important` を付ける
 - メニューからの移動（`deck.slide`）と URL の `#/5` は、そのスライドの位置へスクロールする
 - 見本: `decks/demonstration/` の「reveal（スクロールビュー）」（landau を `?view=scroll` で埋め込む）
