@@ -43,6 +43,9 @@ export default function ImpressApp({ Slides, motion }: DeckSource) {
       const step = (e.target as Element).closest('.step')
       if (!step) return
       syncOverlays(step)
+      // impress の substep のプラグインは、同じ出来事の中で後から段の印(substep-visible)を書き換えることがある
+      // (後ろのスライドから戻ったとき)。出来事の処理が済んだ後にもう一度読む
+      queueMicrotask(() => syncOverlays(step))
       if (e.type === 'impress:stepenter') {
         activeIndex = Math.max(0, allSteps().indexOf(step as HTMLElement))
         announcePresent(step)

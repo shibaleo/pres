@@ -67,6 +67,42 @@ describe('ビルド設定(結合)', () => {
     expect(links).toEqual(['arnold2012=1', 'arnold2012=1', 'nakajima2020=2'])
   })
 
+  it('範囲にまとめた引用([1–4])の番号は、その番号の文献へリンクする', async () => {
+    const keys = ['halmos1974', 'rota1997', 'mccarthy', 'higham2020']
+    const out = String(
+      await compile(
+        new VFile({ path: 'slides.mdx', value: `\\cite{${keys.join(',')}}\n\n<Bibliography />` }),
+        mdxOptions({ bibliography: 'decks/speech/references.bib', strict: false }),
+      ),
+    )
+    const links = [...out.matchAll(/href: "#bib-(\w+)",\s*children: "(\d+)"/g)].map((m) => `${m[2]}=${m[1]}`)
+    expect(links).toEqual(['1=halmos1974', '4=higham2020'])
+  })
+
+  it('\\footfullcite は、その文献の書誌(リンクを含む)をスライドの脚注に出す。<Bibliography /> が無ければ文献リストは出さない', async () => {
+    const out = String(
+      await compile(
+        new VFile({ path: 'slides.mdx', value: '## 題\n\n本文\\footfullcite{halmos1974}' }),
+        mdxOptions({ bibliography: 'decks/speech/references.bib', strict: true }),
+      ),
+    )
+    expect(out).toContain('"footnotes"')
+    expect(out).toContain('How to Talk Mathematics')
+    expect(out).toContain('href: "https://doi.org/10.1007/978-1-4613-8211-9_17"')
+    expect(out).not.toContain('csl-bib-body')
+  })
+
+  it('\\footfullcite の文献は <Bibliography /> にも載る', async () => {
+    const out = String(
+      await compile(
+        new VFile({ path: 'slides.mdx', value: '本文\\footfullcite{halmos1974}\\cite{rota1997}\n\n---\n\n<Bibliography />' }),
+        mdxOptions({ bibliography: 'decks/speech/references.bib', strict: true }),
+      ),
+    )
+    // 番号の順は構文木の順(脚注の本文はスライドの下にあるので、本文の \cite より後)
+    expect([...out.matchAll(/id: "bib-(\w+)"/g)].map((m) => m[1]).sort()).toEqual(['halmos1974', 'rota1997'])
+  })
+
   it('文献リストの URL と DOI はリンクになる(句点は含めない)', async () => {
     const out = String(
       await compile(

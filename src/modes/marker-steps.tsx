@@ -1,4 +1,5 @@
 import { isShown, overlayClass, type OverlayProps } from './structure'
+import { markStep } from '../deck/mode'
 
 /**
  * 段の印: 段階表示が「要素を文書順に 1 つずつ現す」だけのライブラリ(impress の substep、Shower の .next)で、
@@ -29,6 +30,7 @@ export function StepMarkers({ steps, markerClass }: { steps: number; markerClass
 
 /** スライドを段 k の状態にする(各 Overlay の表示を決める) */
 export function applyStep(slide: Element, k: number) {
+  markStep(slide, k)
   for (const el of slide.querySelectorAll<HTMLElement>('.overlay')) {
     el.classList.toggle('overlay-hidden', !isShown(k, el.dataset.from!, el.dataset.to))
   }

@@ -82,6 +82,7 @@ const commands = {
     }
     const dir = join(DECKS_DIR, name)
     if (existsSync(dir)) throw new Error(`decks/${name}/ はもうあります`)
+    if (existsSync(`${dir}.mdx`)) throw new Error(`1 ファイルのデッキ decks/${name}.mdx がもうあります(フォルダに移すなら、それを decks/${name}/deck.mdx にする)`)
     mkdirSync(dir, { recursive: true })
     writeFileSync(
       join(dir, 'deck.mdx'),

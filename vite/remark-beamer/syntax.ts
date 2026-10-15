@@ -62,11 +62,13 @@ function lineConstruct(name: 'latexLine', accept: (line: string) => boolean): Co
 }
 
 const ENV_LINE_RE =
-  /^\\begin\{([A-Za-z]+\*?)\}(?:<[^>]*>)?(?:\[[^\]]*\])?\s*(?:\\label\{[^}]*\})?$|^\\end\{([A-Za-z]+\*?)\}$|^\\pause$|^\\(?:input|import|inputfrom|subimport|subinputfrom)\*?(?:\{[^}]*\}){1,2}$|^\\newtheorem\*?\{[^}]*\}(?:\[[^\]]*\])?\{[^}]*\}(?:\[[^\]]*\])?$|^\\renewcommand\{\\[A-Za-z]+\}\{.*\}$/
+  /^\\begin\{([A-Za-z]+\*?)\}(?:<[^>]*>)?(?:\[[^\]]*\])?\s*(?:\\label\{[^}]*\})?$|^\\end\{([A-Za-z]+\*?)\}$|^\\pause$|^\\(?:input|import|inputfrom|subimport|subinputfrom)\*?(?:\{[^}]*\}){1,2}$|^\\newtheorem\*?\{[^}]*\}(?:\[[^\]]*\])?\{[^}]*\}(?:\[[^\]]*\])?$|^\\renewcommand\{\\[A-Za-z]+\}\{.*\}$|^\\(?:title|subtitle|author|institute|date)(?:\[[^\]]*\])?\{.*\}$|^\\useoutertheme\{[^}]*\}$|^\\(?:titlepage|maketitle)$/
 /**
  * `\begin{theorem}[…]` / `\end{theorem}` / `\pause` / ファイルの取り込み(`\input{…}`、import パッケージの
  * `\import{…}{…}` `\subimport{…}{…}` と別名)/ 定理型の環境の宣言(amsthm の `\newtheorem`)/
- * 命令の定義し直し(`\renewcommand{\thefootnote}{…}`。対応する命令は transform.ts が決める)。
+ * 命令の定義し直し(`\renewcommand{\thefootnote}{…}`。対応する命令は transform.ts が決める)/
+ * Beamer の題目の情報(`\title[短い題]{…}` `\subtitle` `\author` `\institute` `\date`)・表紙(`\titlepage` `\maketitle`)・
+ * 外側のテーマ(`\useoutertheme{infolines}`)。
  * 数式環境は別の構文が先に拾う
  */
 const latexLine = lineConstruct('latexLine', (line) => {
@@ -160,12 +162,20 @@ const nonLazyContinuation: Construct = {
 /**
  * 文中の命令 `\name<spec>[opt]{body}`。< > と [ ] と { } のどれかが続くときだけ命令と見なす
  * (`C:\Users` のような文字列は対象外)。body の中括弧は入れ子を数える。
+ * ただし `\item`(description 環境の項目。LaTeX と同じく本文の中括弧を取らない)は `\item` / `\item<spec>` /
+ * `\item[用語]` / `\item<spec>[用語]` で終わる。
  */
 const latexCommand: Construct = {
   name: 'latexCommand',
   tokenize(effects: Effects, ok: State, nok: State) {
     let depth = 0
     let escaped = false
+    let commandName = ''
+    const isItem = () => commandName === 'item'
+    const done = (code: Code): State | undefined => {
+      effects.exit('latexCommand')
+      return ok(code)
+    }
     return start
 
     function start(code: Code): State | undefined {
@@ -176,16 +186,19 @@ const latexCommand: Construct = {
     }
     function nameStart(code: Code): State | undefined {
       if (!asciiAlpha(code)) return nok(code)
+      commandName += String.fromCharCode(code as number)
       effects.consume(code)
       return name
     }
     function name(code: Code): State | undefined {
       if (asciiAlpha(code)) {
+        commandName += String.fromCharCode(code as number)
         effects.consume(code)
         return name
       }
       if (code === LT) return spec(code)
       if (code === LBRACKET) return opt(code)
+      if (isItem()) return done(code)
       if (code === LBRACE) return body(code)
       return nok(code)
     }
@@ -204,6 +217,7 @@ const latexCommand: Construct = {
     }
     function afterSpec(code: Code): State | undefined {
       if (code === LBRACKET) return opt(code)
+      if (isItem()) return done(code)
       if (code === LBRACE) return body(code)
       return nok(code)
     }
@@ -221,6 +235,7 @@ const latexCommand: Construct = {
       return optInside
     }
     function afterOpt(code: Code): State | undefined {
+      if (isItem()) return done(code)
       if (code === LBRACE) return body(code)
       return nok(code)
     }

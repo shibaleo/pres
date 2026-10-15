@@ -165,15 +165,26 @@ class Steps {
 
 // ---------- 行・命令の解析 ----------
 
+/** Beamer の題目の情報(\title[短い形]{…} など)。表紙(\titlepage)と下端の題目(infolines)に使う */
+type InfoField = 'title' | 'subtitle' | 'author' | 'institute' | 'date'
+
 type Line =
   | { kind: 'begin'; name: string; spec?: string; opt?: string; label?: string }
   | { kind: 'end'; name: string }
   | { kind: 'pause' }
   | { kind: 'newtheorem'; star: boolean; name: string; shared?: string; heading: string; within?: string }
   | { kind: 'renewcommand'; name: string; body: string }
+  | { kind: 'info'; field: InfoField; short?: string; body: string }
+  | { kind: 'outertheme'; name: string }
+  | { kind: 'titlepage' }
 function parseLine(raw: string): Line {
   const s = raw.trim()
   if (s === '\\pause') return { kind: 'pause' }
+  if (s === '\\titlepage' || s === '\\maketitle') return { kind: 'titlepage' }
+  const info = s.match(/^\\(title|subtitle|author|institute|date)(?:\[([^\]]*)\])?\{(.*)\}$/)
+  if (info) return { kind: 'info', field: info[1] as InfoField, short: info[2], body: info[3] }
+  const outer = s.match(/^\\useoutertheme\{([^}]*)\}$/)
+  if (outer) return { kind: 'outertheme', name: outer[1].trim() }
   const rc = s.match(/^\\renewcommand\{\\([A-Za-z]+)\}\{(.*)\}$/)
   if (rc) return { kind: 'renewcommand', name: rc[1], body: rc[2] }
   // amsthm: \newtheorem{名前}[番号を共有する環境]{見出し} / \newtheorem{名前}{見出し}[section] / \newtheorem*{名前}{見出し}
@@ -269,8 +280,9 @@ function formatFootnote(format: FootnoteFormat, n: number): { mark: string } | {
 }
 
 function parseCommand(raw: string) {
-  const m = raw.match(/^\\([A-Za-z]+)(?:<([^>]*)>)?(?:\[([^\]]*)\])?\{([\s\S]*)\}$/)!
-  return { name: m[1], spec: m[2], opt: m[3], body: m[4] }
+  // 本文の中括弧の無い命令は \item だけ(syntax.ts)。そのときの body は空
+  const m = raw.match(/^\\([A-Za-z]+)(?:<([^>]*)>)?(?:\[([^\]]*)\])?(?:\{([\s\S]*)\})?$/)!
+  return { name: m[1], spec: m[2], opt: m[3], body: m[4] ?? '' }
 }
 
 // ---------- 本体 ----------
@@ -387,6 +399,11 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
     const slides = stacks.map((s) => s.filter((nodes) => nodes.length > 0)).filter((s) => s.length > 0)
 
     // (2) 環境と \pause を構造にする(スライドごと)
+    /** 証明の見出しの語(amsthm の \proofname。\renewcommand{\proofname}{…} で、書いた所から後が変わる。既定は部品の Proof) */
+    let proofName: string | undefined
+    /** Beamer の題目の情報(\title[短い形]{…} など。書いた順に上書き)と、下端に題目を出すか(\useoutertheme{infolines}) */
+    const titleInfo: Partial<Record<InfoField, { short?: string; body: string }>> = {}
+    let infolines = false
     const built = slides.map((stack) => stack.map((nodes) => buildEnvs(nodes)))
 
     function buildEnvs(children: RootContent[]): RootContent[] {
@@ -394,6 +411,7 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
       const stack: Frame[] = [{ kind: 'root', items: [] }]
       const top = () => stack[stack.length - 1]
       const finish = (f: Frame) => {
+        if (f.name === 'description') f.items = descriptionItems(f.items, f.node!)
         f.node!.children = [...(f.head ?? []), ...f.items] as MdxJsxFlowElement['children']
         const spec = beamer(f.node!)?.spec
         // \begin{theorem}<2-> は環境ごと Overlay で包む
@@ -416,10 +434,24 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
           stack.push({ kind: 'pause', node: inherit(overlayFlow({ pause: true }, [], child.position), child), items: [] })
         } else if (line.kind === 'newtheorem') {
           declareTheorem(line, child)
+        } else if (line.kind === 'info') {
+          titleInfo[line.field] = { short: line.short, body: line.body }
+        } else if (line.kind === 'outertheme') {
+          if (line.name === 'infolines') infolines = true
+          else error(`\\useoutertheme{${line.name}} には対応していません(対応しているのは infolines)`, child)
+        } else if (line.kind === 'titlepage') {
+          // 表紙は題目の情報がそろった後(文書を組み終えた後の transformNode)で組むので、印として残す
+          child.data = { ...child.data, titlepage: true } as typeof child.data
+          top().items.push(child)
         } else if (line.kind === 'renewcommand') {
-          // 命令の定義し直し。LaTeX と同じく書いた所から後に効くので、文書の順に処理する所(transformNode)まで残す
-          if (line.name !== 'thefootnote') error(`\\renewcommand{\\${line.name}} には対応していません(対応しているのは \\thefootnote)`, child)
-          else {
+          // 命令の定義し直し。LaTeX と同じく書いた所から後に効く。\proofname はここ(環境を組む順 = 文書の順)で、
+          // \thefootnote は脚注を処理する所(transformNode)で効かせるので、そこまで残す
+          if (line.name === 'proofname') {
+            if (/[\\{}$]/.test(line.body)) error(`\\proofname は文字だけで書いてください(${line.body})`, child)
+            else proofName = line.body.trim()
+          } else if (line.name !== 'thefootnote') {
+            error(`\\renewcommand{\\${line.name}} には対応していません(対応しているのは \\thefootnote と \\proofname)`, child)
+          } else {
             const format = parseFootnoteFormat(line.body)
             if (typeof format === 'string') error(format, child)
             else {
@@ -427,16 +459,23 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
               top().items.push(child)
             }
           }
+        } else if (line.kind === 'begin' && line.name === 'description') {
+          // LaTeX の description 環境 → HTML の用語と説明(<dl>)。項目は \item[用語](finish で組む)
+          if (line.opt !== undefined || line.label !== undefined) error('\\begin{description} には [ ] や \\label を書けません', child)
+          const el = jsxFlow('dl', {}, [], child.position)
+          el.data = { beamer: { spec: line.spec, env: 'description' } } as object
+          inherit(el, child)
+          stack.push({ kind: 'env', node: el, name: 'description', items: [] })
         } else if (line.kind === 'begin') {
           const env = theorems[line.name]
           const tag = env?.tag ?? (line.name === 'proof' ? 'Proof' : undefined)
           if (!tag) {
-            error(`未対応の環境 \\begin{${line.name}} です(使えるのは ${[...Object.keys(theorems), 'proof'].join(', ')} と数式環境。定理型の環境は \\newtheorem で足せる)`, child)
+            error(`未対応の環境 \\begin{${line.name}} です(使えるのは ${[...Object.keys(theorems), 'proof', 'description'].join(', ')} と数式環境。定理型の環境は \\newtheorem で足せる)`, child)
             continue
           }
           used.add(line.name)
-          // 見出しの語: 証明は [ ] の中身(LaTeX の \begin{proof}[…] と同じ)、定理型は \newtheorem の見出し
-          const el = jsxFlow(tag, tag === 'Proof' ? { heading: line.opt } : { heading: env?.heading }, [], child.position)
+          // 見出しの語: 証明は [ ] の中身(LaTeX の \begin{proof}[…] と同じ)か \proofname、定理型は \newtheorem の見出し
+          const el = jsxFlow(tag, tag === 'Proof' ? { heading: line.opt ?? proofName } : { heading: env?.heading }, [], child.position)
           el.data = { beamer: { spec: line.spec, label: line.label, env: line.name } } as object
           inherit(el, child)
           const head = line.opt && tag !== 'Proof' ? [titleElement(line.opt, child.position)] : []
@@ -461,6 +500,115 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
         finish(f)
       }
       return stack[0].items
+    }
+
+    /**
+     * description 環境の中身を項目に組む。\item<spec>[用語] から次の \item までが 1 項目で、用語は <dt>、
+     * 後ろの本文(段落・リストなど、複数でよい)は <dd>。\item は段落の途中(前の行の続き)にあってもよい。
+     * overlay 指定は項目ごと(<dt> と <dd> を <div> で包み、その組に掛ける。HTML の <dl> で許される包み方)。
+     * 最初の \item より前に本文があればエラー
+     */
+    function descriptionItems(items: RootContent[], env: MdxJsxFlowElement): RootContent[] {
+      type Item = { term: PhrasingContent[]; spec?: string; body: RootContent[]; at: LatexCommand }
+      const out: Item[] = []
+      const isItem = (n: { type: string; value?: string }): n is LatexCommand => n.type === 'latexCommand' && parseCommand(n.value!).name === 'item'
+      const add = (node: RootContent) => {
+        if (out.length === 0) {
+          error('description 環境の中身は \\item[用語] で始めてください', node)
+          return
+        }
+        out[out.length - 1].body.push(node)
+      }
+      for (const node of items) {
+        if (node.type !== 'paragraph' || !node.children.some(isItem)) {
+          add(node)
+          continue
+        }
+        // 段落を \item の所で分ける。前の部分は直前の項目の続き、\item の後ろは新しい項目の最初の段落
+        let run: PhrasingContent[] = []
+        const flush = () => {
+          const trimmed = trimPhrasing(run)
+          if (trimmed.length > 0) add({ type: 'paragraph', children: trimmed, position: node.position } as Paragraph)
+          run = []
+        }
+        for (const child of node.children) {
+          if (!isItem(child)) {
+            run.push(child)
+            continue
+          }
+          flush()
+          const cmd = parseCommand(child.value)
+          const term = cmd.opt === undefined ? [] : phrasingOf(cmd.opt, child.position)
+          out.push({ term, spec: cmd.spec, body: [], at: child })
+        }
+        flush()
+      }
+      return out.map(({ term, spec, body, at }) => {
+        const pair = [jsxFlow('dt', {}, term as unknown as RootContent[], at.position), jsxFlow('dd', {}, body, at.position)]
+        if (spec === undefined) return pair
+        return [overlayFlow({ spec }, pair, at.position)]
+      }).flat().map((n) => inherit(n as MdxJsxFlowElement, env as unknown as RootContent) as RootContent)
+    }
+    /** 題目の情報の行(\\ と \and で分ける。Beamer の表紙と同じく 1 行ずつ並べる) */
+    const infoLines = (body: string) => body.split(/\\\\|\\and(?![A-Za-z])/).map((l) => l.trim()).filter(Boolean)
+
+    /**
+     * 表紙(\titlepage・\maketitle)。Beamer の既定の表紙と同じ順に、題(# 題 と同じ h1。\\ で改行)・副題・著者・所属・日付を並べる。
+     * 著者・所属・日付は <Byline> と同じ .byline(最初の行が際立つ)。\title が無ければエラー
+     */
+    function titlePage(node: RootContent, steps: Steps, overlays: Jsx[]): AnyNode[] {
+      const { title, subtitle, author, institute, date } = titleInfo
+      if (!title) {
+        error('\\titlepage には \\title{…} が要ります(題目の情報は表紙より前に書く)', node)
+        return []
+      }
+      const titleLines = infoLines(title.body).map((l) => phrasingOf(l, node.position))
+      const heading = {
+        type: 'heading',
+        depth: 1,
+        children: titleLines.flatMap((l, i) => (i > 0 ? [{ type: 'break' } as PhrasingContent, ...l] : l)),
+        position: node.position,
+      } as RootContent
+      const out: RootContent[] = [heading]
+      if (subtitle) out.push(jsxFlow('p', { className: 'subtitle' }, phrasingOf(subtitle.body, node.position) as unknown as RootContent[], node.position))
+      const lines = [author, institute, date].flatMap((f) => (f ? infoLines(f.body) : []))
+      if (lines.length > 0) {
+        out.push(jsxFlow('div', { className: 'byline' }, lines.map((l) => jsxFlow('div', {}, phrasingOf(l, node.position) as unknown as RootContent[], node.position)), node.position))
+      }
+      const holder = { type: 'root', children: out } as Root
+      transformChildren(holder, steps, overlays)
+      return holder.children
+    }
+
+    /** 下端の題目(Beamer の infolines)。短い形([ ])が無ければ本文(行は「, 」でつなぐ)。段の数には数えない */
+    function footline(): RootContent {
+      const pick = (f?: { short?: string; body: string }) => (f ? (f.short ?? infoLines(f.body).join(', ')) : '')
+      const who = pick(titleInfo.author) + (titleInfo.institute ? ` (${pick(titleInfo.institute)})` : '')
+      const parts = [who, pick(titleInfo.title), pick(titleInfo.date)].map((t) => {
+        const holder = { type: 'paragraph', children: t ? phrasingOf(t) : [] } as Paragraph
+        transformChildren(holder, new Steps(), [])
+        return jsxFlow('span', {}, holder.children as unknown as RootContent[])
+      })
+      return jsxFlow('div', { className: 'footline', 'aria-hidden': 'true' }, parts)
+    }
+
+    /** 段落の中身の前後の空白(\item の後ろの空白と、項目の間の改行)を落とす */
+    function trimPhrasing(nodes: PhrasingContent[]): PhrasingContent[] {
+      const out = [...nodes]
+      while (out[0]?.type === 'text' && out[0].value.trim() === '') out.shift()
+      while (out.at(-1)?.type === 'text' && (out.at(-1) as Text).value.trim() === '') out.pop()
+      if (out[0]?.type === 'text') out[0] = { ...out[0], value: out[0].value.replace(/^\s+/, '') }
+      const last = out.at(-1)
+      if (last?.type === 'text') out[out.length - 1] = { ...last, value: last.value.replace(/\s+$/, '') }
+      return out
+    }
+    /** [ ] の中の文字(用語)を Markdown として読む(数式なども書ける) */
+    function phrasingOf(source: string, position?: Position): PhrasingContent[] {
+      const parsed = processor.parse(source) as Root
+      const first = parsed.children[0]
+      const phrasing = first && first.type === 'paragraph' ? first.children : [text(source)]
+      setPosition(phrasing, position)
+      return phrasing
     }
 
     /**
@@ -630,6 +778,11 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
     /** 脚注の印の書き方(\renewcommand{\thefootnote}{…} で、書いた所から後が変わる) */
     let footnoteFormat = DEFAULT_FOOTNOTE_FORMAT
     let slideFootnotes: RootContent[] = []
+    /**
+     * 段組の列(<Col>。Beamer の columns の列は minipage)の中の脚注。LaTeX の minipage の脚注と同じく、列ごとの番号
+     * (mpfootnote。\thempfootnote = イタリックの a, b, …)で、本文はその列の終わりに付く。列の外では undefined
+     */
+    let columnFootnotes: { items: RootContent[]; count: number } | undefined
     const slideElements: RootContent[] = built.map((stack, h) => {
       const els = stack.map((nodes, v) => {
         const steps = new Steps()
@@ -652,6 +805,8 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
             jsxFlow('div', { className: 'footnotes' }, slideFootnotes),
           ]
         }
+        // 下端の題目(\useoutertheme{infolines}): 短い形の「著者(所属)・題・日付」
+        if (infolines) root.children.push(footline())
         // to が最後のステップ以降なら「消える」ステップは存在しないので外す
         for (const o of overlays) {
           const to = getAttr(o, 'to')
@@ -681,6 +836,7 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
 
     function transformNode(node: AnyNode, steps: Steps, overlays: Jsx[]): AnyNode[] {
       // \renewcommand{\thefootnote}{…}(buildEnvs で確かめ済み): ここから後の脚注の印の書き方
+      if (node.type === 'latexLine' && (node.data as { titlepage?: boolean } | undefined)?.titlepage) return titlePage(node, steps, overlays)
       const format = node.type === 'latexLine' ? (node.data as { footnoteFormat?: FootnoteFormat } | undefined)?.footnoteFormat : undefined
       if (format) {
         footnoteFormat = format
@@ -706,6 +862,17 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
         transformChildren(node as Parent, steps, overlays)
         return [node]
       }
+      // <Code highlight="1-2 | 3 | 5-6">: 強調する行の範囲を段ごとに(Spectacle の CodePane の highlightRanges に当たる。
+      // LaTeX に標準の書き方が無いので部品で書く)。範囲 1 つにつき 1 段: 最初の範囲はコードの出る段、残りは 1 段ずつ進める
+      // (<Fragment> と同じく段を足すだけで、後ろの本文は隠さない)。各範囲の段を highlightSteps に書き、部品が今の段で選ぶ
+      if (isJsx(node, 'Code') && getAttr(node, 'highlight') !== undefined) {
+        const ranges = getAttr(node, 'highlight')!.split('|').map((r) => r.trim())
+        const bad = ranges.find((r) => !/^\d+(-\d+)?(\s*,\s*\d+(-\d+)?)*$/.test(r))
+        if (bad !== undefined) error(`<Code highlight> の範囲 "${bad}" を読めません(例: "1-2 | 3 | 5-6"。行は 1 から数える)`, node)
+        const at = [steps.cur, ...ranges.slice(1).map(() => steps.pause())]
+        setAttr(node, 'highlightSteps', at.join(' '))
+        return [node]
+      }
       // <Bibliography /> → rehype-citation が文献リストを差し込む印
       if (isJsx(node, 'Bibliography')) {
         return [{ type: 'paragraph', children: [text('[^ref]')], position: node.position }]
@@ -724,6 +891,17 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
       }
       if (node.type === 'latexCommand') return replaceCommand(node, steps, overlays)
       if (node.type === 'latexLine') return [] // buildEnvs で処理済み(エラー報告済みのもの)
+      // 段組の列: 列の中の脚注を集め、列の終わりに並べる(入れ子の列は内側の列のもの)
+      if (isJsx(node, 'Col')) {
+        const outer = columnFootnotes
+        columnFootnotes = { items: [], count: 0 }
+        transformChildren(node as Parent, steps, overlays)
+        if (columnFootnotes.items.length > 0) {
+          ;(node as Parent).children.push(jsxFlow('div', { className: 'footnotes footnotes-column' }, columnFootnotes.items) as never)
+        }
+        columnFootnotes = outer
+        return [node]
+      }
       if ('children' in node) transformChildren(node as Parent, steps, overlays)
       return [node]
     }
@@ -761,25 +939,50 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
      * - オプションは frame(フレームの下に置く。ここでは常にフレームの下なので何もしない)と番号だけ
      * - overlay 指定は本文にだけ掛かる(Beamer の \uncover#2。印は最初から出ていて、本文は隠れている間も場所を取る)
      */
-    function footnote(node: LatexCommand, steps: Steps, overlays: Jsx[]): PhrasingContent {
+    /**
+     * 文献の引用(\cite と \footfullcite)。文献ファイルと key を確かめ、rehype-citation(pandoc 記法)の入力 [@a; @b] にする
+     */
+    function citation(name: string, body: string, opt: string | undefined, node: LatexCommand): Text {
+      const keys = body.split(',').map((k) => k.trim()).filter(Boolean)
+      if (noBibliography) error(`\\${name}{${body}} を書いていますが、文献ファイル(references.bib)がありません`, node)
+      for (const k of keys) if (bibKeys && !bibKeys.has(k)) warn(`文献 "${k}" が ${bibliography} に見つかりません`, node)
+      // 初出順(= 番号順)に並べてから渡す。rehype-citation は複数文献の引用で、番号の並べ替え(CSL)と
+      // リンク先の割り当て(書いた順)が食い違い、[1,2] の 1 が別の文献を指してしまうため
+      for (const k of keys) if (!citeOrder.has(k)) citeOrder.set(k, citeOrder.size)
+      keys.sort((a, b) => citeOrder.get(a)! - citeOrder.get(b)!)
+      // LaTeX の ~ は改行しない空白
+      const locator = opt ? `, ${opt.replace(/~/g, ' ')}` : ''
+      return text(`[${keys.map((k) => `@${k}`).join('; ')}${locator}]`, node.position)
+    }
+
+    function footnote(node: LatexCommand, steps: Steps, overlays: Jsx[], body?: PhrasingContent[]): PhrasingContent {
       const cmd = parseCommand(node.value)
       let mark: number
-      const opt = cmd.opt?.trim()
+      // \footfullcite のオプションは頁の指定(脚注のオプションではない)
+      const opt = body ? undefined : cmd.opt?.trim()
+      // 列の中で [frame] を付けない脚注は、列の脚注(Beamer の既定)。[frame] はスライドの下(フレームの脚注)
+      const column = opt === 'frame' ? undefined : columnFootnotes
       if (opt && /^\d+$/.test(opt)) mark = Number(opt)
       else {
         if (opt && opt !== 'frame') error(`\\footnote のオプション [${opt}] には対応していません(使えるのは frame と番号)`, node)
-        mark = ++footnoteCount
+        mark = column ? ++column.count : ++footnoteCount
       }
-      const parsed = processor.parse(cmd.body) as Root
-      const first = parsed.children[0]
-      if (parsed.children.length > 1 || (first && first.type !== 'paragraph')) error('\\footnote の本文は 1 段落の文で書いてください', node)
-      const holder = { type: 'paragraph', children: first?.type === 'paragraph' ? first.children : [] } as Paragraph
-      setPosition(holder.children, node.position)
-      transformChildren(holder, steps, overlays)
-      const formatted = formatFootnote(footnoteFormat, mark)
+      let holder: Paragraph
+      if (body) holder = { type: 'paragraph', children: body }
+      else {
+        const parsed = processor.parse(cmd.body) as Root
+        const first = parsed.children[0]
+        if (parsed.children.length > 1 || (first && first.type !== 'paragraph')) error('\\footnote の本文は 1 段落の文で書いてください', node)
+        holder = { type: 'paragraph', children: first?.type === 'paragraph' ? first.children : [] } as Paragraph
+        setPosition(holder.children, node.position)
+        transformChildren(holder, steps, overlays)
+      }
+      // 列の脚注の印は \thempfootnote(イタリックの a, b, …)、フレームの脚注は \thefootnote
+      const formatted = column ? formatFootnote([{ style: 'alph' }], mark) : formatFootnote(footnoteFormat, mark)
       if ('error' in formatted) error(formatted.error, node)
       const markText = 'mark' in formatted ? formatted.mark : String(mark)
-      const label = jsxText('span', { className: 'footnote-mark' }, [jsxText('sup', {}, [text(markText)])], node.position)
+      const markClass = column ? 'footnote-mark footnote-mark-column' : 'footnote-mark'
+      const label = jsxText('span', { className: markClass }, [jsxText('sup', {}, [text(markText)])], node.position)
       let item: RootContent = {
         type: 'paragraph',
         children: [label, ...(holder.children as PhrasingContent[])],
@@ -791,8 +994,9 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
         overlays.push(el)
         item = el
       }
-      slideFootnotes.push(item)
-      return jsxText('sup', { className: 'footnote-ref' }, [text(markText, node.position)], node.position)
+      ;(column ? column.items : slideFootnotes).push(item)
+      const refClass = column ? 'footnote-ref footnote-ref-column' : 'footnote-ref'
+      return jsxText('sup', { className: refClass }, [text(markText, node.position)], node.position)
     }
 
     /**
@@ -831,20 +1035,21 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
           if (l?.kind === 'eq') return [eqRef('eqref', key, node)]
           return [refLink(key, `(${l?.n ?? '??'})`, node)]
         }
-        case 'cite': {
-          const keys = cmd.body.split(',').map((k) => k.trim()).filter(Boolean)
-          if (noBibliography) error(`\\cite{${cmd.body}} を書いていますが、文献ファイル(references.bib)がありません`, node)
-          for (const k of keys) if (bibKeys && !bibKeys.has(k)) warn(`文献 "${k}" が ${bibliography} に見つかりません`, node)
-          // 初出順(= 番号順)に並べてから渡す。rehype-citation は複数文献の引用で、番号の並べ替え(CSL)と
-          // リンク先の割り当て(書いた順)が食い違い、[1,2] の 1 が別の文献を指してしまうため
-          for (const k of keys) if (!citeOrder.has(k)) citeOrder.set(k, citeOrder.size)
-          keys.sort((a, b) => citeOrder.get(a)! - citeOrder.get(b)!)
-          // rehype-citation(pandoc 記法)の入力に。LaTeX の ~ は改行しない空白
-          const locator = cmd.opt ? `, ${cmd.opt.replace(/~/g, ' ')}` : ''
-          return [text(`[${keys.map((k) => `@${k}`).join('; ')}${locator}]`, node.position)]
-        }
+        case 'cite':
+          return [citation('cite', cmd.body, cmd.opt, node)]
         case 'footnote':
           return [footnote(node, steps, overlays)]
+        case 'footfullcite': {
+          // biblatex の \footfullcite{key}: その文献の書誌を脚注に。脚注の本文は文献の引用を包んだ印(span.fullcite)にし、
+          // rehype-citation が整形した後で、文献リストのその項目の書誌に置き換える(vite/rehype-cite-links.ts)
+          if (cmd.opt !== undefined) error('\\footfullcite の [ ](頁などの指定)には対応していません', node)
+          const placeholder = jsxText('span', { className: 'fullcite' }, [citation('footfullcite', cmd.body, undefined, node)], node.position)
+          return [footnote(node, steps, overlays, [placeholder])]
+        }
+        case 'item':
+          // description 環境の中の \item は環境を組むときに項目になる(descriptionItems)。ここに来るのは環境の外
+          error('\\item は description 環境の中で使えます(箇条書きは Markdown の - や 1. で書く)', node)
+          return []
         default:
           if (OVERLAY_COMMANDS.has(cmd.name)) {
             const el = overlayCommand(node, steps, overlays, true)

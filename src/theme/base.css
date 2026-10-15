@@ -212,6 +212,10 @@ body {
   min-width: 1.8em;
   text-align: right;
 }
+/* 段組の列の脚注(LaTeX の minipage の脚注)は、列の終わりに付き、印はイタリックの a, b, …(\thempfootnote) */
+.deck :is(.footnote-mark-column sup, sup.footnote-ref-column) {
+  font-style: italic;
+}
 .deck :is(.footnote-mark sup, sup.footnote-ref) {
   line-height: 0;
 }
@@ -329,6 +333,18 @@ body {
 .deck pre code {
   padding: 0;
 }
+/* 段ごとに強調する行(<Code highlight>)。行を 1 行ずつの箱にし、強調する行にアクセント色の淡い地、ほかの行は薄く */
+.deck .code-steps .code-line {
+  display: block;
+  min-height: 1lh;
+  transition: opacity 0.2s, background-color 0.2s;
+}
+.deck .code-steps .code-line-on {
+  background: color-mix(in oklab, var(--color-brand) 18%, transparent);
+}
+.deck .code-steps .code-line-off {
+  opacity: 0.4;
+}
 
 /* ========== 4. その他の部品 ========== */
 
@@ -358,6 +374,31 @@ body {
 }
 .deck .byline > :first-child {
   color: var(--color-ink);
+}
+/* 表紙の副題(\subtitle。\titlepage が組む): 題のすぐ下に、本文の大きさで中央に */
+.deck .subtitle {
+  margin-top: 0;
+  text-align: center;
+}
+/* 下端の題目(\useoutertheme{infolines}): スライドの下の余白(1 行)の中に、著者・題・日付を小さく左・中・右に。
+   余白の中に収まるので、本文の場所は減らない */
+.deck .slide > .footline {
+  position: absolute;
+  right: var(--slide-pad);
+  bottom: 0;
+  left: var(--slide-pad);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: var(--slide-pad);
+  gap: 1ic;
+  font: calc(var(--text-base) / var(--type-ratio) / var(--type-ratio)) / 1 var(--font-ui);
+  color: var(--color-muted);
+  pointer-events: none;
+}
+.deck .slide > .footline > :nth-child(2) {
+  flex: 1;
+  text-align: center;
 }
 
 /* 表: LaTeX の booktabs と同じく、上下の太線と見出しの下の細線だけ(行ごとの罫線は引かない) */

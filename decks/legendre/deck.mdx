@@ -3,7 +3,8 @@
   画像と SVG の図の見本: 表紙の曲面・ルジャンドル曲線・波面・関係の図は元の資料の画像(img/。PDF から取り出して縮めたもの)、
   カスプの法線と正規分布の族は操作できる SVG の図(visx)。付録に、ほかの SVG の図の部品を並べる。
   定理・定義・例は \newtheorem で日本語の見出しにし、元の資料と同じく節ごとの番号(定義 2.1 など)を共有する。
-  脚注の印は元の資料と同じ「∗1)」(\renewcommand{\thefootnote})。
+  脚注の印は元の資料と同じ「∗1)」(\renewcommand{\thefootnote})。表紙は Beamer と同じく \title などと \titlepage で組み、
+  各ページの下端に短い題目を出す(\useoutertheme{infolines})。
 */}
 
 import CuspNormal from './components/CuspNormal'
@@ -12,8 +13,7 @@ import FourPoints from './components/FourPoints'
 import LogSpiral from './components/LogSpiral'
 import Globe from './components/Globe'
 import ConnectedScatterplot from './components/ConnectedScatterplot'
-import generatingFunction from './img/generating-function.png'
-import dual from './img/dual.png'
+import Surface from './components/Surface'
 import legendreCurve from './img/legendre-curve.png'
 import eWavefront from './img/e-wavefront.png'
 import lift from './img/lift.png'
@@ -25,16 +25,27 @@ import d3js from './img/d3js.png'
 \newtheorem{definition}[theorem]{定義}
 \newtheorem{example}[theorem]{例}
 \renewcommand{\thefootnote}{$\ast$\arabic{footnote})}
+\renewcommand{\proofname}{証明}
+\title{ルジャンドル部分多様体の母関数}
+\author[福田]{2064227 福田誠　指導教員 本田淳史}
+\institute[横浜国大]{横浜国立大学 数物・電子情報系学科 数理科学教育プログラム 4 年}
+\date[2024/2/13]{2024 年 2 月 13 日}
+\useoutertheme{infolines}
 
-# ルジャンドル部分多様体の母関数
+\titlepage
 
-<Center>
+<Cols>
+<Col>
 
-<img src={generatingFunction} height={300} alt="関数のグラフとして与えられる曲面" /> <img src={dual} height={300} alt="特異点を持つ曲面とその双対" />
+<Surface kind="graph" />
 
-</Center>
+</Col>
+<Col>
 
-<Byline lines={['横浜国立大学 数物・電子情報系学科 数理科学教育プログラム 4 年', '2064227 福田誠　指導教員 本田淳史', '2024 年 2 月 13 日']} />
+<Surface kind="dual" />
+
+</Col>
+</Cols>
 
 ---
 
@@ -96,10 +107,9 @@ $\xi \wedge (d\xi)^n \neq 0$ を満たす局所的な 1 形式 $\xi$ が存在�
 
 ## 接触形式とダルブーの定理
 
-<dl>
-<dt>接触形式</dt>
-<dd>上の $\xi$．$K = \ker\xi$ を**接触平面場**という．</dd>
-</dl>
+\begin{description}
+\item[接触形式] 上の $\xi$．$K = \ker\xi$ を**接触平面場**という．
+\end{description}
 
 任意の接触多様体の局所的な研究は，標準接触多様体の研究に帰着する．
 
@@ -258,10 +268,9 @@ h = \sum_{i,k \in I} \frac{\partial^2 \textcolor{red}{S}}{\partial x_i \partial 
 $$
 と定義すると，$h$ は $L$ 上で退化点を許容する計量を定める．
 
-<dl>
-<dt>概ヘッセ多様体</dt>
-<dd>退化点を許容する双対平坦構造を持つルジャンドル部分多様体を貼り合わせた多様体．</dd>
-</dl>
+\begin{description}
+\item[概ヘッセ多様体] 退化点を許容する双対平坦構造を持つルジャンドル部分多様体を貼り合わせた多様体．
+\end{description}
 
 ---
 

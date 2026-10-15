@@ -31,6 +31,16 @@ export function announcePresent(slide: Element) {
   document.dispatchEvent(new CustomEvent<Element>(PRESENT_EVENT, { detail: slide }))
 }
 
+/**
+ * スライドの今の段(Beamer と同じ 1 始まり)を、スライドの要素の data-step に書く。どのモードも段が変わるたびに呼ぶ
+ * (段の印のモードは marker-steps.tsx の applyStep、reveal は fragment の出来事、Spectacle は useSteps の段)。
+ * 図の部品は figure/steps.ts の useSlideStep でこれを読み、段階表示と図の状態を連動させる
+ */
+export function markStep(slide: Element, step: number) {
+  const value = String(step)
+  if (slide.getAttribute('data-step') !== value) slide.setAttribute('data-step', value)
+}
+
 /** 最後に知らされた今のスライド(後から描かれた図が、今の状態を知るため) */
 export const presentSlide = () => present
 

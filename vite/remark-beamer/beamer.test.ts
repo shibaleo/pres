@@ -336,13 +336,105 @@ describe('\\footnote', () => {
     expect((await fails('\\renewcommand{\\thefootnote}{\\ast\\arabic{footnote}}')).message).toContain('数式の中で')
     expect((await fails('\\renewcommand{\\thefootnote}{\\textbf{x}}')).message).toContain('脚注の印に使えません')
     expect((await fails('\\renewcommand{\\thefootnote}{\\arabic{page}}')).message).toContain('footnote にしてください')
-    expect((await fails('\\renewcommand{\\proofname}{証明}')).message).toContain('対応していません')
+    expect((await fails('\\renewcommand{\\chaptername}{章}')).message).toContain('対応していません')
     expect((await fails('\\renewcommand{\\thefootnote}{\\fnsymbol{footnote}}\n\n' + 'a\\footnote{x}'.repeat(10))).message).toContain('表せません')
+  })
+
+  it('段組の列の中の脚注は列の終わりに、列ごとの a, b, …。[frame] はスライドの下の通し番号', async () => {
+    const { tree } = await run(
+      '## 題\n\na\\footnote{s}\n\n<Cols>\n<Col>\n\nb\\footnote{c1}c\\footnote[frame]{f}\n\n</Col>\n<Col>\n\nd\\footnote{c2}\n\n</Col>\n</Cols>',
+    )
+    expect(byClass(tree, 'footnote-ref').map(textOf)).toEqual(['1', '2'])
+    expect(byClass(tree, 'footnote-ref footnote-ref-column').map(textOf)).toEqual(['a', 'a'])
+    const cols = jsx(tree, 'Col')
+    expect(cols.map((c) => textOf(byClass(c, 'footnotes footnotes-column')[0]))).toEqual(['ac1', 'ac2'])
+    // スライドの下の脚注は列の外の脚注と [frame] の脚注
+    const slideNotes = jsx(tree, 'Slide')[0].children!.filter((c) => attr(c, 'className') === 'footnotes')
+    expect(slideNotes.map(textOf)).toEqual(['1s2f'])
   })
 
   it('対応しないオプションと、2 段落以上の本文はエラー', async () => {
     expect((await fails('a\\footnote[noframe]{x}')).message).toContain('[noframe]')
     expect((await fails('a\\footnote{- x}')).message).toContain('1 段落')
+  })
+})
+
+describe('題目の情報(\\title など)と \\titlepage', () => {
+  const preamble = '\\title[短い題]{長い題 $x$}\n\\subtitle{副題}\n\\author[著者]{甲 \\and 乙}\n\\institute{所属}\n\\date{2026 年}\n\n'
+
+  it('\\titlepage は題(h1)・副題・著者・所属・日付を Beamer の順に組む(\\and と \\\\ で行を分ける)', async () => {
+    const { tree } = await run(preamble + '\\titlepage\n\n---\n\n## 二')
+    const first = jsx(tree, 'Slide')[0]
+    const kinds = first.children!.map((c) => (c.type === 'heading' ? 'h1' : attr(c, 'className')))
+    expect(kinds).toEqual(['h1', 'subtitle', 'byline'])
+    expect(textOf(first.children![0])).toBe('長い題 x')
+    expect(first.children![2].children!.map(textOf)).toEqual(['甲', '乙', '所属', '2026 年'])
+  })
+
+  it('\\useoutertheme{infolines} は全スライドの下端に短い形の題目を出す', async () => {
+    const { tree } = await run(preamble + '\\useoutertheme{infolines}\n\n\\titlepage\n\n---\n\n## 二')
+    const lines = all(tree, (n) => attr(n, 'className') === 'footline')
+    expect(lines).toHaveLength(2)
+    expect(lines[1].children!.map(textOf)).toEqual(['著者 (所属)', '短い題', '2026 年'])
+  })
+
+  it('\\title の無い \\titlepage と、infolines 以外のテーマはエラー', async () => {
+    expect((await fails('\\titlepage')).message).toContain('\\title')
+    expect((await fails('\\useoutertheme{split}')).message).toContain('infolines')
+  })
+})
+
+describe('<Code highlight>', () => {
+  it('範囲 1 つにつき 1 段。最初の範囲はコードの出る段、残りは 1 段ずつ(後ろの \\pause はその次の段)', async () => {
+    const { tree } = await run('a\n\n\\pause\n\n<Code highlight="1-2 | 3 | 5-6">{`x`}</Code>\n\n\\pause\n\nb')
+    expect(attr(jsx(tree, 'Code')[0], 'highlightSteps')).toBe('2 3 4')
+    expect(attr(jsx(tree, 'Slide')[0], 'steps')).toBe('5')
+  })
+
+  it('読めない範囲はエラー', async () => {
+    expect((await fails('<Code highlight="1-2 | x">{`a`}</Code>')).message).toContain('"x"')
+  })
+})
+
+describe('\\renewcommand{\\proofname}', () => {
+  it('証明の見出しの語を変える(書いた所から後。[ ] を書いた証明はその語)', async () => {
+    const { tree } = await run(
+      '\\begin{proof}\na\n\\end{proof}\n\n\\renewcommand{\\proofname}{証明}\n\n\\begin{proof}\nb\n\\end{proof}\n\n\\begin{proof}[概略]\nc\n\\end{proof}',
+    )
+    expect(jsx(tree, 'Proof').map((p) => attr(p, 'heading'))).toEqual([undefined, '証明', '概略'])
+  })
+
+  it('文字以外を書くとエラー', async () => {
+    expect((await fails('\\renewcommand{\\proofname}{\\textbf{証明}}')).message).toContain('文字だけ')
+  })
+})
+
+describe('description 環境', () => {
+  const kids = (n: N) => (n.children ?? []).map((c) => c.name ?? c.type)
+
+  it('\\item[用語] が <dt>、次の \\item までの本文が <dd> になる(行が続いていても、段落が複数でもよい)', async () => {
+    const { tree } = await run('\\begin{description}\n\\item[接触形式] 説明 $x$\n\\item[ダルブー] 一つ目\n\n二つ目\n\\end{description}')
+    const dl = jsx(tree, 'dl')[0]
+    expect(kids(dl)).toEqual(['dt', 'dd', 'dt', 'dd'])
+    const [dt1, dd1, dt2, dd2] = dl.children!
+    expect(textOf(dt1)).toBe('接触形式')
+    expect(textOf(dd1)).toBe('説明 x')
+    expect(textOf(dt2)).toBe('ダルブー')
+    expect(kids(dd2)).toEqual(['paragraph', 'paragraph'])
+  })
+
+  it('\\item<2-> の overlay 指定は項目(用語と説明の組)に掛かる', async () => {
+    const { tree } = await run('\\begin{description}\n\\item[a] x\n\\item<2->[b] y\n\\end{description}')
+    const dl = jsx(tree, 'dl')[0]
+    expect(kids(dl)).toEqual(['dt', 'dd', 'Overlay'])
+    const o = dl.children![2]
+    expect(attr(o, 'from')).toBe('2')
+    expect(kids(o)).toEqual(['dt', 'dd'])
+  })
+
+  it('最初の \\item より前の本文と、環境の外の \\item はエラー', async () => {
+    expect((await fails('\\begin{description}\n前置き\n\\item[a] x\n\\end{description}')).message).toContain('\\item[用語] で始めて')
+    expect((await fails('a \\item[b] c')).message).toContain('description 環境の中')
   })
 })
 

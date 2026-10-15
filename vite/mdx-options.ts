@@ -16,6 +16,7 @@ import { AllPackages } from 'mathjax-full/js/input/tex/AllPackages.js'
 import remarkBeamer from './remark-beamer/index.ts'
 import rehypeMathjaxDocument from './rehype-mathjax-document.ts'
 import rehypeBibLinks from './rehype-bib-links.ts'
+import rehypeCiteLinks from './rehype-cite-links.ts'
 import rehypeBibPages from './rehype-bib-pages.ts'
 import { rehypeMathPositions, rehypeMathErrors } from './remark-beamer/rehype-math-errors.ts'
 
@@ -89,6 +90,8 @@ export function mdxOptions({
       [rehypeCitationPerFile, { bibliography }],
       // 文献リストの URL・DOI をリンクに(rehype-citation が citeproc-js のリンクの設定を切っているため。rehype-bib-links.ts)
       rehypeBibLinks,
+      // 範囲にまとめた引用([8–11])の番号のリンク先を、番号の文献に合わせ直す(rehype-cite-links.ts)
+      rehypeCiteLinks,
       // 1 枚に収まらない文献リストは、続きのスライドへ送る(Beamer の allowframebreaks。rehype-bib-pages.ts)
       [rehypeBibPages, { width: MIN_WIDTH, height: SLIDE_HEIGHT, textBase: TEXT_BASE, line: SLIDE_PAD, typeRatio: TYPE_RATIO }],
     ],

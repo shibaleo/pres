@@ -4,12 +4,15 @@ import { join, resolve } from 'node:path'
 import type { Locator, Page } from '@playwright/test'
 
 /**
- * 全デッキの名前(decks/<名前>/deck.mdx を持つフォルダ)。デッキに依らない規則(はみ出し・書体)のテストは全デッキで回す。
+ * 全デッキの名前(decks/<名前>/deck.mdx を持つフォルダと、1 ファイルのデッキ decks/<名前>.mdx)。
+ * デッキに依らない規則(はみ出し・書体)のテストは全デッキで回す。
  * ビルドしていないデッキがあれば、そのテストがビルドが無いと報告する(expectBuilt)
  */
 export const allDecks = readdirSync(resolve('decks'), { withFileTypes: true })
-  .filter((d) => d.isDirectory() && existsSync(join('decks', d.name, 'deck.mdx')))
-  .map((d) => d.name)
+  .flatMap((d) =>
+    d.isDirectory() && existsSync(join('decks', d.name, 'deck.mdx')) ? [d.name] : d.isFile() && d.name.endsWith('.mdx') ? [d.name.slice(0, -4)] : [],
+  )
+  .sort()
 
 /**
  * 開くビルド。reveal は reveal モードでビルドしたもの(dist/<名前>/reveal/index.html。npm run build:single -- --mode reveal)で、

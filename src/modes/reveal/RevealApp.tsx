@@ -1,7 +1,8 @@
 import { useRef } from 'react'
 import { Deck, useReveal } from '@revealjs/react'
 import RevealNotes from 'reveal.js/plugin/notes'
-import { LOOK_EVENT, announcePresent, markReady, registerGoTo } from '../../deck/mode'
+import { LOOK_EVENT, announcePresent, markReady, markStep, registerGoTo } from '../../deck/mode'
+import { currentStep } from '../marker-steps'
 import type { DeckSource } from '../../deck/source'
 import { revealComponents, revealTransition } from './components'
 import { StepEffectContext } from './Overlay'
@@ -66,6 +67,13 @@ export default function RevealApp({ Slides, motion }: DeckSource) {
           deck.slide(h, v)
         })
         announcePresent(deck.getCurrentSlide())
+        // 今の段を図の部品に知らせる(deck/mode.ts の markStep)。段は見えている段の印(reveal の fragment の visible)の数 + 1
+        const markCurrentStep = () => {
+          const slide = deck.getCurrentSlide()
+          if (slide) markStep(slide, currentStep(slide, '.visible'))
+        }
+        markCurrentStep()
+        for (const event of ['fragmentshown', 'fragmenthidden', 'slidechanged']) deck.on(event, markCurrentStep)
         markReady()
         if (isPrint) {
           // 印刷用の表示では、reveal はページ番号を通し番号だけで書く。画面と同じ「i/全体」に書き直す。

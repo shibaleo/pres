@@ -31,6 +31,32 @@
   stroke-dasharray: var(--rule) var(--rule);
 }
 
+/* 表紙の曲面(Surface)。曲面の面の色(陰影は部品が黒を混ぜて付ける)と網目、定義域の平面、切り口と尖った辺 */
+.deck .figure-surface {
+  --figure-surface: color-mix(in oklab, var(--color-frame-gray) 45%, white);
+  cursor: grab;
+}
+.deck .figure-surface-sheet {
+  stroke: color-mix(in oklab, var(--figure-surface) 60%, black);
+  stroke-width: 0.4;
+}
+.deck .figure-surface-domain {
+  fill: var(--color-frame-green);
+}
+.deck .figure-surface-outside {
+  fill: var(--color-frame-gold);
+}
+.deck .figure-surface-cut {
+  fill: none;
+  stroke: var(--color-ink);
+  stroke-width: 1;
+}
+.deck .figure-surface-edge {
+  fill: none;
+  stroke: var(--color-frame-red);
+  stroke-width: 1.5;
+}
+
 .deck .figure-globe {
   cursor: grab;
 }

@@ -160,6 +160,8 @@ LaTeX / Beamer 風の記法はすべて JSX の部品に変換されるので、
   デッキだけで使う画像や部品（図など）は、デッキのフォルダ（`img/`・`components/`）に置いて相対パスで import します
   （`import d3js from './img/d3js.png'`、`import Globe from './components/Globe'`）。いくつかのデッキで共有するが
   土台にするほど汎用ではない部品は、`decks/components/` に置きます（そのため `components` という名前のデッキは作れません）。
+- 画像や文献を持たない小さなデッキは、1 ファイル `decks/<名前>.mdx` でも作れます（見た目は土台のまま、動きは reveal の既定、文献なし）。
+  見た目・動き・文献が要るようになったら、`decks/<名前>/deck.mdx` に移してフォルダのデッキにします。同じ名前で両方あるとエラーです。
 
 ### スライドの区切り
 原稿の主ファイルは `decks/<名前>/deck.mdx` です。分けたい部分は LaTeX と同じ `\input` で取り込みます（下記）。
@@ -217,6 +219,25 @@ LaTeX の `\input` と、標準の [import パッケージ](https://ctan.org/pkg
 - MDX の `import Part from './part.mdx'`（部品として読み込む）方式は、ファイルごとに別々にコンパイルされて
   番号が通しにならないので、原稿の分割には使いません。
 
+### 表紙と題目の情報（Beamer と同じ記法）
+原稿の先頭（表紙より前）に、Beamer と同じ行単独の宣言を書き、表紙のスライドに `\titlepage`（`\maketitle` でもよい）と書きます。
+
+```latex
+\title[短い題]{ルジャンドル部分多様体の母関数}
+\subtitle{副題}
+\author[短い著者]{2064227 福田誠　指導教員 本田淳史}
+\institute[短い所属]{横浜国立大学}
+\date[2024/2/13]{2024 年 2 月 13 日}
+\useoutertheme{infolines}
+
+\titlepage
+```
+
+- 表紙は Beamer の既定と同じ順に、題（`# 題` と同じ）・副題・著者・所属・日付を並べます。`\\` と `\and` で行を分けます。中身には数式なども書けます。
+- `\useoutertheme{infolines}` を書くと、全スライドの下端の余白に、短い形（`[ ]`。無ければ本文）の「著者（所属）・題・日付」を小さく出します。
+- `\title` の無い `\titlepage`、infolines 以外の外側のテーマはエラー。手書きの `# 題` と `<Byline>` で表紙を組んでもかまいません。
+- 見本: `decks/legendre/`（infolines あり）、`decks/trial-balance/`。
+
 ### 定理環境（LaTeX と同じ記法）
 ```latex
 \begin{theorem}[Jensen $f$]\label{thm:jensen}
@@ -230,6 +251,7 @@ $f$ が凸なら …
 
 - 環境: `theorem` `lemma` `proposition` `corollary` `definition`（既定では 1 本の通し番号・見出しは英語）、`proof`（番号なし・末尾に ∎）
 - `[…]` は括弧書きの名前（数式も書ける。`proof` では見出し語の置き換え）。`\begin` / `\end` は行単独で書きます。
+- 証明の見出しの語は amsthm と同じく `\renewcommand{\proofname}{証明}`（行単独。書いた所から後の証明に効く。既定は「Proof」）。
 - JSX でも書けます: `<Theorem heading="定理" title="Jensen" id="thm:jensen">…</Theorem>`（`heading` は見出しの語、`title` は括弧書きの名前）。
 
 見出しの語と番号の付け方は、amsthm と同じ `\newtheorem` で決めます（原稿の先頭など、その環境を使う前に行単独で書く）。
@@ -278,10 +300,33 @@ $f$ が凸なら …
 指定は Beamer と同じく `<2->`、`<2>`、`<2-3>`、`<-3>`、`<+->`。ステップ数も Beamer と揃えています。
 `\only` / `\uncover` が段落の中にあれば文中に、段落全体ならブロックとして表示します（LaTeX と同じく、空行の無い連続した行は 1 段落）。
 
+コードの行の強調を段ごとに変えるには、コードブロックを `<Code highlight="…">` で包みます（LaTeX に標準の書き方が無いので部品で書く。
+Spectacle の `CodePane` の `highlightRanges` に当たる）。範囲は `|` で区切り、1 つが 1 段です（最初の範囲はコードの出る段、
+残りは 1 段ずつ。`<Fragment>` と同じく段を足すだけで、後ろの本文は隠さない）。強調している間、ほかの行は薄くなります。
+
+````mdx
+<Code highlight="1-2 | 3 | 5-6">
+
+```js
+function sum(xs) {
+  let s = 0
+  …
+```
+
+</Code>
+````
+
+コードはコードブロックで書きます（MDX の `` {`…`} `` の複数行の文字列は、2 行目以降の行頭の空白が Markdown の字下げとして落ちる）。
+PDF（`?print-pdf`）では段ごとのページでも強調は変わりません（reveal が段ごとのページを写しで作るため）。
+
 ### 文献の引用
 デッキのフォルダの `references.bib`（`decks/<名前>/references.bib`）にエントリを追加し、本文で LaTeX と同じく `\cite{key}`、`\cite{a,b}`、`\cite[p.~5]{key}` と書きます。
 番号付け・整形・文献リストは rehype-citation（CSL）が行い、`<Bibliography />` の位置に文献リストが入ります。
 本文の引用は `[1]` / `[1,2]` の形です（CSL: NLM/Vancouver 角括弧版）。このスタイルは頁指定（`[p.~5]`）を表示しません。
+連続した 3 件以上は `[8–11]` のように範囲にまとまり、表示された番号がそれぞれの文献へリンクします
+（rehype-citation はリンク先を書いた順に割り当てて範囲とずれるので、番号から付け直す。`vite/rehype-cite-links.ts`）。
+そのスライドの脚注に文献の書誌を出すには、biblatex と同じく `\footfullcite{key}` と書きます（脚注の番号・段組の中の扱いは `\footnote` と同じ。
+書誌の整形は文献リストと同じ。`<Bibliography />` があればそこにも載り、無ければ文献リストは出さない）。
 エントリの `url` と `doi` は文献リストでリンクになります（DOI のリンク先は `https://doi.org/…`。`vite/rehype-bib-links.ts`）。
 文献リストが 1 枚に収まらないときは、Beamer の `allowframebreaks` と同じく、同じ題に「（続き）」を付けたスライドへ送ります
 （同じ節の縦の続きとして並ぶ。1 枚に入る量は文字数から見積もる。`vite/rehype-bib-pages.ts`）。
@@ -317,7 +362,7 @@ $f$ が凸なら …
 | 数式の一部に色 | `\textcolor{red}{S}`。色は名前（`red` など）か `\definecolor{名前}{RGB}{235,235,235}`（`gray` 形式も可。一度定義すれば後の数式で使える） |
 | 大事な式を囲む | `$\colorbox{lightgray}{\(K = \ker\xi\)}$`（中の式は `\(…\)` で書く。`$…$` は外側と衝突する） |
 | ブロックの見出しに出典 | `\begin{theorem}[ダルブーの定理 \cite{key}]` |
-| 用語と説明（description 環境） | `<dl>` `<dt>用語</dt>` `<dd>説明</dd>` `</dl>` |
+| 用語と説明（description 環境） | `\begin{description}` `\item[用語] 説明` `\end{description}`（HTML の `<dl>` になる。`\item<2->` で項目ごとの段階表示。JSX の `<dl>` `<dt>` `<dd>` でも書ける） |
 | 脚注 | `\footnote{…}`（下の「脚注」） |
 | 再掲・補足 | `<small>（再掲）…</small>` |
 | 要点を中央に | `<Center>` |
@@ -334,15 +379,17 @@ Beamer と同じく `\footnote{本文}` と書きます（本文には数式・�
   たとえば `\renewcommand{\thefootnote}{$\ast$\arabic{footnote})}` で「∗1)」。番号は `\arabic` `\alph` `\Alph` `\roman` `\Roman` `\fnsymbol`
   （引数は `footnote`）、記号は数式の中の `\ast` `\star` `\dagger` `\ddagger` と、文の中の `\textasteriskcentered` `\textdagger` `\textdaggerdbl`。
   それ以外の命令、表せない番号（`\alph` の 27 以上・`\fnsymbol` の 10 以上）、`\thefootnote` 以外の `\renewcommand` はエラー。
-- オプションは番号と `frame` だけです。段組（`<Cols>`）の中の脚注も、スライドの下に並びます（Beamer の `[frame]` 付きと同じ。列の下に置く Beamer の既定には未対応）。
+- オプションは番号と `frame` だけです。
+- 段組（`<Cols>`）の列の中の脚注は、Beamer と同じく列（minipage）の脚注です。列ごとの番号（イタリックの a, b, …）で、本文はその列の終わりに付きます。
+  `\footnote[frame]{…}` と書けば、スライドの下の通し番号の脚注になります。
 - 処理は `vite/remark-beamer/transform.ts`（`footnote`）、見た目は `src/theme/base.css`（脚注）。見本は `decks/legendre/`。
 
 次のものは今の構成では書けません。
 
 | したいこと | 理由 |
 |---|---|
-| `\begin{description}` / `\begin{itemize}` / `\emph` / `\textbf` | 未対応（エラーになる）。CommonMark と JSX（`<dl>`・リスト・`**`）で書く |
-| スライドごとの文献リスト（使った文献だけ） | `<Bibliography />` はどこに置いても全文献を出す（rehype-citation の動き） |
+| `\begin{itemize}` / `\begin{enumerate}` / `\emph` / `\textbf` | 未対応（エラーになる）。CommonMark（リスト・`**`）で書く。`\item` は description 環境の中だけ |
+| スライドごとの文献リスト（使った文献だけ） | `<Bibliography />` はどこに置いても全文献を出す（rehype-citation の動き）。スライドの文献は `\footfullcite` で脚注に出す |
 | `\definecolor{…}{HTML}{EBEBEB}` | MathJax が HTML 形式に未対応。`RGB` か `gray` 形式で書く |
 
 ### 記法エラーと警告
@@ -377,6 +424,10 @@ Beamer と同じく `\footnote{本文}` と書きます（本文には数式・�
 デッキの `components/`（いくつかのデッキで共有するなら `decks/components/`）に React コンポーネントとして追加。visx の部品（縮尺 `@visx/scale`、座標軸 `@visx/axis`、
 格子 `@visx/grid`、図形 `@visx/shape`、地図 `@visx/geo`）で SVG を組み、状態は React の state で持つ。
 図を作る道具は `src/figure/`（`@/figure/…` で import）。ドラッグは `useSvgDrag.ts`（モードの拡大縮小があっても図の座標で受け取れる）。
+段階表示と図を連動させるには `steps.ts` の `useSlideStep(ref)` で、図の載ったスライドの今の段（Beamer と同じ 1 始まり）を受け取ります
+（Spectacle の `useSteps` に当たる。段の数は原稿の overlay 指定で決まり、原稿の書き方は変わらない。どのモードでも、段が変わると
+スライドの要素の `data-step` に今の段を書く。`deck/mode.ts` の `markStep`）。表紙の曲面（`decks/legendre/components/Surface.tsx`）は、
+網目を見る向きに投影して奥から塗る 3 次元の図の見本。
 SVG なので拡大しても鮮明で、印刷・PDF にもそのまま残る。色は `theme/base.css` の `.figure-*`（点・取っ手・ラベル・軸・系列など、図に共通の語彙）でトークンから決め、1 つの図に固有の色はデッキの `style.css` に書く。
 
 ## 動きの設定（モードと遷移）
@@ -525,10 +576,10 @@ PDF 用の表示は reveal モードのものなので、`npm run pdf` と `npm 
 
 ## 次にやること
 
-- 表紙の双対のグラフ（3D の曲面）を visx の図にする。描く関数（$f = \tfrac12 x^2 + \tfrac13 y^3$ とその双対か）の確認待ち。
-- 今は書けない LaTeX の標準の記法: `description` 環境、スライドごとの文献リスト、
-  証明の見出しの語（`\renewcommand{\proofname}{証明}`。今は「Proof.」のまま）。
-- 開発用の依存の脆弱性警告（`braces`、`vite-plugin-singlefile` 経由）。修正版が出たら更新する。
+- 依存の脆弱性警告。範囲の中で上げられるものは上げた（`npm audit fix`）。残りは直った版がまだ無いもの:
+  `braces`（`vite-plugin-singlefile` 経由。ビルドの時だけ使い、信頼できない glob は受け取らない）と、spectacle が古い版に固定している
+  `trim`・`prismjs`・`decode-uri-component`（Markdown のスライド・コードの強調・URL の解析。どれも自分の原稿しか通さない。
+  decode-uri-component の直った版は ESM だけで、spectacle の query-string 7 が読めないので overrides でも上げない）。上流の更新を待つ。
 
 ### Spectacle / MDX Deck との比較から（方向は決定。着手の時期は未定）
 
@@ -539,13 +590,13 @@ PDF 用の表示は reveal モードのものなので、`npm run pdf` と `npm 
 
 取り込むもの（効果の大きい順）:
 
-1. **段階表示に図の部品が加わる仕組み**（Spectacle の `useSteps` に当たる）。図の部品が段階表示の 1 段として並び、
+1. **段階表示に図の部品が加わる仕組み**（Spectacle の `useSteps` に当たる。済み: `src/figure/steps.ts` の `useSlideStep`）。図の部品が段階表示の 1 段として並び、
    今の段を受け取れるようにする（段階表示と図の状態の連動）。原稿の書き方（overlay 指定）は変えず、部品の側だけで足す。
    各モードの `Overlay` の実体（reveal は fragment、impress は substep）の上に、モードごとに載せる。
-2. **Beamer の題目の情報**（`\title` / `\author` / `\date` と `\maketitle`、footline）。表紙を `<Byline>` で手書きする代わりに、
+2. **Beamer の題目の情報**（`\title` / `\author` / `\date` と `\maketitle`、footline。済み: `\titlepage`・`\useoutertheme{infolines}`）。表紙を `<Byline>` で手書きする代わりに、
    Beamer の標準の書き方で表紙と各ページの下端の題目・著者を作る。原稿の書き方に関わるので、設計を提案して承認を得てから。
-3. **コードの行の強調を段階にする**（Spectacle の `CodePane` の `highlightRanges`）。LaTeX に標準の書き方が無いので、記法ではなく部品で。
-4. **1 ファイルのデッキ**（MDX Deck の Gatsby テーマの `decks/*.mdx`）。画像や文献を持たない小さなデッキ向け。
+3. **コードの行の強調を段階にする**（Spectacle の `CodePane` の `highlightRanges`。済み: `<Code highlight>`）。LaTeX に標準の書き方が無いので、記法ではなく部品で。
+4. **1 ファイルのデッキ**（MDX Deck の Gatsby テーマの `decks/*.mdx`。済み: `decks/<名前>.mdx`）。画像や文献を持たない小さなデッキ向け。
    今の「1 フォルダ = 1 デッキ」と 2 通りになるので、優先は低い。
 
 取り込まないもの: Spectacle の `FitText`（文字を自動で縮めて枠に収める。はみ出しを補うことになり、文字の大きさもスライドごとにばらつく）。

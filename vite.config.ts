@@ -121,7 +121,7 @@ function decksPlugin(deck: string | undefined, mode: ModeName | undefined): Plug
         ...(libraryCss ? [`import '${libraryCss}'`] : []),
         `import { startDeck } from '/src/main.tsx'`,
         `import Mode from '${modeModule(mode)}'`,
-        `import '${rootUrl(d.style)}'`,
+        ...(d.style ? [`import '${rootUrl(d.style)}'`] : []),
         `import Slides, { deckWarnings } from '${main}'`,
         motion,
         `const update = startDeck({ Slides, warnings: deckWarnings, motion }, Mode)`,

@@ -79,6 +79,10 @@ html.reveal-print .reveal .figure-buttons {
   display: flex !important;
   min-height: 100%;
 }
+/* 下端の題目(base.css の .footline)のあるスライドも、スライドの領域いっぱいにして題目を下端に置く */
+.reveal .slides section:has(> .footline) {
+  min-height: 100%;
+}
 
 /* 段階表示(reveal モードの modes/reveal/Overlay.tsx。Beamer の \pause / <2-> / \only など) */
 /* ステップ数を揃えるための見えない fragment */

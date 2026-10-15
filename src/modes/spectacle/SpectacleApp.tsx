@@ -2,7 +2,7 @@ import { Children, createContext, isValidElement, useContext, useEffect, useMemo
 import { Deck, DeckContext, Notes, Slide as SpectacleSlide, SlideContext, useSteps } from 'spectacle'
 import type { DeckSource } from '../../deck/source'
 import { documentComponents } from '../../components'
-import { announcePresent, deckSlides, markReady, registerGoTo } from '../../deck/mode'
+import { announcePresent, deckSlides, markReady, markStep, registerGoTo } from '../../deck/mode'
 import { useViewSize, useWindowHasSize } from '../../deck/view-size'
 import { PageNumber, watchPageNumbers } from '../page-number'
 import { isShown, overlayClass, slideAttributes, stepsOf, type OverlayProps, type SlideProps } from '../structure'
@@ -83,6 +83,10 @@ function Body({ step, attributes, placeholder, children }: { step: number; attri
   useEffect(() => {
     if (isSlideActive && ref.current) announcePresent(ref.current)
   }, [isSlideActive])
+  // 今の段を図の部品に知らせる(deck/mode.ts の markStep)
+  useEffect(() => {
+    if (ref.current) markStep(ref.current, step)
+  }, [step])
   return (
     <div className="deck spectacle-body">
       <section ref={ref} className="slide" {...attributes}>
