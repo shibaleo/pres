@@ -283,6 +283,17 @@ $f$ が凸なら …
 番号付け・整形・文献リストは rehype-citation（CSL）が行い、`<Bibliography />` の位置に文献リストが入ります。
 本文の引用は `[1]` / `[1,2]` の形です（CSL: NLM/Vancouver 角括弧版）。このスタイルは頁指定（`[p.~5]`）を表示しません。
 エントリの `url` と `doi` は文献リストでリンクになります（DOI のリンク先は `https://doi.org/…`。`vite/rehype-bib-links.ts`）。
+文献リストが 1 枚に収まらないときは、Beamer の `allowframebreaks` と同じく、同じ題に「（続き）」を付けたスライドへ送ります
+（同じ節の縦の続きとして並ぶ。1 枚に入る量は文字数から見積もる。`vite/rehype-bib-pages.ts`）。
+文献リストを 1 段小さい文字で組むときは、原稿で `<small>` で包みます（前後に空行。送り先の見積もりも小さい文字で行う）。
+
+```mdx
+<small>
+
+<Bibliography />
+
+</small>
+```
 スタイルを替えるときは CSL の公式リポジトリ（citation-style-language/styles）のファイルを `vite/csl/` に置いて
 `vite/mdx-options.ts` で指定します。
 

@@ -228,7 +228,7 @@ body {
    囲み全般の共通の形。面はすべて --color-surface で、色は見出しの下線(アクセント)にだけ使う。
    見出しのある囲み(Frame・定理環境)は 見出し + 一段下げた本文 の 2 段で、Beamer の block と同じ構成。
    各部品は --accent だけを決める。 */
-.deck :is(.frame, .note, .thm, pre) {
+.deck :is(.frame, .note, .thm, pre, .csl-bib-body) {
   margin: var(--space) 0;
   padding: calc(var(--space) / 2) var(--space);
   border-radius: var(--radius);

@@ -78,6 +78,27 @@ describe('ビルド設定(結合)', () => {
     expect(out).toContain('href: "https://www.math.wustl.edu/~mccarthy/public_papers/colloquium.pdf"')
   })
 
+  it('1 枚に収まらない文献リストは、同じ題に（続き）を付けた縦の続きのスライドへ送る', async () => {
+    const keys = ['halmos1974', 'rota1997', 'mccarthy', 'higham2020', 'viray2023', 'kercheval2019', 'devadoss2019', 'lew2016', 'inglis2012', 'hodds2014', 'alcock2015', 'roy2017']
+    const src = `# 題\n\n${keys.map((k) => `\\cite{${k}}`).join(' ')}\n\n---\n\n## 参考文献 \\label{sec:refs}\n\n<Bibliography />`
+    const out = String(await compile(new VFile({ path: 'slides.mdx', value: src }), mdxOptions({ bibliography: 'decks/speech/references.bib', strict: false })))
+    const pages = out.split('（続き）').length - 1
+    expect(pages).toBeGreaterThan(0)
+    // 全項目が番号の順に 1 回ずつ出る。ラベル(id)は最初の 1 枚だけ
+    expect([...out.matchAll(/id: "bib-(\w+)"/g)].map((m) => m[1])).toEqual(keys)
+    expect(out.match(/"sec:refs"/g)).toHaveLength(1)
+    // 縦の続きとして並ぶ(v が 0, 1, 2, …)
+    const vs = [...out.matchAll(/v: "(\d+)"/g)].map((m) => Number(m[1]))
+    expect(vs.slice(-(pages + 1))).toEqual([...Array(pages + 1).keys()])
+
+    // 原稿で <small> に包んだ文献リストは、小さい文字で見積もる(枚数が減る)。続きのスライドも <small> に包まれる
+    const small = src.replace('<Bibliography />', '<small>\n\n<Bibliography />\n\n</small>')
+    const outSmall = String(await compile(new VFile({ path: 'slides.mdx', value: small }), mdxOptions({ bibliography: 'decks/speech/references.bib', strict: false })))
+    const pagesSmall = outSmall.split('（続き）').length - 1
+    expect(pagesSmall).toBeLessThan(pages)
+    expect(outSmall.match(/_components\.small|"small"/g)?.length).toBeGreaterThanOrEqual(pagesSmall + 1)
+  })
+
   it('\\input で取り込んだ JSX も主ファイルに直接書いたときと同じに扱う', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'mdx-input-'))
     const table = '<table>\n<tbody>\n<tr><td>a</td></tr>\n<tr><td>b</td></tr>\n</tbody>\n</table>\n'

@@ -73,7 +73,8 @@ describe.each(decks)('$name', ({ name, mod }) => {
           expect(l.el.querySelector('.secnum'), `${where(l)}: 題の無いスライドに番号`).toBeNull()
           continue
         }
-        const expected = l.v === 0 ? `${++sec}.` : `${sec}.${++sub}.`
+        // 文献リストの続きのスライド(data-continuation。vite/rehype-bib-pages.ts)は、元のスライドと同じ番号
+        const expected = l.el.hasAttribute('data-continuation') ? (sub ? `${sec}.${sub}.` : `${sec}.`) : l.v === 0 ? `${++sec}.` : `${sec}.${++sub}.`
         expect(h2.querySelector('.secnum')?.textContent?.trim(), where(l)).toBe(expected)
         checked++
       }
@@ -220,7 +221,8 @@ describe.each(decks)('$name', ({ name, mod }) => {
 
   describe('文献', () => {
     it('引用の番号は文献リストでの順番と一致し、リンク先が存在する', () => {
-      const entries = [...root.querySelectorAll('.csl-bib-body')][0]?.querySelectorAll('.csl-entry') ?? []
+      // 文献リストは続きのスライドに分かれることがある(vite/rehype-bib-pages.ts)。全部を文書順に
+      const entries = root.querySelectorAll('.csl-bib-body .csl-entry')
       const order = [...entries].map((e) => e.id)
       const cites = [...root.querySelectorAll('a[href^="#bib-"]')]
       seen.cite += cites.length
