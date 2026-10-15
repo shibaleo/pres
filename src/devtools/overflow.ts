@@ -22,9 +22,14 @@ export function watchOverflow(onChange?: (overflows: Overflow[]) => void): () =>
   let last = ''
 
   const check = () => {
+    const slides = deckSlides()
+    const sizes = slides.map(measureAtMinimum)
+    // 測るために表示したスライドが、まだ読み込んでいない書体を使っていると、読み込みが始まり、この回は代わりの書体で測っている。
+    // その結果は付けも知らせもせず(端末に一瞬だけ誤ったはみ出しが出ないように)、読み込みが終わってからの測り直し(loadingdone)を待つ
+    if (document.fonts.status === 'loading') return
     const overflows: Overflow[] = []
-    deckSlides().forEach((slide, index) => {
-      const { width, height, code } = measureAtMinimum(slide)
+    slides.forEach((slide, index) => {
+      const { width, height, code } = sizes[index]
       const excess = [
         height - SLIDE_HEIGHT > 1 && `縦 ${height - SLIDE_HEIGHT}px`,
         width - MIN_WIDTH > 1 && `横 ${width - MIN_WIDTH}px`,
