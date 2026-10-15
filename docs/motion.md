@@ -98,6 +98,9 @@ impress の substep と Shower の `.next` は、要素を文書順に 1 つず�
   全画面に入るキーは Shift+F5（Mac は Cmd+Enter）。見た目のテーマ（ribbon など）は使わず、配置だけを `shower.css` で決める
 - 段階表示は段の印（`.next`）。一覧ではどのスライドも最後の段の状態
 - 読み上げ用の領域（Shower が置く `section.region`。今のスライドの複製）は、見た目だけ隠す
+- 切り替えの動き: Shower には無いので、このモードが付ける（`shower.css`）。全画面で今のスライドが表示になるときの CSS のアニメーションで、
+  入る方だけが動く（出る方はすぐ消える）。共通の遷移の 7 種すべてを、スライドごと（`data-transition`）とデッキの既定（body の
+  `data-deck-transition`）で使える。前へ戻るときは slide・cube・flip を逆向きに（`slidechange` で付ける body の `data-direction`）
 - まだ無いもの: PDF 出力、発表者ビュー
 
 ### Spectacle モード（試作）

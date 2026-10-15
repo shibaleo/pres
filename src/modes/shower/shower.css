@@ -53,3 +53,77 @@ body.shower {
   translate: -50% -50%;
   scale: var(--deck-scale);
 }
+
+/* 切り替えの動き(motion.ts の遷移。Shower 自体には無いので、このモードが付ける。ShowerApp.tsx)。
+   全画面で今のスライドが表示になるときに走るアニメーションで、入る方だけが動く。スライドの遷移(data-transition。
+   構造の規則やラベルで決まったもの)が無ければ、デッキの既定(body の data-deck-transition)。前へ戻るときは向きを逆に */
+.shower.full {
+  --shower-dir: 1;
+}
+.shower.full[data-direction='backward'] {
+  --shower-dir: -1;
+}
+.shower.full .slide.active {
+  animation-duration: 0.6s;
+  animation-timing-function: ease;
+}
+.shower.full .slide.active[data-transition='slide'],
+.shower.full[data-deck-transition='slide'] .slide.active:not([data-transition]) {
+  animation-name: shower-slide;
+}
+.shower.full .slide.active[data-transition='fade'],
+.shower.full[data-deck-transition='fade'] .slide.active:not([data-transition]) {
+  animation-name: shower-fade;
+}
+.shower.full .slide.active[data-transition='zoom'],
+.shower.full[data-deck-transition='zoom'] .slide.active:not([data-transition]) {
+  animation-name: shower-zoom;
+}
+.shower.full .slide.active[data-transition='cube'],
+.shower.full[data-deck-transition='cube'] .slide.active:not([data-transition]) {
+  animation-name: shower-cube;
+}
+.shower.full .slide.active[data-transition='cards'],
+.shower.full[data-deck-transition='cards'] .slide.active:not([data-transition]) {
+  animation-name: shower-cards;
+}
+.shower.full .slide.active[data-transition='flip'],
+.shower.full[data-deck-transition='flip'] .slide.active:not([data-transition]) {
+  animation-name: shower-flip;
+}
+/* 位置(translate)と倍率(scale)は個別の指定で決めているので、動きは transform だけで書く(重ねて効く) */
+@keyframes shower-slide {
+  from {
+    transform: translateX(calc(var(--shower-dir) * 100%));
+  }
+}
+@keyframes shower-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes shower-zoom {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+}
+/* 立方体の隣の面が回り込んでくる(進むときは右から、戻るときは左から) */
+@keyframes shower-cube {
+  from {
+    transform: perspective(2000px) translateX(calc(var(--shower-dir) * 50%)) rotateY(calc(var(--shower-dir) * 90deg)) translateX(calc(var(--shower-dir) * 50%));
+  }
+}
+/* 下からカードが重なってくる */
+@keyframes shower-cards {
+  from {
+    transform: translateY(110%) rotate(4deg);
+  }
+}
+/* 裏返ってくる(真横から表へ) */
+@keyframes shower-flip {
+  from {
+    opacity: 0;
+    transform: perspective(2000px) rotateY(calc(var(--shower-dir) * -90deg));
+  }
+}

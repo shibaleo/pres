@@ -389,7 +389,7 @@ export default {
 ```
 
 - 遷移の名前は none・slide・fade・zoom・cube・cards・flip。モードごとに使えるものが違います
-  （Spectacle はすべて、reveal は none・slide・fade・zoom、Swiper はデッキの既定だけ。`src/modes/names.ts` の `MODE_TRANSITIONS`）。
+  （Spectacle と Shower はすべて、reveal は none・slide・fade・zoom、Swiper はデッキの既定だけ。`src/modes/names.ts` の `MODE_TRANSITIONS`）。
 - 優先は ラベル → 構造の規則（`section`・`continuation`）→ 既定（`transition`）。ほとんどのデッキは構造の規則だけで足ります。
   本文の文字（題）では指しません（題は内容の都合で直すので）。`\label` は動きの命令ではなく、そのスライドの名前（`\ref` やリンクにも使う）です。
 - 無いラベル・スライドの題のものではないラベル・そのモードで使えない遷移・無い並べ方は、原稿の警告と同じく `motion.ts` の行付きで報告されます

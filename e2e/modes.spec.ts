@@ -108,6 +108,17 @@ test('demonstration: 枠の中に、各モードの本物のデッキが起動�
   }
 })
 
+test('manual(Shower): 全画面で、入るスライドに motion.ts の遷移の動きが付く(戻るときは逆向き)', async ({ page }) => {
+  await open(page, 'manual', '?full')
+  const active = () => page.locator('.shower .slide.active')
+  await page.keyboard.press('ArrowRight')
+  await expect.poll(() => active().evaluate((e) => getComputedStyle(e).animationName)).toBe('shower-slide')
+  expect(await page.evaluate(() => document.body.dataset.direction)).toBe('forward')
+  await page.waitForTimeout(800)
+  await page.keyboard.press('ArrowLeft')
+  await expect.poll(() => page.evaluate(() => document.body.dataset.direction)).toBe('backward')
+})
+
 test('段の現れ方(motion.ts の step): reveal は fragment の型、impress は CSS で、出ていない段の形が決まる', async ({ page }) => {
   // landau(reveal・fade-up): 現れる側の fragment に reveal の型 fade-up が付き、出ていない間は下にずれている
   await open(page, 'landau')

@@ -4,4 +4,7 @@ import type { MotionConfig } from '@/modes/motion'
 export default {
   // Shower: 全ページを並べた一覧から入り、押したページを全画面で読む。手順書を見渡してから読む使い方に
   mode: 'shower',
+  // 全画面で、次のページは横から滑り込み、節の中の続きはカードが重なってくる(Shower には動きが無いので、このモードが付ける)
+  transition: 'slide',
+  continuation: 'cards',
 } satisfies MotionConfig

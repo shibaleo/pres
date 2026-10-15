@@ -64,7 +64,7 @@ export type TransitionName = (typeof TRANSITIONS)[number]
 export const MODE_TRANSITIONS: Record<ModeName, { slide: readonly TransitionName[]; deck: readonly TransitionName[] }> = {
   reveal: { slide: ['none', 'slide', 'fade', 'zoom'], deck: ['none', 'slide', 'fade', 'zoom'] },
   impress: { slide: [], deck: [] },
-  shower: { slide: [], deck: [] },
+  shower: { slide: TRANSITIONS, deck: TRANSITIONS },
   spectacle: { slide: TRANSITIONS, deck: TRANSITIONS },
   swiper: { slide: [], deck: ['slide', 'fade', 'cube', 'cards', 'flip'] },
 }

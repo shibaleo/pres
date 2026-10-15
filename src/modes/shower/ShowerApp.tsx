@@ -12,11 +12,12 @@ import './shower.css'
 
 /**
  * スライド 1 枚 = Shower の .slide(Shower は書いてある DOM をそのまま使い、動かさない)。
- * 段の印は Shower の .next(文書順に 1 つずつ、今の印に active、過ぎた印に visited が付く)
+ * 段の印は Shower の .next(文書順に 1 つずつ、今の印に active、過ぎた印に visited が付く)。
+ * 遷移(motion.ts でスライドごとに決まったもの)は data-transition に置き、shower.css が全画面で入るときの動きにする
  */
 function Slide(props: SlideProps) {
   return (
-    <section className="slide" {...slideAttributes(props)}>
+    <section className="slide" data-transition={props.transition} {...slideAttributes(props)}>
       {props.children}
       <PageNumber />
       <StepMarkers steps={stepsOf(props)} markerClass="next" />
@@ -35,15 +36,27 @@ let shower: Shower | null = null
  * Shower の作りのまま一覧で始まり(URL に ?full があれば全画面)、一覧でスライドを押すと全画面に、Esc で一覧に戻る。
  * Shower の容器は body(キー操作を body で受けるため)。段階表示は段の印(.next)で進める。
  * 見た目のテーマ(Shower の ribbon など)は使わず、一覧と全画面の配置だけを shower.css で決める。まわりとの約束は deck/mode.ts。
+ * Shower 自体には切り替えの動きが無いので、全画面で入るスライドに CSS のアニメーションを付ける(shower.css。motion.ts の遷移)。
+ * 隠れていたスライドが表示になるたびにアニメーションが走るので、動くのは入る方だけ(出る方はすぐ消える)
  */
-export default function ShowerApp({ Slides }: DeckSource) {
+export default function ShowerApp({ Slides, motion }: DeckSource) {
   useEffect(() => {
     if (shower) return
     watchViewSize()
     watchPageNumbers()
     document.body.classList.add('shower')
+    // 既定の遷移(スライドごとの遷移の無いスライド)。無ければ動かさない
+    document.body.dataset.deckTransition = motion?.transition ?? 'none'
     shower = new Shower()
     const s = shower
+    // 進む向き(前へ戻るときは slide・cube・flip を逆向きに)。Shower はスライドの class を替えたのと同じ流れで slidechange を出すので、
+    // ここで付ければアニメーションが始まる前に間に合う
+    let previous = -1
+    s.addEventListener('slidechange', () => {
+      const index = s.slides.findIndex((x) => x === s.activeSlide)
+      document.body.dataset.direction = index < previous ? 'backward' : 'forward'
+      previous = index
+    })
     // 全画面では今のスライドを今の段に、一覧ではどのスライドも最後の段の状態にする
     const sync = () => {
       for (const slide of s.slides) applyStep(slide.element, s.isFullMode ? currentStep(slide.element, '.active, .visited') : Infinity)
