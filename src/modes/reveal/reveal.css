@@ -28,10 +28,18 @@ html.reveal-print .pdf-page:has(> section > h2:first-child) .slide-number {
 /* スクロールビュー(motion.ts の reveal.view。?view=scroll)の右端のバー: スライドごとの区切り・今のスライド・今の位置(丸)。
    reveal はこれを、テーマが決める色(--r-overlay-element-bg-color。スライドの背景の明暗の判定で替わる)で塗るが、
    reveal のテーマは使わず、スライドの背景も reveal に渡していないので、白い地の上で見えない明るい灰色のままになる。
-   そこで矢印や進み具合のバーと同じく、アクセント色(区切りは地の色に混ぜた薄い色)で塗る。角はパネルと同じ(--radius) */
-.reveal-viewport.reveal-scroll .scrollbar :is(.scrollbar-inner, .scrollbar-slide, .scrollbar-playhead),
-.reveal-viewport.reveal-scroll .scrollbar .scrollbar-slide .scrollbar-trigger::after {
-  border-radius: var(--radius);
+   そこで矢印や進み具合のバーと同じく、アクセント色(区切りは地の色に混ぜた薄い色)で塗る。
+   バーは細く(reveal の既定は 7px)、スライドの区切りの両端は幅の半分の丸み(完全な半円)にする。
+   今の位置(playhead。reveal はバーの幅で描く)と段の印(trigger)は丸で、直径はバーの幅と同じ */
+.reveal-viewport.reveal-scroll {
+  --r-scrollbar-width: 3px;
+  --r-scrollbar-trigger-size: var(--r-scrollbar-width);
+}
+.reveal-viewport.reveal-scroll .scrollbar :is(.scrollbar-inner, .scrollbar-slide, .scrollbar-playhead) {
+  border-radius: calc(var(--r-scrollbar-width) / 2);
+}
+.reveal-viewport.reveal-scroll .scrollbar .scrollbar-slide.active .scrollbar-trigger::after {
+  border-radius: 50%;
 }
 .reveal-viewport.reveal-scroll .scrollbar .scrollbar-slide {
   background-color: color-mix(in srgb, var(--color-brand) 20%, transparent);
