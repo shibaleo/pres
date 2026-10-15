@@ -2,7 +2,9 @@
    手順を追いながら読む文書なので、業務マニュアル向けのプリセット(本文もゴシック・太さで強調・手順の番号を太く)をデッキ全体にかける */
 
 @import '@/theme/presets/manual.css';
+/* モードのライブラリの既定の見た目(Shower の既定のテーマ ribbon)。上のプリセットの後に読み、書体・色・大きさを替える */
+@import '@/theme/presets/shower-ribbon.css';
 
 :root {
-  --deck-preset: manual;
+  --deck-preset: manual shower-ribbon;
 }

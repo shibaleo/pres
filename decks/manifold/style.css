@@ -1,9 +1,11 @@
 /* このデッキの見た目の特化(書き方は src/theme/tokens.css と presets/ を参照)。数式の多い資料なので数学向け */
 
 @import '@/theme/presets/math.css';
+/* モードのライブラリの既定の見た目(impress の公式デモの見た目)。上のプリセットの後に読み、書体・色・大きさを替える */
+@import '@/theme/presets/impress-demo.css';
 
 :root {
-  --deck-preset: math;
+  --deck-preset: math impress-demo;
 }
 
 /* このデッキの図(components/)に固有の部分。図の汎用の語彙(点・取っ手・ラベル・曲線・ボタン)は theme/base.css */

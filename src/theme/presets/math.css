@@ -20,3 +20,8 @@
 [data-preset~='math'] {
   --font-body: 'number', 'New Computer Modern', 'Noto Serif JP', serif;
 }
+/* 数式(MathJax の SVG)は、周りの書体の x の高さ(ex)を単位に大きさが決まる。本文の書体を替える見た目のプリセット
+   (reveal-black など。ゴシックは x が高い)と重ねても数式の大きさが変わらないよう、数式の周りは New Computer Modern に保つ */
+[data-preset~='math'] mjx-container {
+  font-family: 'New Computer Modern', serif;
+}

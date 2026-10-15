@@ -61,11 +61,15 @@ export function watchOverflow(onChange?: (overflows: Overflow[]) => void): () =>
   // 属性の変化(ライブラリが付ける今のスライドの class や、ここで付ける class・style)には反応しない
   observer.observe(document.getElementById('root')!, { childList: true, subtree: true, characterData: true })
   document.fonts.ready.then(schedule)
+  // 書体は、その書体を使う要素が表示されて初めて読み込まれる(表示していないスライドだけが使う書体は、測るために
+  // 表示したときに読み込みが始まり、その回は代わりの書体で測ってしまう)。読み込みが終わるたびに測り直す
+  document.fonts.addEventListener('loadingdone', schedule)
   schedule()
 
   return () => {
     clearTimeout(timer)
     observer.disconnect()
+    document.fonts.removeEventListener('loadingdone', schedule)
   }
 }
 

@@ -1,0 +1,43 @@
+/* プリセット: Spectacle の既定のテーマ(spectacle の defaultTheme)の見た目を、この土台の上で写したもの。
+
+   - 地は紺 #1e2852(tertiary)、文字は生成り #ebe5da(primary)、見出しはピンク #fc6986(secondary)の太字で中央揃え。
+     リンクは黄 #ffc951(quaternary)。スライドの外は黒
+   - 大きさ(文字・行送り・余白)は土台のまま(既定のテーマの本文 44px・見出し 64px では、1 枚に詰めた資料が収まらないため)
+   - 題の帯は無い(題はピンクの見出し)。ページ番号も無い(既定のテンプレートは何も出さない)
+   - 書体は Helvetica Neue の代わりに、土台の Noto Sans JP
+
+   使い方(デッキの decks/<名前>/style.css): @import '@/theme/presets/spectacle.css'; したうえで
+     :root { --deck-preset: spectacle; }(ほかのプリセットと並べるときは後ろに書く) */
+[data-preset~='spectacle'] {
+  --font-body: 'Noto Sans JP', sans-serif;
+  --font-heading: 'Noto Sans JP', sans-serif;
+  --body-weight: 400;
+  --heading-weight: 700;
+  --color-brand: #fc6986;
+  --color-ink: #ebe5da;
+  --color-muted: #b9b4ab;
+  --color-canvas: #1e2852;
+  --color-surface: #2a3566;
+  /* スライドの外(Spectacle の backdrop。SpectacleApp.tsx)は黒 */
+  --deck-backdrop: #000;
+}
+[data-preset~='spectacle'] .deck a {
+  color: #ffc951;
+}
+[data-preset~='spectacle'] .deck :is(h1, h2, h3),
+[data-preset~='spectacle'] .deck .slide > h2:first-child {
+  margin: 0 0 var(--space);
+  padding: 0;
+  color: var(--color-brand);
+  text-align: center;
+  background: none;
+}
+[data-preset~='spectacle'] .deck .slide > .page-number {
+  display: none;
+}
+/* 題(スライドの先頭の h2): 色の帯は付けないが、帯と同じ場所(スライドの上の余白に重ねる)と高さ(3 半行)に置く。
+   土台の帯と同じ組み方なので、本文の位置と 1 枚に入る量は変わらない(はみ出しの具合も同じ) */
+[data-preset~='spectacle'] .deck .slide > h2:first-child {
+  margin: calc(-1 * var(--slide-pad)) 0 var(--space);
+  padding: calc((3 * var(--space) - var(--leading-tight) * 1em) / 2) 0;
+}

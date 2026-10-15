@@ -1,0 +1,46 @@
+/* プリセット: Swiper の公式デモの見た目を、この土台の上で写したもの(Swiper はカルーセルの部品で、スライドのテーマを持たない。
+   デモのページの CSS: 面 #eee、スライドは白で、中身を縦横の中央に、文字は 18px の黒)。
+
+   - 面は #eee、スライドは白、文字は黒で中央揃え。中身は縦横の中央に寄せる(デモの display: flex と中央寄せ。
+     スライドの中身が複数の要素なので、縦に並べる)
+   - 大きさ(文字・行送り・余白)は土台のまま(デモの本文 18px は、スライドとして読むには小さいため)。見出しは太字の黒
+   - 題の帯は無い。ページ番号も無い
+   - 書体は Helvetica Neue の代わりに、土台の Noto Sans JP
+
+   使い方(デッキの decks/<名前>/style.css): @import '@/theme/presets/swiper-demo.css'; したうえで
+     :root { --deck-preset: swiper-demo; }(ほかのプリセットと並べるときは後ろに書く) */
+[data-preset~='swiper-demo'] {
+  --font-body: 'Noto Sans JP', sans-serif;
+  --font-heading: 'Noto Sans JP', sans-serif;
+  --body-weight: 400;
+  --heading-weight: 700;
+  --color-brand: #000;
+  --color-ink: #000;
+  --color-canvas: #fff;
+}
+[data-preset~='swiper-demo'] body:has(> #root > .swiper) {
+  background: #eee;
+}
+[data-preset~='swiper-demo'] .deck.swiper .slide {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+[data-preset~='swiper-demo'] .deck :is(h1, h2, h3, h4, h5, h6),
+[data-preset~='swiper-demo'] .deck .slide > h2:first-child {
+  margin: 0 0 var(--space);
+  padding: 0;
+  color: inherit;
+  background: none;
+}
+[data-preset~='swiper-demo'] .deck .slide > .page-number {
+  display: none;
+}
+/* 題(スライドの先頭の h2): 色の帯は付けないが、帯と同じ場所(スライドの上の余白に重ねる)と高さ(3 半行)に置く。
+   土台の帯と同じ組み方なので、本文の位置と 1 枚に入る量は変わらない(はみ出しの具合も同じ) */
+[data-preset~='swiper-demo'] .deck .slide > h2:first-child {
+  margin: calc(-1 * var(--slide-pad)) 0 var(--space);
+  padding: calc((3 * var(--space) - var(--leading-tight) * 1em) / 2) 0;
+}

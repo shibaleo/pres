@@ -1,0 +1,56 @@
+/* プリセット: reveal.js の既定のテーマ black(reveal.js/dist/theme/black.css)の見た目を、この土台の上で写したもの。
+
+   - 地は #191919、文字は白。見出しも白で、欧文は大文字(text-transform: uppercase)、太さ 600
+   - リンク・矢印・進み具合は #42affa
+   - 大きさ(文字・行送り・余白)は土台のまま(black の本文 42px では、1 枚に詰めた資料が収まらないため)
+   - スライドの中身は中央揃えで、縦も中央に寄せる(reveal の既定の center: true と text-align: center)
+   - 題の帯は無い(題はただの見出し)。ページ番号は reveal の既定の形(右下、半透明の黒の地に白)
+   - 書体は Source Sans Pro の代わりに、土台の Noto Sans JP(和文の資料なので、和文も同じゴシックで揃う)
+
+   使い方(デッキの decks/<名前>/style.css): @import '@/theme/presets/reveal-black.css'; したうえで
+     :root { --deck-preset: reveal-black; }(ほかのプリセットと並べるときは後ろに書く) */
+[data-preset~='reveal-black'] {
+  --font-body: 'Noto Sans JP', sans-serif;
+  --font-heading: 'Noto Sans JP', sans-serif;
+  --body-weight: 400;
+  --heading-weight: 600;
+  --color-brand: #42affa;
+  --color-ink: #fff;
+  --color-muted: #bbb;
+  --color-canvas: #191919;
+  --color-surface: #2b2b2b;
+}
+[data-preset~='reveal-black'] .deck :is(h1, h2, h3, h4, h5, h6) {
+  color: var(--color-ink);
+  text-transform: uppercase;
+}
+[data-preset~='reveal-black'] .deck :is(h2, h3),
+[data-preset~='reveal-black'] .deck .slide > h2:first-child {
+  margin: 0 0 var(--space);
+  padding: 0;
+  color: var(--color-ink);
+  background: none;
+}
+/* 中央揃え。横は文字揃え、縦は reveal 自身の center: true(--reveal-center を reveal モードが読んで設定に渡す。
+   CSS で display を替えると、reveal が display: none で隠している遠いスライドまで出てしまう) */
+[data-preset~='reveal-black'] {
+  --reveal-center: true;
+}
+[data-preset~='reveal-black'] .reveal .slides section.slide:not(.stack) {
+  text-align: center;
+}
+/* ページ番号: reveal の既定(右下、半透明の黒の地に白の 12px) */
+[data-preset~='reveal-black'] .reveal .slide-number,
+[data-preset~='reveal-black'] .reveal:has(.slides section.present:not(.stack) > h2:first-child) .slide-number {
+  inset: auto 8px 8px auto;
+  padding: 5px;
+  font: 12px/1 Helvetica, sans-serif;
+  color: #fff;
+  background-color: rgb(0 0 0 / 40%);
+}
+/* 題(スライドの先頭の h2): 色の帯は付けないが、帯と同じ場所(スライドの上の余白に重ねる)と高さ(3 半行)に置く。
+   土台の帯と同じ組み方なので、本文の位置と 1 枚に入る量は変わらない(はみ出しの具合も同じ) */
+[data-preset~='reveal-black'] .deck .slide > h2:first-child {
+  margin: calc(-1 * var(--slide-pad)) 0 var(--space);
+  padding: calc((3 * var(--space) - var(--leading-tight) * 1em) / 2) 0;
+}

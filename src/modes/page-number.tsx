@@ -26,8 +26,12 @@ export function watchPageNumbers(): () => void {
     const order = [...new Set(slides.map(keyOf))]
     slides.forEach((slide) => {
       const el = slide.querySelector(':scope > .page-number')
-      const text = `${order.indexOf(keyOf(slide)) + 1}/${order.length}`
-      if (el && el.textContent !== text) el.textContent = text // 同じなら書かない(書くと監視がまた呼ばれる)
+      const page = String(order.indexOf(keyOf(slide)) + 1)
+      const text = `${page}/${order.length}`
+      if (!el || el.textContent === text) return // 同じなら書かない(書くと監視がまた呼ばれる)
+      el.textContent = text
+      // 番号だけ(全体なし)を出す見た目のため(theme/presets/shower-ribbon.css のリボン)
+      ;(el as HTMLElement).dataset.page = page
     })
   }
   const observer = new MutationObserver(() => {

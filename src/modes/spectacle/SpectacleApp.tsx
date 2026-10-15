@@ -125,11 +125,12 @@ function RegisterGoTo() {
  * Spectacle のテーマ: スライドの大きさは窓と同じ縦横比(deck/view-size.ts。窓の大きさが変わると渡し直す)。
  * 色と書体は本文の範囲(.deck)の規則が決める。
  * backdropStyle は Spectacle の既定(ウィンドウいっぱいに固定)を丸ごと置き換えるので、既定の値も書く
- * (無いと外枠が中身の大きさに縮み、拡大と中央寄せが効かない)
+ * (無いと外枠が中身の大きさに縮み、拡大と中央寄せが効かない)。スライドの外の色は --deck-backdrop(無ければ面の色)。
+ * 見た目のプリセット(theme/presets/spectacle.css)が替える
  */
 const themeOf = (width: number, height: number) => ({
   size: { width, height },
-  backdropStyle: { position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'var(--color-surface)' },
+  backdropStyle: { position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'var(--deck-backdrop, var(--color-surface))' },
 })
 
 /**

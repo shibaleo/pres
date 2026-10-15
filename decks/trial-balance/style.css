@@ -2,9 +2,11 @@
    表を読む資料なので、業務マニュアル向けのプリセット(本文もゴシック・等幅数字・表は 1 行おきに地)をデッキ全体にかける */
 
 @import '@/theme/presets/manual.css';
+/* モードのライブラリの既定の見た目(Swiper の公式デモの見た目)。上のプリセットの後に読み、書体・色・大きさを替える */
+@import '@/theme/presets/swiper-demo.css';
 
 :root {
-  --deck-preset: manual;
+  --deck-preset: manual swiper-demo;
 }
 
 /* 表のセルは 1 行で読むので、行間は見出しと同じ詰めた値に(プリセットの本文の行間 1.6 のままだと、

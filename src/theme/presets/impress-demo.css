@@ -1,0 +1,44 @@
+/* プリセット: impress.js の公式デモ(impress.js/css/impress-demo.css)の見た目を、この土台の上で写したもの。
+
+   - 面は明るい灰色の放射状のグラデーション(中央 rgb(240,240,240) → 外 rgb(190,190,190))
+   - スライドは白で、細い枠(rgba(0,0,0,.3))・角丸 10px・薄い影。文字は灰色 rgb(102,102,102) に薄い影、字間 -1px
+   - 大きさ(文字・行送り・余白)は土台のまま(デモの本文 30px・行送り 36px では、1 枚に詰めた資料が収まらないことがあるため)
+   - デモは見出しを特別に扱わない(リセットで本文と同じ)ので、題の帯は無く、題も本文と同じ書体と色。ページ番号も無い
+   - 書体は Open Sans の代わりに、土台の Noto Sans JP
+
+   使い方(デッキの decks/<名前>/style.css): @import '@/theme/presets/impress-demo.css'; したうえで
+     :root { --deck-preset: impress-demo; }(ほかのプリセットと並べるときは後ろに書く) */
+[data-preset~='impress-demo'] {
+  --font-body: 'Noto Sans JP', sans-serif;
+  --font-heading: 'Noto Sans JP', sans-serif;
+  --body-weight: 400;
+  --heading-weight: 400;
+  --color-ink: rgb(102 102 102);
+  --color-canvas: #fff;
+}
+[data-preset~='impress-demo'] body.impress-enabled {
+  background: radial-gradient(rgb(240 240 240), rgb(190 190 190));
+}
+[data-preset~='impress-demo'] #impress .slide {
+  border: 1px solid rgb(0 0 0 / 30%);
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 10%);
+  text-shadow: 0 2px 2px rgb(0 0 0 / 10%);
+  letter-spacing: -1px;
+}
+[data-preset~='impress-demo'] .deck :is(h1, h2, h3, h4, h5, h6),
+[data-preset~='impress-demo'] .deck .slide > h2:first-child {
+  margin: 0 0 var(--space);
+  padding: 0;
+  color: inherit;
+  background: none;
+}
+[data-preset~='impress-demo'] .deck .slide > .page-number {
+  display: none;
+}
+/* 題(スライドの先頭の h2): 色の帯は付けないが、帯と同じ場所(スライドの上の余白に重ねる)と高さ(3 半行)に置く。
+   土台の帯と同じ組み方なので、本文の位置と 1 枚に入る量は変わらない(はみ出しの具合も同じ) */
+[data-preset~='impress-demo'] .deck .slide > h2:first-child {
+  margin: calc(-1 * var(--slide-pad)) 0 var(--space);
+  padding: calc((3 * var(--space) - var(--leading-tight) * 1em) / 2) 0;
+}

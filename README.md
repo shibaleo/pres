@@ -116,6 +116,8 @@ src/                   全デッキ・全モードで共有する土台(用途�
     fonts.css          土台の書体(本文の明朝 Noto Serif JP・見出しと強調のゴシック Noto Sans JP・等幅・図のラベルの数式用 New Computer Modern Math)
     presets/math.css   数学向けのプリセット(欧文と数字を New Computer Modern に)
     presets/manual.css 業務マニュアル向けのプリセット(本文もゴシック・太さで強調・等幅数字・手順の番号を太く)
+    presets/reveal-black.css ほか  各ライブラリの既定のテーマの見た目(reveal-black・impress-demo・shower-ribbon・spectacle・
+                       swiper-demo。色・書体・題とページ番号の形を写し、大きさは土台のまま。docs/motion.md)
   fonts/               subset 済み woff2(全デッキの文字の和)
   render.test.tsx      全デッキを実際に描いて確かめるテスト(節番号・メニュー・参照・数式・文献・構造)
 vite.config.ts         Vite の設定(deckConfig: デッキの名前を受け取ってビルドの設定にする。引数なしは全デッキの開発サーバー)
@@ -440,6 +442,10 @@ export default {
 ```
 
 見本は `decks/manual/` と `decks/trial-balance/`（業務マニュアル向けのプリセットをデッキ全体にかけている）。
+
+各ライブラリの既定のテーマの見た目もプリセットにしてあります（reveal-black・impress-demo・shower-ribbon・spectacle・swiper-demo）。
+ほかのプリセットと並べるときは後ろに書きます（`--deck-preset: math reveal-black;`）。見本のデッキは、それぞれのモードのテーマを使っています
+（`decks/demonstration/` だけは土台の見た目のまま）。
 
 用途に共通する改善はテンプレート（tokens / base）へ、特定の用途に寄った見た目はプリセット
 （`src/theme/presets/`）へ入れます。

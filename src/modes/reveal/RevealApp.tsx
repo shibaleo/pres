@@ -33,7 +33,8 @@ export default function RevealApp({ Slides, motion }: DeckSource) {
         width,
         height,
         margin: 0,
-        center: false,
+        // 縦の中央寄せは、見た目のプリセットが CSS の --reveal-center: true で頼んだときだけ(reveal-black。既定は上寄せ)
+        center: getComputedStyle(document.documentElement).getPropertyValue('--reveal-center').trim() === 'true',
         slideNumber: 'c/t',
         hash: true,
         // PDF では 1 枚のスライドを 1 ページに収める(画面と同じく、収まらない部分は切れる。
