@@ -8,7 +8,7 @@
      (ribbon の長さのままだと、題の下の本文や枠に重なる)、題の文字はリボンの手前で折り返す
    - 題の帯は無い(題は灰色の太字の見出し)
 
-   使い方(デッキの decks/<名前>/style.css): @import '@/theme/presets/shower-ribbon.css'; したうえで
+   使い方(デッキの decks/<名前>/style.css): @import '@/theme/presets/themes/shower-ribbon.css'; したうえで
      :root { --deck-preset: shower-ribbon; }(ほかのプリセットと並べるときは後ろに書く) */
 [data-preset~='shower-ribbon'] {
   /* リボンの長さ: 題の行(帯と同じ 3 半行)とその下の間を合わせた 4 半行より少し短く、本文に届かない長さ。幅はその半分 */

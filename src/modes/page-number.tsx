@@ -30,7 +30,7 @@ export function watchPageNumbers(): () => void {
       const text = `${page}/${order.length}`
       if (!el || el.textContent === text) return // 同じなら書かない(書くと監視がまた呼ばれる)
       el.textContent = text
-      // 番号だけ(全体なし)を出す見た目のため(theme/presets/shower-ribbon.css のリボン)
+      // 番号だけ(全体なし)を出す見た目のため(theme/presets/themes/shower-ribbon.css のリボン)
       ;(el as HTMLElement).dataset.page = page
     })
   }

@@ -15,8 +15,10 @@ reveal.js のほかに impress.js のようなズーム型、Sozi 風の見せ�
   ライブラリが持っていればそれを使う。足りないものはそのモードの中だけで補い、モードをまたぐ共通の層は作らない
 - **見た目は土台（theme/）が持ち、どのモードでも同じ**。本文の範囲は `.deck`（各モードが本文を包む要素に付ける）、
   スライド 1 枚は `.slide`。要素の既定の見た目（見出しの大きさ・余白など）も土台に持つ（以前は reveal の white テーマに頼っていた）
-- **各ライブラリの既定のテーマは、見た目のプリセットとして写す**（`src/theme/presets/` の reveal-black・impress-demo・shower-ribbon・
-  spectacle・swiper-demo）。デッキの `style.css` で選び、モードとは独立（モードを選んでも見た目は替わらない）。
+- **各ライブラリのテーマは、見た目のプリセットとして写す**（`src/theme/presets/themes/`。reveal の 14 種は `scripts/reveal-themes.mjs` が
+  reveal のテーマの CSS 変数から作り、共通の規則は `reveal-common.css`。impress-demo・shower-ribbon・spectacle・swiper-demo は手で写した）。
+  デッキの `style.css` で選び、モードとは独立（モードを選んでも見た目は替わらない）。開発時は画面の左上の「見た目」で、その場で付け替えて試せる
+  （`src/devtools/LookSwitcher.tsx`。reveal の中央寄せ `--reveal-center` は起動のときに読む設定なので、付け替えの知らせ `deck:look` で読み直す）。
   色・書体・題の形（帯の代わりの見出し）・ページ番号の形（reveal の右下、Shower の赤いリボン）・枠の形（impress の角丸と影）・
   揃え（reveal と Swiper の中央揃え）は元のテーマどおり。大きさ（文字・行送り・余白）は土台のまま（元のテーマの大きさでは、
   1 枚に詰めた資料が収まらない。reveal black の本文 42px では landau の 13 枚中 11 枚がはみ出した）。題は帯と同じ場所と高さに置き、

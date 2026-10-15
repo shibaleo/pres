@@ -1,0 +1,30 @@
+/* プリセット: reveal.js(6.0.2)のテーマ sky(reveal.js/dist/theme/sky.css)の見た目を、この土台の上で写したもの。
+   scripts/reveal-themes.mjs が作る(手で直さない。npm run themes で作り直す)。共通の規則は reveal-common.css。
+
+   - 地 #f7fbfc(面は radial-gradient(#f7fbfc, #add9e4))、文字 #333、見出し #333、リンク #2a76dd
+   - 書体: 本文は "Open Sans", sans-serif、見出しは "Quicksand", sans-serif の代わりに、埋め込み済みの 'Noto Sans JP'・'Noto Sans JP'
+   - 大きさ(文字・行送り・余白)は土台のまま
+
+   使い方(デッキの decks/<名前>/style.css): @import '@/theme/presets/themes/reveal-sky.css'; したうえで
+     :root { --deck-preset: reveal-sky; }(ほかのプリセットと並べるときは後ろに書く) */
+@import './reveal-common.css';
+
+[data-preset~='reveal-sky'] {
+  --font-body: 'Noto Sans JP', sans-serif;
+  --font-heading: 'Noto Sans JP', sans-serif;
+  --body-weight: 400;
+  --heading-weight: 400;
+  --color-brand: #2a76dd;
+  --color-ink: #333;
+  --color-muted: color-mix(in srgb, #333 70%, #f7fbfc);
+  --color-canvas: #f7fbfc;
+  --color-surface: color-mix(in srgb, #333 10%, #f7fbfc);
+  --reveal-heading-color: #333;
+  --reveal-heading-transform: uppercase;
+  --reveal-heading-letter-spacing: -.05em;
+  --reveal-heading-shadow: none;
+}
+[data-preset~='reveal-sky'] body {
+  background: radial-gradient(#f7fbfc, #add9e4);
+  background-color: #f7fbfc;
+}

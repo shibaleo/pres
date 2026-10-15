@@ -1,0 +1,47 @@
+/* reveal.js のテーマのプリセット(reveal-<名前>.css。scripts/reveal-themes.mjs が作る)に共通の規則。
+   どのプリセットも先頭でこのファイルを読み、[data-preset*='reveal-'](reveal- で始まるプリセットのどれか)の範囲にかかる。
+
+   - 題の帯は無い(題はただの見出し)。ただし帯と同じ場所と高さに置き、1 枚に入る量は土台と変えない
+   - 中央揃え: 横は文字揃え、縦は reveal 自身の center: true(--reveal-center を reveal モードが読んで設定に渡す)
+   - ページ番号は reveal の既定の形(右下、半透明の黒の地に白)
+   - 大きさ(文字・行送り・余白)は土台のまま。色・書体・見出しの形は各テーマのファイルが決める */
+[data-preset*='reveal-'] {
+  --reveal-center: true;
+}
+[data-preset*='reveal-'] .deck :is(h1, h2, h3, h4, h5, h6) {
+  color: var(--reveal-heading-color);
+  text-transform: var(--reveal-heading-transform);
+  letter-spacing: var(--reveal-heading-letter-spacing);
+  text-shadow: var(--reveal-heading-shadow);
+}
+[data-preset*='reveal-'] .deck :is(h2, h3),
+[data-preset*='reveal-'] .deck .slide > h2:first-child {
+  margin: 0 0 var(--space);
+  padding: 0;
+  color: var(--reveal-heading-color);
+  background: none;
+}
+/* 題(スライドの先頭の h2): 色の帯は付けないが、帯と同じ場所(スライドの上の余白に重ねる)と高さ(3 半行)に置く */
+[data-preset*='reveal-'] .deck .slide > h2:first-child {
+  margin: calc(-1 * var(--slide-pad)) 0 var(--space);
+  padding: calc((3 * var(--space) - var(--leading-tight) * 1em) / 2) 0;
+}
+/* 強調(と、土台が強調と同じ扱いにする要素)は、ゴシックの太字。土台は強調の太さを見出しの太さ(--heading-weight)と揃えるが、
+   見出しを太くしないテーマ(league・moon・night など)では強調が本文と同じ太さになり、見えなくなるため。
+   明朝の本文でも太らせずにゴシックで際立たせる(土台の決まり) */
+[data-preset*='reveal-'] .deck :is(th, strong, b, dt, .frame-title, .thm-head, .byline > :first-child) {
+  font-family: 'Noto Sans JP', sans-serif;
+  font-weight: 700;
+}
+[data-preset*='reveal-'] .reveal .slides section.slide:not(.stack) {
+  text-align: center;
+}
+/* ページ番号: reveal の既定(右下、半透明の黒の地に白の 12px) */
+[data-preset*='reveal-'] .reveal .slide-number,
+[data-preset*='reveal-'] .reveal:has(.slides section.present:not(.stack) > h2:first-child) .slide-number {
+  inset: auto 8px 8px auto;
+  padding: 5px;
+  font: 12px/1 Helvetica, sans-serif;
+  color: #fff;
+  background-color: rgb(0 0 0 / 40%);
+}

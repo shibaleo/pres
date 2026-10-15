@@ -6,7 +6,7 @@
    - デモは見出しを特別に扱わない(リセットで本文と同じ)ので、題の帯は無く、題も本文と同じ書体と色。ページ番号も無い
    - 書体は Open Sans の代わりに、土台の Noto Sans JP
 
-   使い方(デッキの decks/<名前>/style.css): @import '@/theme/presets/impress-demo.css'; したうえで
+   使い方(デッキの decks/<名前>/style.css): @import '@/theme/presets/themes/impress-demo.css'; したうえで
      :root { --deck-preset: impress-demo; }(ほかのプリセットと並べるときは後ろに書く) */
 [data-preset~='impress-demo'] {
   --font-body: 'Noto Sans JP', sans-serif;

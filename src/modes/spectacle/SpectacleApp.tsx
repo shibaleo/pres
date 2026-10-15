@@ -126,7 +126,7 @@ function RegisterGoTo() {
  * 色と書体は本文の範囲(.deck)の規則が決める。
  * backdropStyle は Spectacle の既定(ウィンドウいっぱいに固定)を丸ごと置き換えるので、既定の値も書く
  * (無いと外枠が中身の大きさに縮み、拡大と中央寄せが効かない)。スライドの外の色は --deck-backdrop(無ければ面の色)。
- * 見た目のプリセット(theme/presets/spectacle.css)が替える
+ * 見た目のプリセット(theme/presets/themes/spectacle.css)が替える
  */
 const themeOf = (width: number, height: number) => ({
   size: { width, height },

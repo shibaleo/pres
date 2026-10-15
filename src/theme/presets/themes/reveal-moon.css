@@ -1,0 +1,26 @@
+/* プリセット: reveal.js(6.0.2)のテーマ moon(reveal.js/dist/theme/moon.css)の見た目を、この土台の上で写したもの。
+   scripts/reveal-themes.mjs が作る(手で直さない。npm run themes で作り直す)。共通の規則は reveal-common.css。
+
+   - 地 #002b36、文字 #93a1a1、見出し #eee8d5、リンク #268bd2
+   - 書体: 本文は Lato, sans-serif、見出しは League Gothic, Impact, sans-serif の代わりに、埋め込み済みの 'Noto Sans JP'・'Noto Sans JP'
+   - 大きさ(文字・行送り・余白)は土台のまま
+
+   使い方(デッキの decks/<名前>/style.css): @import '@/theme/presets/themes/reveal-moon.css'; したうえで
+     :root { --deck-preset: reveal-moon; }(ほかのプリセットと並べるときは後ろに書く) */
+@import './reveal-common.css';
+
+[data-preset~='reveal-moon'] {
+  --font-body: 'Noto Sans JP', sans-serif;
+  --font-heading: 'Noto Sans JP', sans-serif;
+  --body-weight: 400;
+  --heading-weight: 400;
+  --color-brand: #268bd2;
+  --color-ink: #93a1a1;
+  --color-muted: color-mix(in srgb, #93a1a1 70%, #002b36);
+  --color-canvas: #002b36;
+  --color-surface: color-mix(in srgb, #93a1a1 10%, #002b36);
+  --reveal-heading-color: #eee8d5;
+  --reveal-heading-transform: uppercase;
+  --reveal-heading-letter-spacing: normal;
+  --reveal-heading-shadow: none;
+}

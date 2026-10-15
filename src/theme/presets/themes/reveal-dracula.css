@@ -1,0 +1,26 @@
+/* プリセット: reveal.js(6.0.2)のテーマ dracula(reveal.js/dist/theme/dracula.css)の見た目を、この土台の上で写したもの。
+   scripts/reveal-themes.mjs が作る(手で直さない。npm run themes で作り直す)。共通の規則は reveal-common.css。
+
+   - 地 #191919、文字 #f8f8f2、見出し #bd93f9、リンク #ff79c6
+   - 書体: 本文は -apple-system, BlinkMacSystemFont, avenir next, avenir, segoe ui, helvetica neue, helvetica, Cantarell, Ubuntu, roboto, noto, arial, sans-serif、見出しは -apple-system, BlinkMacSystemFont, avenir next, avenir, segoe ui, helvetica neue, helvetica, Cantarell, Ubuntu, roboto, noto, arial, sans-serif の代わりに、埋め込み済みの 'Noto Sans JP'・'Noto Sans JP'
+   - 大きさ(文字・行送り・余白)は土台のまま
+
+   使い方(デッキの decks/<名前>/style.css): @import '@/theme/presets/themes/reveal-dracula.css'; したうえで
+     :root { --deck-preset: reveal-dracula; }(ほかのプリセットと並べるときは後ろに書く) */
+@import './reveal-common.css';
+
+[data-preset~='reveal-dracula'] {
+  --font-body: 'Noto Sans JP', sans-serif;
+  --font-heading: 'Noto Sans JP', sans-serif;
+  --body-weight: 400;
+  --heading-weight: 600;
+  --color-brand: #ff79c6;
+  --color-ink: #f8f8f2;
+  --color-muted: color-mix(in srgb, #f8f8f2 70%, #191919);
+  --color-canvas: #191919;
+  --color-surface: color-mix(in srgb, #f8f8f2 10%, #191919);
+  --reveal-heading-color: #bd93f9;
+  --reveal-heading-transform: none;
+  --reveal-heading-letter-spacing: normal;
+  --reveal-heading-shadow: none;
+}

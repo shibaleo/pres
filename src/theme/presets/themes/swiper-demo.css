@@ -7,7 +7,7 @@
    - 題の帯は無い。ページ番号も無い
    - 書体は Helvetica Neue の代わりに、土台の Noto Sans JP
 
-   使い方(デッキの decks/<名前>/style.css): @import '@/theme/presets/swiper-demo.css'; したうえで
+   使い方(デッキの decks/<名前>/style.css): @import '@/theme/presets/themes/swiper-demo.css'; したうえで
      :root { --deck-preset: swiper-demo; }(ほかのプリセットと並べるときは後ろに書く) */
 [data-preset~='swiper-demo'] {
   --font-body: 'Noto Sans JP', sans-serif;

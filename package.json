@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "subset": "node scripts/subset-fonts.mjs",
+    "themes": "node scripts/reveal-themes.mjs",
     "decks": "node scripts/deck.mjs list",
     "new": "node scripts/deck.mjs new",
     "dev": "node scripts/deck.mjs dev",

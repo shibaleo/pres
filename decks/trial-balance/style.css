@@ -3,7 +3,7 @@
 
 @import '@/theme/presets/manual.css';
 /* モードのライブラリの既定の見た目(Swiper の公式デモの見た目)。上のプリセットの後に読み、書体・色・大きさを替える */
-@import '@/theme/presets/swiper-demo.css';
+@import '@/theme/presets/themes/swiper-demo.css';
 
 :root {
   --deck-preset: manual swiper-demo;

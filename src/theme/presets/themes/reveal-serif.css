@@ -1,0 +1,26 @@
+/* プリセット: reveal.js(6.0.2)のテーマ serif(reveal.js/dist/theme/serif.css)の見た目を、この土台の上で写したもの。
+   scripts/reveal-themes.mjs が作る(手で直さない。npm run themes で作り直す)。共通の規則は reveal-common.css。
+
+   - 地 #f0f1eb、文字 #000、見出し #383d3d、リンク #51483d
+   - 書体: 本文は "Palatino Linotype", "Book Antiqua", Palatino, FreeSerif, serif、見出しは "Palatino Linotype", "Book Antiqua", Palatino, FreeSerif, serif の代わりに、埋め込み済みの 'Noto Serif JP'・'Noto Serif JP'
+   - 大きさ(文字・行送り・余白)は土台のまま
+
+   使い方(デッキの decks/<名前>/style.css): @import '@/theme/presets/themes/reveal-serif.css'; したうえで
+     :root { --deck-preset: reveal-serif; }(ほかのプリセットと並べるときは後ろに書く) */
+@import './reveal-common.css';
+
+[data-preset~='reveal-serif'] {
+  --font-body: 'Noto Serif JP', serif;
+  --font-heading: 'Noto Serif JP', serif;
+  --body-weight: 400;
+  --heading-weight: 600;
+  --color-brand: #51483d;
+  --color-ink: #000;
+  --color-muted: color-mix(in srgb, #000 70%, #f0f1eb);
+  --color-canvas: #f0f1eb;
+  --color-surface: color-mix(in srgb, #000 10%, #f0f1eb);
+  --reveal-heading-color: #383d3d;
+  --reveal-heading-transform: none;
+  --reveal-heading-letter-spacing: normal;
+  --reveal-heading-shadow: none;
+}

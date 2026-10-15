@@ -3,7 +3,7 @@
 
 @import '@/theme/presets/manual.css';
 /* モードのライブラリの既定の見た目(Shower の既定のテーマ ribbon)。上のプリセットの後に読み、書体・色・大きさを替える */
-@import '@/theme/presets/shower-ribbon.css';
+@import '@/theme/presets/themes/shower-ribbon.css';
 
 :root {
   --deck-preset: manual shower-ribbon;

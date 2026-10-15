@@ -6,7 +6,7 @@
    - 題の帯は無い(題はピンクの見出し)。ページ番号も無い(既定のテンプレートは何も出さない)
    - 書体は Helvetica Neue の代わりに、土台の Noto Sans JP
 
-   使い方(デッキの decks/<名前>/style.css): @import '@/theme/presets/spectacle.css'; したうえで
+   使い方(デッキの decks/<名前>/style.css): @import '@/theme/presets/themes/spectacle.css'; したうえで
      :root { --deck-preset: spectacle; }(ほかのプリセットと並べるときは後ろに書く) */
 [data-preset~='spectacle'] {
   --font-body: 'Noto Sans JP', sans-serif;

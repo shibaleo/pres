@@ -2,7 +2,7 @@
 
 @import '@/theme/presets/math.css';
 /* モードのライブラリの既定の見た目(reveal の既定のテーマ black)。上のプリセットの後に読み、書体・色・大きさを替える */
-@import '@/theme/presets/reveal-black.css';
+@import '@/theme/presets/themes/reveal-black.css';
 
 :root {
   --deck-preset: math reveal-black;
