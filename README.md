@@ -375,6 +375,10 @@ export default {
     // (x・y・z は中心の座標(px。スライドは 933×700)、rotate・rotateX・rotateY は回転(度)、scale は倍率)
     positions: { 'sec:main': { z: -1500, scale: 2 } },
   },
+  reveal: {
+    // reveal モードでの表示。scroll はスクロールビュー(スライドを縦に並べた 1 ページにし、スクロールで進む。Web で読ませる資料に)
+    view: 'scroll',
+  },
 } satisfies MotionConfig
 ```
 

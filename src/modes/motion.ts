@@ -1,4 +1,4 @@
-import type { ImpressLayout, ModeName, TransitionName } from './names'
+import type { ImpressLayout, ModeName, RevealView, TransitionName } from './names'
 
 /**
  * デッキの動きの設定(decks/<名前>/motion.ts の default export)。原稿(本文)には動きの指定を書かず、ここに書く。
@@ -34,6 +34,16 @@ export type MotionConfig = {
   transitions?: Record<string, TransitionName>
   /** impress モードでのスライドの置き方(impress は平面・空間にスライドを置き、カメラが移る) */
   impress?: ImpressMotion
+  /** reveal モードでの表示 */
+  reveal?: RevealMotion
+}
+
+/**
+ * reveal モードでの表示。view: 'scroll' で reveal のスクロールビュー(スライドを縦に並べた 1 ページにし、スクロールで進む。
+ * Web で読ませる資料に)。省略すると 1 枚ずつのスライド。URL の ?view=scroll(reveal 自身の約束)でも一時的に替えられる
+ */
+export type RevealMotion = {
+  view?: RevealView
 }
 
 /**

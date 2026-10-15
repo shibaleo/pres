@@ -45,6 +45,16 @@ import LiveDeck from './components/LiveDeck'
 
 <small>→ ↓ で次へ、`Esc` で一覧、`S` で発表者ビュー。</small>
 
+--
+
+## reveal（スクロールビュー） \label{sec:reveal-scroll}
+
+同じデッキを、スライドを縦に並べた 1 ページとして読む。段階表示もスクロールで 1 段ずつ進む。Web で読ませる資料に。
+
+<LiveDeck deck="landau" view="scroll" title="reveal のスクロールビューで開いたデッキ(Landau 減衰の線形計算)" width={760} height={400} />
+
+<small>枠の中をスクロールして読む。`motion.ts` の `reveal: { view: 'scroll' }` でいつもこの表示に。</small>
+
 ---
 
 ## impress \label{sec:impress}

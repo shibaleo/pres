@@ -28,7 +28,7 @@ URL の検索の部分で受けるのは、ライブラリ自身の約束（reve
 
 | モード | 場所 | 状態 |
 |---|---|---|
-| reveal（既定） | `src/modes/reveal/` | 完成。一覧・ページ番号・はみ出しの検査・PDF・発表者ビュー（reveal のノートのプラグイン。S キー） |
+| reveal（既定） | `src/modes/reveal/` | 完成。一覧・ページ番号・はみ出しの検査・PDF・発表者ビュー（reveal のノートのプラグイン。S キー）。motion.ts の `reveal: { view: 'scroll' }`（または reveal 自身の URL の約束 `?view=scroll`）でスクロールビュー |
 | impress | `src/modes/impress/` | 平面に並べてカメラが移る。下の「impress モード」 |
 | Shower | `src/modes/shower/` | 一覧と全画面を行き来する。下の「Shower モード」 |
 | Spectacle | `src/modes/spectacle/` | React の部品のデッキ。下の「Spectacle モード」 |
@@ -48,6 +48,16 @@ URL の検索の部分で受けるのは、ライブラリ自身の約束（reve
 impress の substep と Shower の `.next` は、要素を文書順に 1 つずつ現すだけで、段の番号の指定も「消える」も無い。
 そこで各モードの `Slide` が、段の数 - 1 個の空の要素（印）をスライドの末尾に置き、ライブラリには印だけを進めさせる。今の段 = 進んだ印の数 + 1 とし、
 各 `Overlay` の表示をそこから決める。`\only`・`<2-3>` も Beamer どおりに出る。
+
+### reveal のスクロールビュー
+
+- reveal 6 の `view: 'scroll'`。スライドを縦に並べた 1 ページにし、スクロールで進む（段階表示もスクロールで 1 段ずつ）。
+  デッキの motion.ts の `reveal: { view: 'scroll' }` でいつもこの表示に、URL の `?view=scroll`（reveal 自身の約束）で一時的に。
+  PDF 用の表示（`?print-pdf`）では使わない。reveal は窓の幅が 435px 以下だと自動でスクロールビューにする（`scrollActivationWidth`）
+- ページ番号は出ない（reveal がスクロールビューでは隠し、代わりにスクロールバーにスライドの区切りを出す）
+- スクロールビューはスライドの幅と高さを `!important` で決めるので、はみ出しの検査は測る間の幅と高さにも `!important` を付ける
+- メニューからの移動（`deck.slide`）と URL の `#/5` は、そのスライドの位置へスクロールする
+- 見本: `decks/demonstration/` の「reveal（スクロールビュー）」（landau を `?view=scroll` で埋め込む）
 
 ### impress モード（試作）
 

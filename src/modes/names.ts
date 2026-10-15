@@ -35,6 +35,13 @@ export const IMPRESS_LAYOUTS = ['grid', 'spiral', 'zoom'] as const
 export type ImpressLayout = (typeof IMPRESS_LAYOUTS)[number]
 
 /**
+ * reveal モードの表示(motion.ts の reveal.view)。省略すると 1 枚ずつのスライド。
+ * scroll は reveal のスクロールビュー(スライドを縦に並べた 1 ページにし、スクロールで進む。段階表示もスクロールで進む)
+ */
+export const REVEAL_VIEWS = ['scroll'] as const
+export type RevealView = (typeof REVEAL_VIEWS)[number]
+
+/**
  * 遷移(スライドへ入るときの動き)の名前。デッキの動きの設定(decks/<名前>/motion.ts。modes/motion.ts)で使う共通の語彙で、
  * 各モードは持っているものだけを自分の演出に対応させる
  */

@@ -44,6 +44,9 @@ export default function RevealApp({ Slides, motion }: DeckSource) {
         // 縦スライド(原稿の --)の進め方。'linear' にすると ←→ だけで縦も含めて順に進む
         // (見た目の切り替わり方は変わらない)。'grid' は縦の位置を保って列を移る
         navigationMode: 'default',
+        // 表示(デッキの動きの設定 motion.ts の reveal.view)。scroll はスクロールビュー。PDF 用の表示(?print-pdf)では使わない
+        // (reveal は ?print-pdf で印刷用の表示にし、URL の ?view=scroll はこの設定より優先する)
+        ...(motion?.reveal?.view === 'scroll' && !isPrint ? { view: 'scroll' as const } : {}),
         // 既定の遷移(デッキの動きの設定 motion.ts。reveal に無いものは使わない。スライドごとの遷移は components.tsx)
         ...(revealTransition(motion?.transition) ? { transition: revealTransition(motion?.transition) } : {}),
         // 番号(節・定理・式・文献)はすべてビルド時に振るので、reveal の既定どおり

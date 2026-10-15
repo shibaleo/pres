@@ -459,4 +459,13 @@ describe('動きの設定(motion.ts)', () => {
       expect.stringMatching(/impress\.ts:8: ラベル sec:none のスライドがありません/),
     ])
   })
+
+  it('reveal の表示: 無い表示は警告(位置は motion.ts の行)', async () => {
+    const ok = motionFile('reveal-scroll', `{ mode: 'reveal', reveal: { view: 'scroll' } }`)
+    expect((await run(src, { motion: ok })).file.messages).toEqual([])
+    const bad = motionFile('reveal-view', `{\n  mode: 'reveal',\n  reveal: { view: 'pages' },\n}`)
+    expect((await run(src, { motion: bad })).file.messages.map((m) => m.reason)).toEqual([
+      expect.stringMatching(/reveal-view\.ts:3: reveal の表示 "pages" はありません\(scroll\)/),
+    ])
+  })
 })

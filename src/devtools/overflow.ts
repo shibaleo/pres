@@ -74,23 +74,24 @@ export function watchOverflow(onChange?: (overflows: Overflow[]) => void): () =>
  * コードの枠は overflow: auto なので、長い行は枠の中でスクロールになり、スライドの大きさには出ない(発表では行の続きが見えない)。
  * ライブラリは今のスライドから遠いものを描かないことがある(display: none。スライドにも、それを包む要素にも付く)ので、
  * 測る間だけ表示し、縮小(zoom。Shower の一覧)も外す。スライドは窓と同じ縦横比で最小サイズより広い・高いことがあるので
- * (deck/view-size.ts)、測る間だけ幅と高さを最小サイズにする(高さはそれより中身が高ければ scrollHeight に出る)
+ * (deck/view-size.ts)、測る間だけ幅と高さを最小サイズにする(高さはそれより中身が高ければ scrollHeight に出る)。
+ * reveal のスクロールビューはスライドの幅と高さを !important で決めるので、測る間の値にも !important を付ける
  */
 function measureAtMinimum(slide: HTMLElement): { width: number; height: number; code: number } {
   const hidden: HTMLElement[] = []
   for (let el: HTMLElement | null = slide; el && el !== document.body; el = el.parentElement) {
     if (getComputedStyle(el).display === 'none') hidden.push(el)
   }
-  const prev = { display: hidden.map((el) => el.style.display), width: slide.style.width, height: slide.style.height, zoom: slide.style.zoom }
+  const OVERRIDES = { width: `${MIN_WIDTH}px`, height: `${SLIDE_HEIGHT}px`, zoom: '1' }
+  const prev = {
+    display: hidden.map((el) => el.style.display),
+    slide: Object.keys(OVERRIDES).map((name) => [name, slide.style.getPropertyValue(name), slide.style.getPropertyPriority(name)] as const),
+  }
   for (const el of hidden) el.style.display = 'block'
-  slide.style.width = `${MIN_WIDTH}px`
-  slide.style.height = `${SLIDE_HEIGHT}px`
-  slide.style.zoom = '1'
+  for (const [name, value] of Object.entries(OVERRIDES)) slide.style.setProperty(name, value, 'important')
   const code = Math.max(0, ...[...slide.querySelectorAll('pre')].map((p) => p.scrollWidth - p.clientWidth))
   const size = { width: slide.scrollWidth, height: slide.scrollHeight, code }
-  slide.style.width = prev.width
-  slide.style.height = prev.height
-  slide.style.zoom = prev.zoom
+  for (const [name, value, priority] of prev.slide) slide.style.setProperty(name, value, priority)
   hidden.forEach((el, i) => (el.style.display = prev.display[i]))
   return size
 }

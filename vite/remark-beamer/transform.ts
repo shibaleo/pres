@@ -25,7 +25,7 @@ import type { Point, Position } from 'unist'
 import { MATH_ENVS } from './syntax.ts'
 import { findInclude, parseInclude, resolveInclude, type IncludeContext } from './inputs.js'
 import type { LatexCommand, LatexLine } from './mdast.ts'
-import { IMPRESS_LAYOUTS, MODE_NAMES, MODE_TRANSITIONS, TRANSITIONS, type ModeName, type TransitionName } from '../../src/modes/names.ts'
+import { IMPRESS_LAYOUTS, MODE_NAMES, REVEAL_VIEWS, MODE_TRANSITIONS, TRANSITIONS, type ModeName, type TransitionName } from '../../src/modes/names.ts'
 import type { MotionConfig } from '../../src/modes/motion.ts'
 
 export type BeamerOptions = {
@@ -757,6 +757,11 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
       const impress = config.impress
       if (impress?.layout !== undefined && !(IMPRESS_LAYOUTS as readonly string[]).includes(impress.layout)) {
         motionWarn(`impress の並べ方 "${impress.layout}" はありません(${IMPRESS_LAYOUTS.join('・')})`, 'layout')
+      }
+      // reveal モードでの表示
+      const view = config.reveal?.view
+      if (view !== undefined && !(REVEAL_VIEWS as readonly string[]).includes(view)) {
+        motionWarn(`reveal の表示 "${view}" はありません(${REVEAL_VIEWS.join('・')})`, 'view')
       }
       for (const key of Object.keys(impress?.positions ?? {})) slideLabeled(key, 'positions')
 
