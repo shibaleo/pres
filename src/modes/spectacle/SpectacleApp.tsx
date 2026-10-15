@@ -3,7 +3,7 @@ import { Deck, DeckContext, Notes, Slide as SpectacleSlide, SlideContext, useSte
 import type { DeckSource } from '../../deck/source'
 import { documentComponents } from '../../components'
 import { announcePresent, deckSlides, markReady, registerGoTo } from '../../deck/mode'
-import { useViewSize } from '../../deck/view-size'
+import { useViewSize, useWindowHasSize } from '../../deck/view-size'
 import { PageNumber, watchPageNumbers } from '../page-number'
 import { isShown, overlayClass, slideAttributes, stepsOf, type OverlayProps, type SlideProps } from '../structure'
 import type { TransitionName } from '../names'
@@ -141,6 +141,10 @@ const themeOf = (width: number, height: number) => ({
 export default function SpectacleApp({ Slides, motion }: DeckSource) {
   const { width, height } = useViewSize()
   const theme = useMemo(() => themeOf(width, height), [width, height])
+  // Spectacle は起動のときに外枠の大きさを getClientRects()[0] で読み、表示していない窓の中(ほかのデッキに埋め込まれ、
+  // 隣の隠れたスライドで読み込まれた iframe)では空なので例外で止まる。窓に大きさが付くまで組まない
+  const hasSize = useWindowHasSize()
+  if (!hasSize) return null
   return (
     // 遷移はスライドごとに決める(既定の遷移 motion.ts の transition は DeckTransitionContext で配る)
     <DeckTransitionContext.Provider value={motion?.transition}>

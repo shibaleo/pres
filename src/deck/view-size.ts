@@ -14,6 +14,9 @@ let last: ViewSize = { width: MIN_WIDTH, height: SLIDE_HEIGHT, scale: 1 }
 
 /** 今の窓での表示の大きさ(同じ値なら同じオブジェクト。useSyncExternalStore のため) */
 export function viewSize(): ViewSize {
+  // 窓の大きさが 0 のとき(表示していない iframe の中。ほかのデッキに埋め込まれ、隣の隠れたスライドで読み込まれたとき)は、
+  // 最小サイズにする(そのまま割ると NaN になり、ライブラリがその大きさで組んで描けなくなる)。大きさが付けば resize で直る
+  if (innerWidth <= 0 || innerHeight <= 0) return last
   const fit = Math.min(innerWidth / MIN_WIDTH, innerHeight / SLIDE_HEIGHT)
   const width = Math.round(innerWidth / fit)
   const height = Math.round(innerHeight / fit)
@@ -27,6 +30,14 @@ export function viewSize(): ViewSize {
 function subscribe(onChange: () => void) {
   addEventListener('resize', onChange)
   return () => removeEventListener('resize', onChange)
+}
+
+/**
+ * 窓に大きさがあるか(表示していない iframe の中では 0)。大きさを測って組むライブラリ(Spectacle)は、
+ * 大きさが付くまで組まずに待つ
+ */
+export function useWindowHasSize(): boolean {
+  return useSyncExternalStore(subscribe, () => innerWidth > 0 && innerHeight > 0)
 }
 
 /** 窓の大きさが変わると更新される表示の大きさ(React の部品で使う) */
