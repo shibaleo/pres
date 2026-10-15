@@ -8,6 +8,9 @@
  *                                                           ビルド(dist/<名前>/。--single は 1 枚の index.html。
  *                                                           モードはデッキの動きの設定(motion.ts)のもの。--mode で別のモードにすると
  *                                                           dist/<名前>/<モード>/)
+ *   node scripts/deck.mjs build [名前...] --single --also-mode <モード>
+ *                                                           本番のビルドと、そのモードのビルド(dist/<名前>/<モード>/)の両方を作る。
+ *                                                           デッキのモードがもともとそのモードなら、本番のビルドを写すだけ(npm run check)
  *   node scripts/deck.mjs lint [名前...]                     単一 HTML をビルドして、はみ出しだけを検査する(原稿の位置を一覧。あれば失敗)
  *   node scripts/deck.mjs shots [名前...] [--handout]        単一 HTML を reveal モードでビルドして、各ページと一覧を screenshots/<名前>/ に撮る
  *   node scripts/deck.mjs pdf [名前...]                      単一 HTML を reveal モードでビルドして、pdf/<名前>.pdf と pdf/<名前>-handout.pdf を書き出す
@@ -17,10 +20,10 @@
  * Vite のコマンドは任意の引数を設定に渡せないので、Vite を JS の API で呼び、デッキを vite.config.ts の deckConfig に
  * 引数として渡す(環境変数は使わない)。
  */
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
+import { copyFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { parseArgs } from 'node:util'
-import { DECK_NAME, DECKS_DIR, RESERVED_NAMES, ROOT, listDecks, resolveDeck } from '../vite/decks.js'
+import { DECK_NAME, DECKS_DIR, RESERVED_NAMES, ROOT, deckMode, listDecks, resolveDeck } from '../vite/decks.js'
 
 // Vite と設定(vite.config.ts)、ブラウザ(Playwright)は使うコマンドの中で読み込む(list / new を軽くするため)
 const vite = () => import('vite')
@@ -34,6 +37,7 @@ const { values: flags, positionals: names } = parseArgs({
   options: {
     single: { type: 'boolean' },
     'allow-warnings': { type: 'boolean' },
+    'also-mode': { type: 'string' },
     handout: { type: 'boolean' },
     port: { type: 'string' },
     mode: { type: 'string' },
@@ -117,7 +121,21 @@ const commands = {
   },
 
   async build() {
-    for (const deck of decksFromArgs()) await buildDeck(deck, { single: !!flags.single, allowWarnings: !!flags['allow-warnings'], mode: flags.mode })
+    const options = { single: !!flags.single, allowWarnings: !!flags['allow-warnings'] }
+    for (const deck of decksFromArgs()) {
+      const html = await buildDeck(deck, { ...options, mode: flags.mode })
+      const also = flags['also-mode']
+      if (!also) continue
+      // 本番のビルドが同じモードで、1 枚の HTML なら、組み直さずに写す(同じものを 2 度ビルドしない)
+      if (!flags.mode && options.single && (await deckMode(deck)) === also) {
+        const copy = join(deck.outDir, also, 'index.html')
+        mkdirSync(join(deck.outDir, also), { recursive: true })
+        copyFileSync(html, copy)
+        console.log(`${deck.name}: ${rel(copy)} に写しました(デッキのモードが ${also})`)
+      } else {
+        await buildDeck(deck, { ...options, mode: also })
+      }
+    }
   },
 
   async shots() {

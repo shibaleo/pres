@@ -57,7 +57,8 @@ npm run subset                 # フォントを全デッキで使う文字だ�
 npm run typecheck              # 型チェック(ブラウザ側 tsconfig.json + ビルド側 tsconfig.node.json + e2e)
 npm run test                   # テスト(Vitest)。transform: 記法の変換とビルド設定 / render: 全デッキを実際に描いて番号・参照・構造を確かめる
 npm run test:e2e               # e2e テスト(Playwright)。ビルドしたデッキを Chrome で開き、全デッキのはみ出し(本番のビルド)と書体、legendre の図の操作、landau の PDF 用の表示を確かめる
-npm run check                  # typecheck + test + build:single(全デッキ) + build:single -- --mode reveal(全デッキ) + test:e2e。コミット前に実行する
+npm run check                  # typecheck + test + build:single -- --also-mode reveal(全デッキの本番のビルドと reveal モードのビルド。
+                               # モードが reveal のデッキは写すだけ) + test:e2e。コミット前に実行する
 ```
 
 - デッキの名前はコマンドの引数で渡します（`npm run build -- landau`）。環境変数は使いません。
