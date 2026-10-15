@@ -170,9 +170,12 @@ type Line =
   | { kind: 'end'; name: string }
   | { kind: 'pause' }
   | { kind: 'newtheorem'; star: boolean; name: string; shared?: string; heading: string; within?: string }
+  | { kind: 'renewcommand'; name: string; body: string }
 function parseLine(raw: string): Line {
   const s = raw.trim()
   if (s === '\\pause') return { kind: 'pause' }
+  const rc = s.match(/^\\renewcommand\{\\([A-Za-z]+)\}\{(.*)\}$/)
+  if (rc) return { kind: 'renewcommand', name: rc[1], body: rc[2] }
   // amsthm: \newtheorem{名前}[番号を共有する環境]{見出し} / \newtheorem{名前}{見出し}[section] / \newtheorem*{名前}{見出し}
   const nt = s.match(/^\\newtheorem(\*?)\{([^}]*)\}(?:\[([^\]]*)\])?\{([^}]*)\}(?:\[([^\]]*)\])?$/)
   if (nt) return { kind: 'newtheorem', star: nt[1] === '*', name: nt[2].trim(), shared: nt[3]?.trim(), heading: nt[4].trim(), within: nt[5]?.trim() }
@@ -181,6 +184,90 @@ function parseLine(raw: string): Line {
   const b = s.match(/^\\begin\{([A-Za-z]+\*?)\}(?:<([^>]*)>)?(?:\[([^\]]*)\])?\s*(?:\\label\{([^}]*)\})?$/)!
   return { kind: 'begin', name: b[1], spec: b[2], opt: b[3], label: b[4]?.trim() }
 }
+/**
+ * 脚注の印の書き方(LaTeX の \thefootnote)。\renewcommand{\thefootnote}{…} の中身を、文字と番号の並びとして読む。
+ * 番号は LaTeX のカウンタの表示の命令(\arabic \alph \Alph \roman \Roman \fnsymbol。引数は footnote)、
+ * 記号は数式の中の \ast \star \dagger \ddagger と、文の中の \textasteriskcentered \textdagger \textdaggerdbl。
+ * それ以外の命令はエラー(誤りを補わない)
+ */
+const COUNTER_STYLES = ['arabic', 'alph', 'Alph', 'roman', 'Roman', 'fnsymbol'] as const
+type CounterStyle = (typeof COUNTER_STYLES)[number]
+/** 印の並び: 文字はそのまま、{ style } はカウンタの表示 */
+type FootnoteFormat = (string | { style: CounterStyle })[]
+const MARK_SYMBOLS: Record<string, string> = { ast: '∗', star: '⋆', dagger: '†', ddagger: '‡' }
+const TEXT_SYMBOLS: Record<string, string> = { textasteriskcentered: '∗', textdagger: '†', textdaggerdbl: '‡' }
+/** LaTeX の既定(\arabic{footnote}) */
+const DEFAULT_FOOTNOTE_FORMAT: FootnoteFormat = [{ style: 'arabic' }]
+
+function parseFootnoteFormat(body: string): FootnoteFormat | string {
+  const out: FootnoteFormat = []
+  const re = /\\([A-Za-z]+)\{([^}]*)\}|\$((?:\\[A-Za-z]+\s*)+)\$|\\([A-Za-z]+)|([^\\$]+)/y
+  let at = 0
+  while (at < body.length) {
+    re.lastIndex = at
+    const m = re.exec(body)
+    if (!m) return `脚注の印の書き方 ${body} を読めません(${body.slice(at)} の所)`
+    at = re.lastIndex
+    if (m[1] !== undefined) {
+      if (!(COUNTER_STYLES as readonly string[]).includes(m[1])) {
+        return `\\${m[1]}{${m[2]}} は脚注の印に使えません(使えるのは ${COUNTER_STYLES.map((s) => `\\${s}`).join(' ')})`
+      }
+      if (m[2].trim() !== 'footnote') return `\\${m[1]}{${m[2]}} のカウンタは footnote にしてください`
+      out.push({ style: m[1] as CounterStyle })
+    } else if (m[3] !== undefined) {
+      for (const name of m[3].match(/[A-Za-z]+/g)!) {
+        if (!MARK_SYMBOLS[name]) return `数式の中の \\${name} は脚注の印に使えません(使えるのは ${Object.keys(MARK_SYMBOLS).map((s) => `\\${s}`).join(' ')})`
+        out.push(MARK_SYMBOLS[name])
+      }
+    } else if (m[4] !== undefined) {
+      if (MARK_SYMBOLS[m[4]]) return `\\${m[4]} は数式の中で書いてください($\\${m[4]}$。LaTeX でも文の中では使えない)`
+      if (!TEXT_SYMBOLS[m[4]]) return `\\${m[4]} は脚注の印に使えません`
+      out.push(TEXT_SYMBOLS[m[4]])
+    } else out.push(m[5])
+  }
+  return out
+}
+
+/**
+ * LaTeX のカウンタの表示(\arabic \alph \Alph \roman \Roman \fnsymbol)で印を書く。
+ * 表せない番号(\alph の 27 以上、\fnsymbol の 10 以上)は LaTeX と同じく誤り(Counter too large)として、文字列で理由を返す
+ */
+function formatFootnote(format: FootnoteFormat, n: number): { mark: string } | { error: string } {
+  const roman = (k: number) => {
+    const table: [number, string][] = [[1000, 'm'], [900, 'cm'], [500, 'd'], [400, 'cd'], [100, 'c'], [90, 'xc'], [50, 'l'], [40, 'xl'], [10, 'x'], [9, 'ix'], [5, 'v'], [4, 'iv'], [1, 'i']]
+    let s = ''
+    for (const [v, r] of table) {
+      while (k >= v) {
+        s += r
+        k -= v
+      }
+    }
+    return s
+  }
+  // LaTeX の \fnsymbol の並び
+  const FNSYMBOL = ['∗', '†', '‡', '§', '¶', '‖', '∗∗', '††', '‡‡']
+  let mark = ''
+  for (const p of format) {
+    if (typeof p === 'string') {
+      mark += p
+      continue
+    }
+    const tooLarge = ((p.style === 'alph' || p.style === 'Alph') && (n < 1 || n > 26)) || (p.style === 'fnsymbol' && (n < 1 || n > 9))
+    if (tooLarge || ((p.style === 'roman' || p.style === 'Roman') && n < 1)) {
+      return { error: `脚注の番号 ${n} は \\${p.style} で表せません(LaTeX の Counter too large)` }
+    }
+    switch (p.style) {
+      case 'arabic': mark += String(n); break
+      case 'alph': mark += String.fromCharCode(96 + n); break
+      case 'Alph': mark += String.fromCharCode(64 + n); break
+      case 'roman': mark += roman(n); break
+      case 'Roman': mark += roman(n).toUpperCase(); break
+      case 'fnsymbol': mark += FNSYMBOL[n - 1]; break
+    }
+  }
+  return { mark }
+}
+
 function parseCommand(raw: string) {
   const m = raw.match(/^\\([A-Za-z]+)(?:<([^>]*)>)?(?:\[([^\]]*)\])?\{([\s\S]*)\}$/)!
   return { name: m[1], spec: m[2], opt: m[3], body: m[4] }
@@ -329,6 +416,17 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
           stack.push({ kind: 'pause', node: inherit(overlayFlow({ pause: true }, [], child.position), child), items: [] })
         } else if (line.kind === 'newtheorem') {
           declareTheorem(line, child)
+        } else if (line.kind === 'renewcommand') {
+          // 命令の定義し直し。LaTeX と同じく書いた所から後に効くので、文書の順に処理する所(transformNode)まで残す
+          if (line.name !== 'thefootnote') error(`\\renewcommand{\\${line.name}} には対応していません(対応しているのは \\thefootnote)`, child)
+          else {
+            const format = parseFootnoteFormat(line.body)
+            if (typeof format === 'string') error(format, child)
+            else {
+              child.data = { ...child.data, footnoteFormat: format } as typeof child.data
+              top().items.push(child)
+            }
+          }
         } else if (line.kind === 'begin') {
           const env = theorems[line.name]
           const tag = env?.tag ?? (line.name === 'proof' ? 'Proof' : undefined)
@@ -527,12 +625,33 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
     // (4)(5) 文中の命令と段階表示(スライドごと・文書順)
     /** 各スライドの並びと要素(動きの設定で、構造とラベルからスライドを指すため) */
     const slideList: { h: number; v: number; el: MdxJsxFlowElement }[] = []
+    /** 脚注の通し番号(LaTeX の footnote カウンタ。デッキ全体で 1 本)と、組んでいるスライドの脚注の本文 */
+    let footnoteCount = 0
+    /** 脚注の印の書き方(\renewcommand{\thefootnote}{…} で、書いた所から後が変わる) */
+    let footnoteFormat = DEFAULT_FOOTNOTE_FORMAT
+    let slideFootnotes: RootContent[] = []
     const slideElements: RootContent[] = built.map((stack, h) => {
       const els = stack.map((nodes, v) => {
         const steps = new Steps()
         const overlays: Jsx[] = []
         const root = { type: 'root', children: nodes } as Root
+        slideFootnotes = []
         transformChildren(root, steps, overlays)
+        // 脚注はスライドの下に(Beamer のフレームの脚注)。題の帯の後ろの本文を .slide-body に包み、その後ろに脚注(.footnotes)を
+        // 置く。スライドを縦に並べ、本文が残りの高さを取って脚注を下に寄せる(base.css)。脚注の無いスライドの構造は変えない
+        if (slideFootnotes.length > 0) {
+          // 題は先頭の ## 見出し(前の {/* コメント */} は飛ばす。節番号と同じ見方)
+          const at = root.children.findIndex((n) => n.type !== 'mdxFlowExpression')
+          const first = root.children[at]
+          const split = first?.type === 'heading' && first.depth === 2 ? at + 1 : 0
+          const head = root.children.slice(0, split)
+          const body = root.children.slice(split)
+          root.children = [
+            ...head,
+            jsxFlow('div', { className: 'slide-body' }, body),
+            jsxFlow('div', { className: 'footnotes' }, slideFootnotes),
+          ]
+        }
         // to が最後のステップ以降なら「消える」ステップは存在しないので外す
         for (const o of overlays) {
           const to = getAttr(o, 'to')
@@ -561,6 +680,12 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
     }
 
     function transformNode(node: AnyNode, steps: Steps, overlays: Jsx[]): AnyNode[] {
+      // \renewcommand{\thefootnote}{…}(buildEnvs で確かめ済み): ここから後の脚注の印の書き方
+      const format = node.type === 'latexLine' ? (node.data as { footnoteFormat?: FootnoteFormat } | undefined)?.footnoteFormat : undefined
+      if (format) {
+        footnoteFormat = format
+        return []
+      }
       // Overlay(\pause・環境の overlay 指定): 文書順にステップを割り当てる
       if (isJsx(node, 'Overlay') && beamer(node)) {
         const b = beamer(node)!
@@ -629,6 +754,48 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
     }
 
     /**
+     * \footnote<spec>[opt]{本文}(Beamer と同じ。beamerbaseframecomponents.sty)。
+     * 本文の位置には上付きの番号(印)を置き、本文はスライドの下にまとめる(slideFootnotes。スライドを組むときに並べる)。
+     * - 番号は LaTeX の footnote カウンタと同じく、デッキ全体の通し番号(フレームごとには戻らない)。
+     *   [3] のように番号を書けば、その番号を使い、通し番号は進めない
+     * - オプションは frame(フレームの下に置く。ここでは常にフレームの下なので何もしない)と番号だけ
+     * - overlay 指定は本文にだけ掛かる(Beamer の \uncover#2。印は最初から出ていて、本文は隠れている間も場所を取る)
+     */
+    function footnote(node: LatexCommand, steps: Steps, overlays: Jsx[]): PhrasingContent {
+      const cmd = parseCommand(node.value)
+      let mark: number
+      const opt = cmd.opt?.trim()
+      if (opt && /^\d+$/.test(opt)) mark = Number(opt)
+      else {
+        if (opt && opt !== 'frame') error(`\\footnote のオプション [${opt}] には対応していません(使えるのは frame と番号)`, node)
+        mark = ++footnoteCount
+      }
+      const parsed = processor.parse(cmd.body) as Root
+      const first = parsed.children[0]
+      if (parsed.children.length > 1 || (first && first.type !== 'paragraph')) error('\\footnote の本文は 1 段落の文で書いてください', node)
+      const holder = { type: 'paragraph', children: first?.type === 'paragraph' ? first.children : [] } as Paragraph
+      setPosition(holder.children, node.position)
+      transformChildren(holder, steps, overlays)
+      const formatted = formatFootnote(footnoteFormat, mark)
+      if ('error' in formatted) error(formatted.error, node)
+      const markText = 'mark' in formatted ? formatted.mark : String(mark)
+      const label = jsxText('span', { className: 'footnote-mark' }, [jsxText('sup', {}, [text(markText)])], node.position)
+      let item: RootContent = {
+        type: 'paragraph',
+        children: [label, ...(holder.children as PhrasingContent[])],
+        position: node.position,
+      } as Paragraph
+      if (cmd.spec !== undefined) {
+        const el = jsxFlow('Overlay', {}, [item], node.position)
+        applySpec(el, cmd.spec, steps, node)
+        overlays.push(el)
+        item = el
+      }
+      slideFootnotes.push(item)
+      return jsxText('sup', { className: 'footnote-ref' }, [text(markText, node.position)], node.position)
+    }
+
+    /**
      * 式の参照は数式の中の \ref / \eqref として MathJax に解決させる。後ろにある式への参照も、
      * MathJax が文書全体を組むときに組み直して解決する(vite/rehype-mathjax-document.ts)
      */
@@ -676,6 +843,8 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
           const locator = cmd.opt ? `, ${cmd.opt.replace(/~/g, ' ')}` : ''
           return [text(`[${keys.map((k) => `@${k}`).join('; ')}${locator}]`, node.position)]
         }
+        case 'footnote':
+          return [footnote(node, steps, overlays)]
         default:
           if (OVERLAY_COMMANDS.has(cmd.name)) {
             const el = overlayCommand(node, steps, overlays, true)

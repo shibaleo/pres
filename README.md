@@ -308,7 +308,7 @@ $f$ が凸なら …
 コード（`` `…` ``、コードブロック、テンプレート文字列）と数式の中の記法は変換されないので、記法の説明はそこに書けます。
 
 ### 強調・用語・脚注などの書き方（標準の記法の範囲）
-見本は `decks/legendre/deck.mdx`（色と強調・出典・用語・脚注を、資料の中で使っている）。どれも変換処理に手を加えず、CommonMark・JSX・LaTeX（MathJax）の標準の書き方で書けます。
+見本は `decks/legendre/deck.mdx`（色と強調・出典・用語・脚注を、資料の中で使っている）。どれも CommonMark・JSX・LaTeX（MathJax）の標準の書き方で書けます。
 
 | したいこと | 書き方 |
 |---|---|
@@ -318,17 +318,29 @@ $f$ が凸なら …
 | 大事な式を囲む | `$\colorbox{lightgray}{\(K = \ker\xi\)}$`（中の式は `\(…\)` で書く。`$…$` は外側と衝突する） |
 | ブロックの見出しに出典 | `\begin{theorem}[ダルブーの定理 \cite{key}]` |
 | 用語と説明（description 環境） | `<dl>` `<dt>用語</dt>` `<dd>説明</dd>` `</dl>` |
-| 脚注 | 本文に `<sup>*1)</sup>`、下に `***`（区切り線）と `<small>*1) …</small>` |
+| 脚注 | `\footnote{…}`（下の「脚注」） |
 | 再掲・補足 | `<small>（再掲）…</small>` |
 | 要点を中央に | `<Center>` |
 | 別のスライドへのリンク | 題に `\label{sec:env}` を付けたスライドへ `[定理環境のスライド](#sec:env)`（どのモードでも移る。上の「数式と相互参照」） |
 | 節番号 | 自動。横のスライドが `4.`、その下の縦のスライドが `4.1.` |
 
+### 脚注
+Beamer と同じく `\footnote{本文}` と書きます（本文には数式・強調・`\cite` なども書ける。1 段落まで）。
+
+- 印は上付きの番号、本文はそのスライドの下に区切り線（段の幅の 4 割）を引いて 1 段小さい文字で並びます（Beamer のフレームの脚注）。
+- 番号は LaTeX の footnote カウンタと同じく、デッキ全体の通し番号です。`\footnote[3]{…}` と書けばその番号を使い、通し番号は進めません。
+- `\footnote<2->{…}` の overlay 指定は本文にだけ掛かります（印は最初から出ていて、本文は隠れている間も場所を取る。Beamer と同じ）。
+- 印の形は LaTeX と同じく `\renewcommand{\thefootnote}{…}` で変えます（行単独。書いた所から後の脚注に効く。本文の印と脚注の頭の両方）。
+  たとえば `\renewcommand{\thefootnote}{$\ast$\arabic{footnote})}` で「∗1)」。番号は `\arabic` `\alph` `\Alph` `\roman` `\Roman` `\fnsymbol`
+  （引数は `footnote`）、記号は数式の中の `\ast` `\star` `\dagger` `\ddagger` と、文の中の `\textasteriskcentered` `\textdagger` `\textdaggerdbl`。
+  それ以外の命令、表せない番号（`\alph` の 27 以上・`\fnsymbol` の 10 以上）、`\thefootnote` 以外の `\renewcommand` はエラー。
+- オプションは番号と `frame` だけです。段組（`<Cols>`）の中の脚注も、スライドの下に並びます（Beamer の `[frame]` 付きと同じ。列の下に置く Beamer の既定には未対応）。
+- 処理は `vite/remark-beamer/transform.ts`（`footnote`）、見た目は `src/theme/base.css`（脚注）。見本は `decks/legendre/`。
+
 次のものは今の構成では書けません。
 
 | したいこと | 理由 |
 |---|---|
-| `\footnote` | LaTeX の命令として未対応（エラーになる）。上の手書きの脚注で代える |
 | `\begin{description}` / `\begin{itemize}` / `\emph` / `\textbf` | 未対応（エラーになる）。CommonMark と JSX（`<dl>`・リスト・`**`）で書く |
 | スライドごとの文献リスト（使った文献だけ） | `<Bibliography />` はどこに置いても全文献を出す（rehype-citation の動き） |
 | `\definecolor{…}{HTML}{EBEBEB}` | MathJax が HTML 形式に未対応。`RGB` か `gray` 形式で書く |
@@ -514,7 +526,7 @@ PDF 用の表示は reveal モードのものなので、`npm run pdf` と `npm 
 ## 次にやること
 
 - 表紙の双対のグラフ（3D の曲面）を visx の図にする。描く関数（$f = \tfrac12 x^2 + \tfrac13 y^3$ とその双対か）の確認待ち。
-- 今は書けない LaTeX の標準の記法: `\footnote`、`description` 環境、スライドごとの文献リスト、
+- 今は書けない LaTeX の標準の記法: `description` 環境、スライドごとの文献リスト、
   証明の見出しの語（`\renewcommand{\proofname}{証明}`。今は「Proof.」のまま）。
 - 開発用の依存の脆弱性警告（`braces`、`vite-plugin-singlefile` 経由）。修正版が出たら更新する。
 

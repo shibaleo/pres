@@ -3,6 +3,7 @@
   画像と SVG の図の見本: 表紙の曲面・ルジャンドル曲線・波面・関係の図は元の資料の画像(img/。PDF から取り出して縮めたもの)、
   カスプの法線と正規分布の族は操作できる SVG の図(visx)。付録に、ほかの SVG の図の部品を並べる。
   定理・定義・例は \newtheorem で日本語の見出しにし、元の資料と同じく節ごとの番号(定義 2.1 など)を共有する。
+  脚注の印は元の資料と同じ「∗1)」(\renewcommand{\thefootnote})。
 */}
 
 import CuspNormal from './components/CuspNormal'
@@ -23,6 +24,7 @@ import d3js from './img/d3js.png'
 \newtheorem{theorem}{定理}[section]
 \newtheorem{definition}[theorem]{定義}
 \newtheorem{example}[theorem]{例}
+\renewcommand{\thefootnote}{$\ast$\arabic{footnote})}
 
 # ルジャンドル部分多様体の母関数
 
@@ -57,9 +59,7 @@ $\dot\gamma(t)\cdot\nu(t) = 0$ となる $\mathbf{0}$ でないベクトル $\nu
 </Col>
 </Cols>
 
-法ベクトル場を定めるには**方向**さえわかればよい．$\nu(t)$ は $\tfrac32 t$ で与えられていると考えてよい<sup>*1)</sup>．
-
-<small>*1) $\approx$ は $0$ でないスカラー倍を同一視する同値関係．</small>
+法ベクトル場を定めるには**方向**さえわかればよい．$\nu(t)$ は $\tfrac32 t$ で与えられていると考えてよい\footnote{$\approx$ は $0$ でないスカラー倍を同一視する同値関係．}．
 
 --
 
@@ -88,11 +88,9 @@ $S(p)$ の値と $S$ の微分係数を用いて $L$ をパラメタ表示する
 ルジャンドル部分多様体を定義する前に，外の空間を定義する（以下，$n \in \mathbb{N}$）．
 
 \begin{definition}[接触多様体]
-$N$ を $(2n+1)$ 次元多様体，$K$ を $N$ 上の超平面場<sup>*1)</sup>とする．
+$N$ を $(2n+1)$ 次元多様体，$K$ を $N$ 上の超平面場\footnote{$N$ の各点ごとに $2n$ 次元線型空間を定める写像．}とする．
 $\xi \wedge (d\xi)^n \neq 0$ を満たす局所的な 1 形式 $\xi$ が存在して $K = \ker \xi$ となるとき，$N = (N, K)$ を**接触多様体**という．
 \end{definition}
-
-<small>*1) $N$ の各点ごとに $2n$ 次元線型空間を定める写像．</small>
 
 --
 

@@ -279,6 +279,73 @@ describe('段階表示', () => {
   })
 })
 
+describe('\\footnote', () => {
+  const byClass = (n: N, cls: string) => all(n, (x) => attr(x, 'className') === cls)
+
+  it('印は上付きの通し番号(スライドをまたいで続く)。本文はそのスライドの下の .footnotes に、題の帯の後ろの本文は .slide-body に', async () => {
+    const { tree } = await run('## 一\n\na\\footnote{注 $x$}b\\footnote{二つ目}\n\n---\n\n## 二\n\nc\\footnote{三つ目}')
+    expect(byClass(tree, 'footnote-ref').map(textOf)).toEqual(['1', '2', '3'])
+    const [first, second] = jsx(tree, 'Slide')
+    const notes = byClass(first, 'footnotes')
+    expect(notes).toHaveLength(1)
+    expect(textOf(notes[0])).toContain('1注')
+    expect(all(notes[0], (x) => x.type === 'inlineMath')).toHaveLength(1)
+    // 題(h2)はスライドの先頭のまま、その後ろが本文と脚注
+    expect(first.children!.map((c) => c.type === 'heading' ? 'h2' : attr(c, 'className'))).toEqual(['h2', 'slide-body', 'footnotes'])
+    expect(textOf(byClass(second, 'footnotes')[0])).toBe('3三つ目')
+  })
+
+  it('脚注の無いスライドの構造は変えない', async () => {
+    const { tree } = await run('## 題\n\n本文')
+    expect(byClass(tree, 'slide-body')).toHaveLength(0)
+  })
+
+  it('[番号] はその番号を使い、通し番号を進めない。[frame] は書ける', async () => {
+    const { tree } = await run('a\\footnote[7]{x}b\\footnote[frame]{y}c\\footnote{z}')
+    expect(byClass(tree, 'footnote-ref').map(textOf)).toEqual(['7', '1', '2'])
+  })
+
+  it('overlay 指定は本文にだけ掛かる(印は最初から出る)', async () => {
+    const { tree } = await run('a\\footnote<2->{後で}')
+    const ref = byClass(tree, 'footnote-ref')[0]
+    expect(all(tree, (x) => x.name === 'Overlay' && all(x, (y) => y === ref).length > 0)).toHaveLength(0)
+    const o = jsx(byClass(tree, 'footnotes')[0], 'Overlay')
+    expect(o).toHaveLength(1)
+    expect(attr(o[0], 'from')).toBe('2')
+    expect(attr(jsx(tree, 'Slide')[0], 'steps')).toBe('2')
+  })
+
+  it('\\renewcommand{\\thefootnote}{…} で印の書き方を変える(書いた所から後。本文の印と脚注の頭の両方)', async () => {
+    const { tree } = await run('a\\footnote{x}\n\n\\renewcommand{\\thefootnote}{$\\ast$\\arabic{footnote})}\n\nb\\footnote{y}')
+    expect(byClass(tree, 'footnote-ref').map(textOf)).toEqual(['1', '∗2)'])
+    expect(byClass(tree, 'footnote-mark').map(textOf)).toEqual(['1', '∗2)'])
+  })
+
+  it('印の書き方は LaTeX のカウンタの表示(\\alph \\Roman \\fnsymbol など)と記号で書く', async () => {
+    const marks = async (format: string) => {
+      const { tree } = await run(`\\renewcommand{\\thefootnote}{${format}}\n\na\\footnote{x}b\\footnote{y}`)
+      return byClass(tree, 'footnote-ref').map(textOf)
+    }
+    expect(await marks('\\alph{footnote}')).toEqual(['a', 'b'])
+    expect(await marks('(\\Roman{footnote})')).toEqual(['(I)', '(II)'])
+    expect(await marks('\\fnsymbol{footnote}')).toEqual(['∗', '†'])
+    expect(await marks('\\textasteriskcentered\\arabic{footnote}')).toEqual(['∗1', '∗2'])
+  })
+
+  it('印の書き方の誤りはエラー(数式の外の \\ast、使えない命令、footnote 以外のカウンタ、\\thefootnote 以外の定義し直し)', async () => {
+    expect((await fails('\\renewcommand{\\thefootnote}{\\ast\\arabic{footnote}}')).message).toContain('数式の中で')
+    expect((await fails('\\renewcommand{\\thefootnote}{\\textbf{x}}')).message).toContain('脚注の印に使えません')
+    expect((await fails('\\renewcommand{\\thefootnote}{\\arabic{page}}')).message).toContain('footnote にしてください')
+    expect((await fails('\\renewcommand{\\proofname}{証明}')).message).toContain('対応していません')
+    expect((await fails('\\renewcommand{\\thefootnote}{\\fnsymbol{footnote}}\n\n' + 'a\\footnote{x}'.repeat(10))).message).toContain('表せません')
+  })
+
+  it('対応しないオプションと、2 段落以上の本文はエラー', async () => {
+    expect((await fails('a\\footnote[noframe]{x}')).message).toContain('[noframe]')
+    expect((await fails('a\\footnote{- x}')).message).toContain('1 段落')
+  })
+})
+
 describe('\\input', () => {
   // 一時ディレクトリに主ファイルと取り込むファイルを置く
   const dir = mkdtempSync(join(tmpdir(), 'beamer-input-'))

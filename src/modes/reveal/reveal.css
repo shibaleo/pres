@@ -72,6 +72,14 @@ html.reveal-print .reveal .figure-buttons {
   display: none;
 }
 
+/* 脚注のあるスライド(base.css)。reveal はスライドの表示を要素の style(display: block / none)で切り替えるので、
+   隠していない(display: none でない)スライドだけ縦に並べ直す。reveal のスライドの高さは中身の高さなので、
+   スライドの領域(.slides。reveal の大きさ。印刷では 1 ページ)いっぱいにして脚注を下に寄せる */
+.reveal .slides section:has(> .footnotes):not([style*='display: none']) {
+  display: flex !important;
+  min-height: 100%;
+}
+
 /* 段階表示(reveal モードの modes/reveal/Overlay.tsx。Beamer の \pause / <2-> / \only など) */
 /* ステップ数を揃えるための見えない fragment */
 .deck .overlay-step {

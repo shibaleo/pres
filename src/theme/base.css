@@ -176,6 +176,46 @@ body {
   color: var(--color-canvas);
   background: var(--color-brand);
 }
+/* 脚注(\footnote。Beamer のフレームの脚注。vite/remark-beamer/transform.ts)。脚注のあるスライドだけ、題の帯の後ろが
+   本文(.slide-body)と脚注(.footnotes)になる。スライドを縦に並べ、本文が残りの高さを取って脚注を下に寄せる。
+   スライドの高さはモードが決める(reveal はモードの CSS で足す)。モードがスライドを隠す規則(display: none)の方が
+   詳細度が高いので、隠したスライドはそのまま隠れる */
+.deck .slide:has(> .footnotes) {
+  display: flex;
+  flex-direction: column;
+}
+.deck .slide > .slide-body {
+  flex: 1 0 auto;
+}
+/* 題の帯の下の間隔は帯の側にある(並べ方を変えても、本文の先頭の段落の上の間隔が帯の間隔に重なって消えるのと同じにする) */
+.deck .slide > h2:first-child + .slide-body > :first-child {
+  margin-top: 0;
+}
+/* 脚注の文字は 1 段小さく(\footnotesize)。区切り線は段の幅の 4 割(\footnoterule) */
+/* 区切り線の上の間隔は、本文の最後の段落の下の間隔(半行)がそのまま担う */
+.deck .footnotes {
+  font-size: calc(1em / var(--type-ratio));
+}
+.deck .footnotes::before {
+  content: '';
+  display: block;
+  width: 40%;
+  margin-bottom: calc(var(--space) / 2);
+  border-top: thin solid var(--color-ink);
+}
+.deck .footnotes p {
+  margin: 0;
+}
+/* 脚注の印: 幅 1.8em の箱に右揃え(Beamer の footnote の既定の型)。「∗1)」のように長い印(\thefootnote)は箱から広がる */
+.deck .footnote-mark {
+  display: inline-block;
+  min-width: 1.8em;
+  text-align: right;
+}
+.deck :is(.footnote-mark sup, sup.footnote-ref) {
+  line-height: 0;
+}
+
 /* 発表の題(h1): 表紙の主役なので帯にせず、大きさとアクセント色だけで示す */
 .deck h1 {
   text-align: center;
