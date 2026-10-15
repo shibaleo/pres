@@ -4,14 +4,15 @@
    - 右上に赤(#c00)いリボンを垂らし、白でページの番号だけを書く(全体の数は書かない)
    - 一覧の面は灰色 #585a5e、全画面の面は黒
    - 大きさ(文字・行送り・余白)は土台のまま(ribbon の本文 25px・行送り 2 倍では、1 枚に詰めた資料が収まらないため)。
-     リボンの形だけは ribbon の割合(幅 50px・長さ 100px を、このリポジトリのスライドの高さ 700 に合わせて 700 / 576 倍)
+     リボンは ribbon と同じ形(幅 1 : 長さ 2、下を V 字に切り欠く)で、本文の右端に揃えて垂らす。長さは題の行の中に収め
+     (ribbon の長さのままだと、題の下の本文や枠に重なる)、題の文字はリボンの手前で折り返す
    - 題の帯は無い(題は灰色の太字の見出し)
 
    使い方(デッキの decks/<名前>/style.css): @import '@/theme/presets/shower-ribbon.css'; したうえで
      :root { --deck-preset: shower-ribbon; }(ほかのプリセットと並べるときは後ろに書く) */
 [data-preset~='shower-ribbon'] {
-  /* ribbon の 1px(1024×576 のスライドの上)を、このリポジトリのスライド(高さ 700)の上の長さにする倍率 */
-  --ribbon-px: calc(700px / 576);
+  /* リボンの長さ: 題の行(帯と同じ 3 半行)とその下の間を合わせた 4 半行より少し短く、本文に届かない長さ。幅はその半分 */
+  --ribbon-length: calc(3.5 * var(--space));
   --font-body: 'Noto Sans JP', sans-serif;
   --font-heading: 'Noto Sans JP', sans-serif;
   --body-weight: 400;
@@ -36,15 +37,15 @@
 [data-preset~='shower-ribbon'] .deck li::marker {
   color: #585a5e;
 }
-/* ページ番号: 右上に垂らした赤いリボン(幅 50px・長さ 100px、下を V 字に切り欠く)に、白で番号だけ */
+/* ページ番号: 右上に垂らした赤いリボン(幅 1 : 長さ 2、下を V 字に切り欠く)に、白で番号だけ */
 [data-preset~='shower-ribbon'] .deck .slide > .page-number {
   display: block;
   top: 0;
-  right: calc((1024 - 875 - 50) * var(--ribbon-px));
+  right: var(--slide-pad);
   box-sizing: border-box;
-  width: calc(50 * var(--ribbon-px));
-  height: calc(100 * var(--ribbon-px));
-  padding: calc(15 * var(--ribbon-px)) 0 0;
+  width: calc(var(--ribbon-length) / 2);
+  height: var(--ribbon-length);
+  padding: calc(var(--ribbon-length) * 0.15) 0 0;
   font-size: 0;
   text-align: center;
   color: #fff;
@@ -53,11 +54,13 @@
 }
 [data-preset~='shower-ribbon'] .deck .slide > .page-number::before {
   content: attr(data-page);
-  font: calc(var(--text-base) / var(--type-ratio)) / 2 var(--font-body);
+  font: calc(var(--text-base) / var(--type-ratio)) / 1 var(--font-body);
 }
 /* 題(スライドの先頭の h2): 色の帯は付けないが、帯と同じ場所(スライドの上の余白に重ねる)と高さ(3 半行)に置く。
    土台の帯と同じ組み方なので、本文の位置と 1 枚に入る量は変わらない(はみ出しの具合も同じ) */
 [data-preset~='shower-ribbon'] .deck .slide > h2:first-child {
   margin: calc(-1 * var(--slide-pad)) 0 var(--space);
   padding: calc((3 * var(--space) - var(--leading-tight) * 1em) / 2) 0;
+  /* 題の文字はリボンの手前で折り返す */
+  padding-right: calc(var(--ribbon-length) / 2 + var(--space));
 }
