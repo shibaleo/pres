@@ -62,7 +62,7 @@ function decksPlugin(deck: string | undefined, mode: ModeName | undefined): Plug
 </style></head>
 <body><h1>デッキの一覧</h1>
 <table><thead><tr><th>デッキ</th>${head}</tr></thead><tbody>${rows.join('')}</tbody></table>
-<p>デッキの名前のリンクは、デッキの動きの設定(motion.ts)のモードで開く(ビルドにはそのモードだけが入る)。表のリンクは、そのモードで開いた見本(開発時だけ)。
+<p>デッキの名前のリンクは、デッキの動きの設定(motion.ts)のモードで開く(ビルドにはそのモードだけが入る)。表のリンクは、そのモードで開いた見本(開発時だけ)。見た目はモードではなくデッキの style.css で決まるので、どのモードで開いても同じ見た目になる。
 モード(スライドを動かすライブラリ)は docs/motion.md。reveal 以外は試作。小さい字はライブラリ自身の開き方の変わり種。</p>
 <p>decks/&lt;名前&gt;/ に deck.mdx と style.css を置くと一覧に加わります(npm run new -- &lt;名前&gt;)。</p></body></html>`
   }
