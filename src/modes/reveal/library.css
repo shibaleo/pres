@@ -1,0 +1,3 @@
+/* reveal.js の本体の CSS(スライドの配置と遷移・UI)。土台の見た目(theme/)より先に読み、土台が上書きする。
+   デッキの入口(vite.config.ts)が、モードのフォルダに library.css があれば土台より先に読む */
+@import 'reveal.js/reveal.css';

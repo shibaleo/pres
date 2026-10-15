@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 import { viteSingleFile } from 'vite-plugin-singlefile'
 import type { Plugin, UserConfig } from 'vite'
 import { fileURLToPath } from 'node:url'
+import { existsSync } from 'node:fs'
 import { basename, join, relative } from 'node:path'
 import mdx from '@mdx-js/rollup'
 import { mdxOptions } from './vite/mdx-options.ts'
@@ -14,16 +15,14 @@ import { MODE_NAMES, MODE_VARIANTS, type ModeName } from './src/modes/names.ts'
 const ENTRY_PREFIX = '/@deck/'
 const ENTRY_ID = '\0deck-entry:'
 
-/** モードの作り(src/modes/<名前>/ の部品)。入口がデッキのモードの分だけを読み込む */
-const MODE_APPS: Record<ModeName, string> = {
-  reveal: '/src/modes/reveal/RevealApp.tsx',
-  impress: '/src/modes/impress/ImpressApp.tsx',
-  shower: '/src/modes/shower/ShowerApp.tsx',
-  spectacle: '/src/modes/spectacle/SpectacleApp.tsx',
-  swiper: '/src/modes/swiper/SwiperApp.tsx',
-}
-/** 土台の見た目より先に読むライブラリの本体の CSS(土台が上書きする。reveal のスライドの配置と遷移・UI) */
-const MODE_LIBRARY_CSS: Partial<Record<ModeName, string>> = { reveal: 'reveal.js/reveal.css' }
+/**
+ * モードの作り。モードは src/modes/<名前>/ の 1 フォルダで、入口はデッキのモードの分だけを読み込む:
+ *   index.tsx     モードの部品(default export)
+ *   library.css   土台の見た目より先に読むライブラリの本体の CSS(あれば。土台が上書きする。reveal のスライドの配置と遷移・UI)
+ * モードを足すときは、src/modes/names.ts に名前を書き、このフォルダを作る
+ */
+const modeModule = (mode: ModeName) => `/src/modes/${mode}/index.tsx`
+const modeLibraryCss = (mode: ModeName) => (existsSync(join(ROOT, 'src', 'modes', mode, 'library.css')) ? `/src/modes/${mode}/library.css` : undefined)
 
 const isMode = (name: string | undefined): name is ModeName => (MODE_NAMES as readonly string[]).includes(name ?? '')
 
@@ -117,11 +116,11 @@ function decksPlugin(deck: string | undefined, mode: ModeName | undefined): Plug
       const main = rootUrl(d.main)
       // 動きの設定(decks/<名前>/motion.ts)。既定の遷移などに使う(スライドごとの遷移は原稿の変換が付ける)
       const motion = d.motion ? `import motion from '${rootUrl(d.motion)}'` : `const motion = undefined`
-      const libraryCss = MODE_LIBRARY_CSS[mode]
+      const libraryCss = modeLibraryCss(mode)
       return [
         ...(libraryCss ? [`import '${libraryCss}'`] : []),
         `import { startDeck } from '/src/main.tsx'`,
-        `import Mode from '${MODE_APPS[mode]}'`,
+        `import Mode from '${modeModule(mode)}'`,
         `import '${rootUrl(d.style)}'`,
         `import Slides, { deckWarnings } from '${main}'`,
         motion,

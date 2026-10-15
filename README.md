@@ -101,7 +101,9 @@ src/                   全デッキ・全モードで共有する土台(用途�
     index.ts           原稿から import なしで使える部品の一覧
     Frame / Theorem / layout / Notes  色付きの枠 / 定理・定義・証明 / 段組み・中央寄せ・署名・注・コード / スピーカーノート
   figure/              図を作る道具(ドラッグ・リセットと再生のボタン・表示中のスライドだけで動かす・数式用イタリックのラベル)
-  modes/               モード(スライドを動かすライブラリごとの作り。docs/motion.md)
+  modes/               モード(スライドを動かすライブラリごとの作り。docs/motion.md)。1 モード = 1 フォルダで、
+                       index.tsx(モードの部品)と、あれば library.css(土台より先に読むライブラリの CSS)をデッキの入口が読む。
+                       モードを足すときは names.ts に名前を書き、フォルダを作る
     names.ts           モードの名前と開き方の変わり種(開発サーバーの一覧ページと共有)
     structure.tsx      構造の部品(Slide・Stack・Overlay)の共通の約束と、段の表示の判定
     marker-steps.tsx   段の印(impress・Shower。Swiper も表示の判定に使う)
