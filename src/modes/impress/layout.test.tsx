@@ -50,6 +50,31 @@ describe('impress の置き方(motion.ts の impress)', () => {
     }
   })
 
+  it.each(sizes)('circle は輪に並べ、どのスライドも重ならない($width×$height)', (size) => {
+    for (const n of [2, 5, 20]) {
+      const places = placeSlides(Array.from({ length: n }, (_, h) => ({ h, v: 0 })), size, { layout: 'circle' })
+      const diagonal = Math.hypot(size.width, size.height)
+      for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) expect(Math.hypot(places[i].x - places[j].x, places[i].y - places[j].y)).toBeGreaterThan(diagonal)
+    }
+  })
+
+  it.each(sizes)('helix は外を向いて回りながら下り、隣のスライドと上下の周が重ならない($width×$height)', (size) => {
+    const places = placeSlides(Array.from({ length: 14 }, (_, h) => ({ h, v: 0 })), size, { layout: 'helix' })
+    for (let i = 1; i < places.length; i++) {
+      // 隣とは、スライドの幅より離れている
+      expect(Math.hypot(places[i].x - places[i - 1].x, places[i].z - places[i - 1].z)).toBeGreaterThan(size.width)
+      expect(places[i].y).toBeGreaterThan(places[i - 1].y)
+    }
+    // 1 周後の真下のスライドとは、スライドの高さより下がっている
+    expect(places[6].y - places[0].y).toBeGreaterThan(size.height)
+    expect(places[6].rotateY - places[0].rotateY).toBeCloseTo(360)
+  })
+
+  it.each(sizes)('depth は奥へ奥へと並べる($width×$height)', (size) => {
+    const places = placeSlides(Array.from({ length: 5 }, (_, h) => ({ h, v: 0 })), size, { layout: 'depth' })
+    for (let i = 1; i < places.length; i++) expect(places[i].z).toBeLessThan(places[i - 1].z)
+  })
+
   it.each(sizes)('zoom は続きを節の枠の下半分に、重ならずに並べ、節の枠どうしも重ならない($width×$height)', (size) => {
     // 節 0(続きなし)・節 1(続き 3 枚)・節 2(続き 5 枚。2 列になる)・節 3(続き 1 枚)
     const deck = [

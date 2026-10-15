@@ -106,7 +106,52 @@ function zoom(slides: SlideKey[], size: Size): Place[] {
   })
 }
 
-const LAYOUTS = { grid, spiral, zoom }
+/**
+ * circle の形: 文書の順に、原点を中心とする輪に並べる(スライドは立てたまま)。隣のスライドとの間(弦)が対角線より広くなる半径にする
+ */
+const CIRCLE_GAP = 100
+
+function circle(slides: SlideKey[], size: Size): Place[] {
+  const n = slides.length
+  const chord = diagonal(size) + CIRCLE_GAP
+  // 弦の長さ = 2r sin(π / n) が chord 以上になる半径(2 枚以下は横に並ぶ)
+  const r = n <= 2 ? chord / 2 : chord / (2 * Math.sin(Math.PI / n))
+  return slides.map((_, i) => {
+    const theta = (2 * Math.PI * i) / n - Math.PI / 2 // 最初のスライドは輪のいちばん上
+    return { ...origin(), x: r * Math.cos(theta), y: r * Math.sin(theta) }
+  })
+}
+
+/**
+ * helix の形: 縦の軸のまわりを、外を向いて回りながら下っていく立体の螺旋(1 周 HELIX_TURN 枚)。
+ * スライドはその位置で軸から外を向き(rotateY)、カメラは各スライドの正面へ回り込む。
+ * 1 周の間に下がる量はスライドの高さより大きくし、上下の周が重ならないようにする
+ */
+const HELIX_TURN = 6
+const HELIX_GAP = 200
+
+function helix(slides: SlideKey[], size: Size): Place[] {
+  // 隣のスライドとの間(弦)がスライドの幅 + 間になる半径
+  const r = (size.width + HELIX_GAP) / (2 * Math.sin(Math.PI / HELIX_TURN))
+  const drop = (size.height + HELIX_GAP) / HELIX_TURN
+  return slides.map((_, i) => {
+    const theta = (2 * Math.PI * i) / HELIX_TURN
+    return { ...origin(), x: r * Math.sin(theta), y: i * drop, z: r * Math.cos(theta), rotateY: (theta * 180) / Math.PI }
+  })
+}
+
+/**
+ * depth の形: スライドを奥へ奥へと並べ、進むたびに奥へ飛び込む。奥へ行くほど少し右下へずらし、
+ * 手前から見渡したときに奥のスライドが手前のスライドの陰に隠れきらないようにする
+ */
+const DEPTH_STEP = 1500
+const DEPTH_SHIFT = { x: 0.3, y: 0.2 }
+
+function depth(slides: SlideKey[], size: Size): Place[] {
+  return slides.map((_, i) => ({ ...origin(), x: i * size.width * DEPTH_SHIFT.x, y: i * size.height * DEPTH_SHIFT.y, z: -i * DEPTH_STEP }))
+}
+
+const LAYOUTS = { grid, spiral, zoom, circle, helix, depth }
 
 /** 全スライドの置き場所(slides と同じ順)。size はスライドの大きさ */
 export function placeSlides(slides: SlideKey[], size: Size, motion: ImpressMotion = {}): Place[] {
@@ -117,16 +162,21 @@ export function placeSlides(slides: SlideKey[], size: Size, motion: ImpressMotio
   })
 }
 
+/** 手前に出ているスライドの、見渡しの範囲の足し分(手前の距離に対する割合) */
+const NEAR_MARGIN = 0.5
+
 /**
  * 全体を見渡す置き場所: 全スライドの範囲の中央に置き、範囲が画面に収まる倍率にする。
  * スライドはどの向きに傾いていてもよいように、中心から対角線の半分(× そのスライドの倍率)の円で範囲を測る
  */
 export function overviewOf(places: Place[], size: Size): Place {
   const half = diagonal(size) / 2
-  const minX = Math.min(...places.map((p) => p.x - half * p.scale))
-  const maxX = Math.max(...places.map((p) => p.x + half * p.scale))
-  const minY = Math.min(...places.map((p) => p.y - half * p.scale))
-  const maxY = Math.max(...places.map((p) => p.y + half * p.scale))
+  // 手前(z > 0)に出ているスライドは遠近で大きく見えるので、その分だけ範囲を広めに取る(helix の手前の面)
+  const reach = (p: Place) => half * p.scale + Math.max(0, p.z) * NEAR_MARGIN
+  const minX = Math.min(...places.map((p) => p.x - reach(p)))
+  const maxX = Math.max(...places.map((p) => p.x + reach(p)))
+  const minY = Math.min(...places.map((p) => p.y - reach(p)))
+  const maxY = Math.max(...places.map((p) => p.y + reach(p)))
   return { ...origin(), x: (minX + maxX) / 2, y: (minY + maxY) / 2, scale: 1.05 * Math.max((maxX - minX) / size.width, (maxY - minY) / size.height) }
 }
 

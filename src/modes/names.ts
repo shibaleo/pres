@@ -31,7 +31,8 @@ export const MODE_VARIANTS: Record<ModeName, { query: string; label: string }[]>
  * zoom は Prezi のように、節の最初のスライドを大きな枠にして、節の中の続きをその中に小さく置く(寄ったり引いたりして進む。
  * 最初は全体を見渡すところから始まる)
  */
-export const IMPRESS_LAYOUTS = ['grid', 'spiral', 'zoom'] as const
+// circle は輪に、helix は縦の軸のまわりを回りながら下る立体の螺旋に、depth は奥へ奥へと並べる
+export const IMPRESS_LAYOUTS = ['grid', 'spiral', 'zoom', 'circle', 'helix', 'depth'] as const
 export type ImpressLayout = (typeof IMPRESS_LAYOUTS)[number]
 
 /**

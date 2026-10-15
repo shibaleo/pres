@@ -450,12 +450,12 @@ describe('動きの設定(motion.ts)', () => {
   it('impress の置き方: 無い並べ方と、スライドの題のものではないラベルは警告(同じラベルが transitions にあっても positions の行を指す)', async () => {
     const motion = motionFile(
       'impress',
-      `{\n  mode: 'impress',\n  transitions: { 'sec:none': 'none' },\n  impress: {\n    layout: 'circle',\n    positions: {\n      'sec:main': { z: -1000 },\n      'sec:none': { x: 0 },\n    },\n  },\n}`,
+      `{\n  mode: 'impress',\n  transitions: { 'sec:none': 'none' },\n  impress: {\n    layout: 'ring',\n    positions: {\n      'sec:main': { z: -1000 },\n      'sec:none': { x: 0 },\n    },\n  },\n}`,
     )
     const { file } = await run(src, { motion })
     expect(file.messages.map((m) => m.reason)).toEqual([
       expect.stringMatching(/impress\.ts:3: ラベル sec:none のスライドがありません/),
-      expect.stringMatching(/impress\.ts:5: impress の並べ方 "circle" はありません\(grid・spiral・zoom\)/),
+      expect.stringMatching(/impress\.ts:5: impress の並べ方 "ring" はありません\(grid・spiral・zoom・circle・helix・depth\)/),
       expect.stringMatching(/impress\.ts:8: ラベル sec:none のスライドがありません/),
     ])
   })

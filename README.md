@@ -375,8 +375,11 @@ export default {
   },
   impress: {
     // impress モードでの置き方。layout は grid(横の並びを右へ・縦の続きを下へ。既定)、spiral(文書の順に螺旋に沿って)、
-    // zoom(Prezi 風。節の最初のスライドを大きな枠にし、節の中の続きをその下半分に小さく置く。全体を見渡すところから始まる)
+    // zoom(Prezi 風。節の最初のスライドを大きな枠にし、節の中の続きをその下半分に小さく置く。全体を見渡すところから始まる)、
+    // circle(輪に)、helix(縦の軸のまわりを回りながら下る立体の螺旋)、depth(奥へ奥へ)
     layout: 'spiral',
+    // カメラが次のスライドへ移る時間(ミリ秒。既定 1000)
+    duration: 1500,
     // 個別のスライドの置き場所(ラベルで指す)。書いた項目だけが layout の値を置き換える
     // (x・y・z は中心の座標(px。スライドは 933×700)、rotate・rotateX・rotateY は回転(度)、scale は倍率)
     positions: { 'sec:main': { z: -1500, scale: 2 } },

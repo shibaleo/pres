@@ -768,6 +768,9 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
         motionWarn(`reveal の表示 "${view}" はありません(${REVEAL_VIEWS.join('・')})`, 'view')
       }
       for (const key of Object.keys(impress?.positions ?? {})) slideLabeled(key, 'positions')
+      if (impress?.duration !== undefined && !(typeof impress.duration === 'number' && impress.duration >= 0)) {
+        motionWarn(`impress の duration "${impress.duration}" は 0 以上の数(ミリ秒)で書いてください`, 'duration')
+      }
 
       /** 題にそのラベルを書いたスライド。無ければ警告(after は警告の行を探し始める所) */
       function slideLabeled(key: string, after?: string) {

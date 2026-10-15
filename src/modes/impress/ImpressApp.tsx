@@ -181,7 +181,7 @@ export default function ImpressApp({ Slides, motion }: DeckSource) {
       id="impress"
       className="deck"
       data-max-scale="3"
-      data-transition-duration="1000"
+      data-transition-duration={motion?.impress?.duration ?? 1000}
     >
       {startFromOverview && <div id="overview-start" className="step overview" />}
       {/* impress は #impress の子を自分の canvas に移す。React の描く範囲をこの div の中に閉じて、移されても壊れないようにする */}
