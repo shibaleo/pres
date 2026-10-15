@@ -1,0 +1,8 @@
+/* このデッキの見た目の特化(書き方は src/theme/tokens.css と presets/ を参照)。
+   講演の文献が勧める「抑えた見た目」なので、土台の Beamer 風のまま。数式の書体だけ数学向け */
+
+@import '@/theme/presets/math.css';
+
+:root {
+  --deck-preset: math;
+}

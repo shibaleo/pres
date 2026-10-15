@@ -219,6 +219,10 @@ body {
   line-height: inherit;
   vertical-align: baseline;
 }
+/* リストは inline-block なので、直後に行単独で書いた <small>(段落にならない)はリストの横に並んでしまう。次の行に置く */
+.deck :is(ul, ol, dl) + small {
+  display: block;
+}
 
 /* ========== 3. パネル ==========
    囲み全般の共通の形。面はすべて --color-surface で、色は見出しの下線(アクセント)にだけ使う。
@@ -351,6 +355,10 @@ body {
 .deck .csl-left-margin {
   justify-self: end;
   white-space: nowrap;
+}
+/* URL・DOI のリンク(vite/rehype-bib-links.ts)は区切りの無い長い文字列なので、行の幅で折り返す */
+.deck .csl-bib-body a {
+  overflow-wrap: anywhere;
 }
 
 /* 数式(rehype-mathjax の SVG 出力)。\eqref のリンク色をアクセントに合わせる(MathJax の既定は青) */

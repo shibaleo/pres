@@ -282,6 +282,7 @@ $f$ が凸なら …
 デッキのフォルダの `references.bib`（`decks/<名前>/references.bib`）にエントリを追加し、本文で LaTeX と同じく `\cite{key}`、`\cite{a,b}`、`\cite[p.~5]{key}` と書きます。
 番号付け・整形・文献リストは rehype-citation（CSL）が行い、`<Bibliography />` の位置に文献リストが入ります。
 本文の引用は `[1]` / `[1,2]` の形です（CSL: NLM/Vancouver 角括弧版）。このスタイルは頁指定（`[p.~5]`）を表示しません。
+エントリの `url` と `doi` は文献リストでリンクになります（DOI のリンク先は `https://doi.org/…`。`vite/rehype-bib-links.ts`）。
 スタイルを替えるときは CSL の公式リポジトリ（citation-style-language/styles）のファイルを `vite/csl/` に置いて
 `vite/mdx-options.ts` で指定します。
 

@@ -15,6 +15,7 @@ import rehypeCitation from 'rehype-citation'
 import { AllPackages } from 'mathjax-full/js/input/tex/AllPackages.js'
 import remarkBeamer from './remark-beamer/index.ts'
 import rehypeMathjaxDocument from './rehype-mathjax-document.ts'
+import rehypeBibLinks from './rehype-bib-links.ts'
 import { rehypeMathPositions, rehypeMathErrors } from './remark-beamer/rehype-math-errors.ts'
 
 /** 文献ファイル。関数なら変換する主ファイルのパスから決める(デッキごとに文献ファイルが違うため。vite/decks.js) */
@@ -83,6 +84,8 @@ export function mdxOptions({
       rehypeMathErrors,
       // CSL は公式リポジトリの NLM/Vancouver(角括弧版)。本文の引用は [1] / [1,2] の形になる
       [rehypeCitationPerFile, { bibliography }],
+      // 文献リストの URL・DOI をリンクに(rehype-citation が citeproc-js のリンクの設定を切っているため。rehype-bib-links.ts)
+      rehypeBibLinks,
     ],
   }
 }

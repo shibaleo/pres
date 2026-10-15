@@ -67,6 +67,17 @@ describe('ビルド設定(結合)', () => {
     expect(links).toEqual(['arnold2012=1', 'arnold2012=1', 'nakajima2020=2'])
   })
 
+  it('文献リストの URL と DOI はリンクになる(句点は含めない)', async () => {
+    const out = String(
+      await compile(
+        new VFile({ path: 'slides.mdx', value: '\\cite{halmos1974,mccarthy}\n\n<Bibliography />' }),
+        mdxOptions({ bibliography: 'decks/speech/references.bib', strict: false }),
+      ),
+    )
+    expect(out).toContain('href: "https://doi.org/10.1007/978-1-4613-8211-9_17"')
+    expect(out).toContain('href: "https://www.math.wustl.edu/~mccarthy/public_papers/colloquium.pdf"')
+  })
+
   it('\\input で取り込んだ JSX も主ファイルに直接書いたときと同じに扱う', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'mdx-input-'))
     const table = '<table>\n<tbody>\n<tr><td>a</td></tr>\n<tr><td>b</td></tr>\n</tbody>\n</table>\n'
