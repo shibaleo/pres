@@ -35,6 +35,15 @@ export const IMPRESS_LAYOUTS = ['grid', 'spiral', 'zoom'] as const
 export type ImpressLayout = (typeof IMPRESS_LAYOUTS)[number]
 
 /**
+ * 段の現れ方(motion.ts の step。段階表示で、次の段の要素が現れるときの動き)。先頭が既定。どのモードでも同じに効く:
+ * reveal は fragment の型(fade-up など。blur と none はこのリポジトリの CSS)、ほかのモードは theme/base.css の .overlay の規則。
+ * fade は今の見え方(その場で薄く現れる)、fade-up などはその向きから滑り込み、zoom-in は小さい所から、blur はぼかしから、none はすぐ出る。
+ * \only(出ていない間は場所も取らない段)は、どのモードでもすぐ出る
+ */
+export const STEP_EFFECTS = ['fade', 'fade-up', 'fade-down', 'fade-left', 'fade-right', 'zoom-in', 'blur', 'none'] as const
+export type StepEffect = (typeof STEP_EFFECTS)[number]
+
+/**
  * reveal モードの表示(motion.ts の reveal.view)。省略すると 1 枚ずつのスライド。
  * scroll は reveal のスクロールビュー(スライドを縦に並べた 1 ページにし、スクロールで進む。段階表示もスクロールで進む)
  */

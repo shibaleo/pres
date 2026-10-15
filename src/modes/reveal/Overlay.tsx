@@ -1,4 +1,24 @@
+import { createContext, useContext } from 'react'
+import type { StepEffect } from '../names'
 import type { OverlayProps } from '../structure'
+
+/** 段の現れ方(デッキの motion.ts の step。RevealApp が配る) */
+export const StepEffectContext = createContext<StepEffect>('fade')
+
+/**
+ * 段の現れ方を reveal の fragment の型にする。fade は reveal の既定(型なし)。blur と none は reveal に無いので、
+ * reveal.css の規則(.fragment.blur・.fragment.instant)
+ */
+const FRAGMENT_STYLE: Record<StepEffect, string | false> = {
+  fade: false,
+  'fade-up': 'fade-up',
+  'fade-down': 'fade-down',
+  'fade-left': 'fade-left',
+  'fade-right': 'fade-right',
+  'zoom-in': 'zoom-in',
+  blur: 'blur',
+  none: 'instant',
+}
 
 /**
  * reveal モードの Overlay: Beamer の overlay(`\pause`, `<2->`, `\only<2>{…}`, <Fragment> など)を reveal の fragment にしたもの。
@@ -10,6 +30,7 @@ import type { OverlayProps } from '../structure'
  *   only  … 非表示の間は場所も取らない(\only)。既定は場所を残す(\uncover)
  */
 export function Overlay({ from, to, as: Tag = 'div', only = false, children }: OverlayProps) {
+  const effect = useContext(StepEffectContext)
   const cls = (...c: (string | false)[]) => c.filter(Boolean).join(' ')
   let node = children
   if (to !== undefined) {
@@ -20,8 +41,9 @@ export function Overlay({ from, to, as: Tag = 'div', only = false, children }: O
     )
   }
   if (Number(from) >= 2) {
+    // 現れ方の型は、現れる側の fragment に付ける(\only はどのモードでもすぐ出す)
     node = (
-      <Tag className={cls('fragment', only && 'only')} data-fragment-index={Number(from) - 2}>
+      <Tag className={cls('fragment', only && 'only', !only && FRAGMENT_STYLE[effect])} data-fragment-index={Number(from) - 2}>
         {node}
       </Tag>
     )

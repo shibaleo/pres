@@ -4,6 +4,7 @@ import RevealNotes from 'reveal.js/plugin/notes'
 import { LOOK_EVENT, announcePresent, markReady, registerGoTo } from '../../deck/mode'
 import type { DeckSource } from '../../deck/source'
 import { revealComponents, revealTransition } from './components'
+import { StepEffectContext } from './Overlay'
 import Menu from './Menu'
 import { isHandout, isPrint, useSlideSize } from './slide-size'
 import './reveal.css'
@@ -95,7 +96,9 @@ export default function RevealApp({ Slides, motion }: DeckSource) {
         }
       }}
     >
-      <Slides components={revealComponents} />
+      <StepEffectContext.Provider value={motion?.step ?? 'fade'}>
+        <Slides components={revealComponents} />
+      </StepEffectContext.Provider>
       <Menu />
     </Deck>
   )

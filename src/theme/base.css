@@ -532,7 +532,33 @@ body {
 .deck .overlay {
   transition:
     opacity 0.2s ease,
-    visibility 0.2s ease;
+    visibility 0.2s ease,
+    transform 0.3s ease,
+    filter 0.3s ease;
+}
+/* 段の現れ方(motion.ts の step。main.tsx が <html data-step-effect> に写す。reveal は fragment の型。modes/reveal/Overlay.tsx)。
+   出ていない間の形を決め、出るときにそこから今の形へ動く。動かせるのはブロック(div)の段だけ(文中の段は薄く現れるだけ)。
+   ずらす量は reveal の型(40px)に近い 2 半行 */
+[data-step-effect='fade-up'] .deck div.overlay.overlay-hidden {
+  transform: translateY(calc(2 * var(--space)));
+}
+[data-step-effect='fade-down'] .deck div.overlay.overlay-hidden {
+  transform: translateY(calc(-2 * var(--space)));
+}
+[data-step-effect='fade-left'] .deck div.overlay.overlay-hidden {
+  transform: translateX(calc(2 * var(--space)));
+}
+[data-step-effect='fade-right'] .deck div.overlay.overlay-hidden {
+  transform: translateX(calc(-2 * var(--space)));
+}
+[data-step-effect='zoom-in'] .deck div.overlay.overlay-hidden {
+  transform: scale(0.1);
+}
+[data-step-effect='blur'] .deck .overlay.overlay-hidden {
+  filter: blur(calc(var(--space) / 2));
+}
+[data-step-effect='none'] .deck .overlay {
+  transition: none;
 }
 .deck .overlay.overlay-hidden {
   opacity: 0;

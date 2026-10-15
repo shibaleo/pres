@@ -108,6 +108,20 @@ test('demonstration: 枠の中に、各モードの本物のデッキが起動�
   }
 })
 
+test('段の現れ方(motion.ts の step): reveal は fragment の型、impress は CSS で、出ていない段の形が決まる', async ({ page }) => {
+  // landau(reveal・fade-up): 現れる側の fragment に reveal の型 fade-up が付き、出ていない間は下にずれている
+  await open(page, 'landau')
+  expect(await page.evaluate(() => document.documentElement.dataset.stepEffect)).toBe('fade-up')
+  const fragment = page.locator('.reveal .fragment.fade-up').first()
+  await expect(fragment).toBeAttached()
+  expect(await fragment.evaluate((e) => getComputedStyle(e).transform)).not.toBe('none')
+  // manifold(impress・blur): 出ていない段はぼけている
+  await open(page, 'manifold')
+  expect(await page.evaluate(() => document.documentElement.dataset.stepEffect)).toBe('blur')
+  const hidden = page.locator('#impress .overlay.overlay-hidden').first()
+  expect(await hidden.evaluate((e) => getComputedStyle(e).filter)).toContain('blur')
+})
+
 test('見本のデッキに、モードのライブラリの既定の見た目が当たっている', async ({ page }) => {
   const look: Record<string, (p: Page) => Promise<string>> = {
     // reveal black の地

@@ -1,4 +1,4 @@
-import type { ImpressLayout, ModeName, RevealView, TransitionName } from './names'
+import type { ImpressLayout, ModeName, RevealView, StepEffect, TransitionName } from './names'
 
 /**
  * デッキの動きの設定(decks/<名前>/motion.ts の default export)。原稿(本文)には動きの指定を書かず、ここに書く。
@@ -32,6 +32,11 @@ export type MotionConfig = {
    *   ## 主定理の紹介 \label{sec:main}   →   transitions: { 'sec:main': 'cube' }
    */
   transitions?: Record<string, TransitionName>
+  /**
+   * 段の現れ方(段階表示で次の段が現れるときの動き。fade(既定)・fade-up・fade-down・fade-left・fade-right・zoom-in・blur・none)。
+   * どのモードでも同じに効く
+   */
+  step?: StepEffect
   /** impress モードでのスライドの置き方(impress は平面・空間にスライドを置き、カメラが移る) */
   impress?: ImpressMotion
   /** reveal モードでの表示 */

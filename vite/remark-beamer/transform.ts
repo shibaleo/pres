@@ -25,7 +25,7 @@ import type { Point, Position } from 'unist'
 import { MATH_ENVS } from './syntax.ts'
 import { findInclude, parseInclude, resolveInclude, type IncludeContext } from './inputs.js'
 import type { LatexCommand, LatexLine } from './mdast.ts'
-import { IMPRESS_LAYOUTS, MODE_NAMES, REVEAL_VIEWS, MODE_TRANSITIONS, TRANSITIONS, type ModeName, type TransitionName } from '../../src/modes/names.ts'
+import { IMPRESS_LAYOUTS, MODE_NAMES, REVEAL_VIEWS, STEP_EFFECTS, MODE_TRANSITIONS, TRANSITIONS, type ModeName, type TransitionName } from '../../src/modes/names.ts'
 import type { MotionConfig } from '../../src/modes/motion.ts'
 
 export type BeamerOptions = {
@@ -757,6 +757,10 @@ export function beamerTransform(this: Processor, options: BeamerOptions = {}) {
       const impress = config.impress
       if (impress?.layout !== undefined && !(IMPRESS_LAYOUTS as readonly string[]).includes(impress.layout)) {
         motionWarn(`impress の並べ方 "${impress.layout}" はありません(${IMPRESS_LAYOUTS.join('・')})`, 'layout')
+      }
+      // 段の現れ方
+      if (config.step !== undefined && !(STEP_EFFECTS as readonly string[]).includes(config.step)) {
+        motionWarn(`段の現れ方 "${config.step}" はありません(${STEP_EFFECTS.join('・')})`, 'step')
       }
       // reveal モードでの表示
       const view = config.reveal?.view

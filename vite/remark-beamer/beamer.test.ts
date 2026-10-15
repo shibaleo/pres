@@ -460,6 +460,18 @@ describe('動きの設定(motion.ts)', () => {
     ])
   })
 
+  it('段の現れ方: 無い現れ方は警告(位置は motion.ts の行)', async () => {
+    const ok = motionFile('step-ok', `{ mode: 'impress', step: 'fade-up' }`)
+    expect((await run(src, { motion: ok })).file.messages).toEqual([])
+    const bad = motionFile('step-bad', `{
+  mode: 'reveal',
+  step: 'spin',
+}`)
+    expect((await run(src, { motion: bad })).file.messages.map((m) => m.reason)).toEqual([
+      expect.stringMatching(/step-bad\.ts:3: 段の現れ方 "spin" はありません\(fade・fade-up・fade-down・fade-left・fade-right・zoom-in・blur・none\)/),
+    ])
+  })
+
   it('reveal の表示: 無い表示は警告(位置は motion.ts の行)', async () => {
     const ok = motionFile('reveal-scroll', `{ mode: 'reveal', reveal: { view: 'scroll' } }`)
     expect((await run(src, { motion: ok })).file.messages).toEqual([])

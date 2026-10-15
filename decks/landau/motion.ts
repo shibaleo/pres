@@ -5,6 +5,8 @@ export default {
   // reveal: 段階表示・縦の続き・発表者ビュー・PDF がそろった完成品。導出を 1 段ずつ追う資料に
   mode: 'reveal',
   transition: 'slide',
+  // 導出の式は、段ごとに下から上がってくる
+  step: 'fade-up',
   // 付録(記法の見本。縦の続き)は静かに切り替える
   continuation: 'fade',
   transitions: {

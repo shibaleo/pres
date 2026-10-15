@@ -77,6 +77,13 @@ html.reveal-print .reveal .figure-buttons {
 .deck .overlay-step {
   display: none !important;
 }
+/* 段の現れ方(motion.ts の step)のうち reveal に型の無いもの: blur はぼかしから、instant(none)はすぐ出る */
+.reveal .fragment.blur:not(.visible) {
+  filter: blur(calc(var(--space) / 2));
+}
+.reveal .fragment.instant {
+  transition: none;
+}
 /* \only: 非表示の間は場所も取らない(\uncover は場所を残す = reveal の既定) */
 .deck .fragment.only:not(.visible),
 .deck .fragment.only.fade-out.visible {

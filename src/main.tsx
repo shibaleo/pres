@@ -25,6 +25,8 @@ export function startDeck(deck: DeckSource, Mode: ComponentType<DeckSource>): (n
   if (import.meta.env.DEV) void import('./devtools/LookSwitcher').then((m) => m.mountLookSwitcher(preset))
 
   setMinSizeVariables()
+  // 段の現れ方(motion.ts の step)。reveal 以外のモードは theme/base.css の .overlay の規則がこれを見る(reveal は Overlay.tsx)
+  document.documentElement.dataset.stepEffect = deck.motion?.step ?? 'fade'
   // 文書の中のリンク(#名前。\ref・[文字](#名前))でそのスライドへ移る(どのモードでも同じ)
   watchInternalLinks()
   // はみ出しの検査は開発時と、ビルドしたデッキを ?check-overflow で開いたとき(e2e/overflow.spec.ts)。
