@@ -1,6 +1,6 @@
 /* 見た目の切り替え(devtools/LookSwitcher.tsx。開発時だけ読み込むので、ビルドには入らない)。
    開発時の道具なので、デッキの見た目(テーマ)には依らない。Next.js や TanStack の開発表示のように、
-   画面の左下の暗い丸いバッジから、上にパネルが開く。デッキの中身の硬い見た目とは別の、道具としての見た目 */
+   画面の左上の暗い丸いバッジから、下にパネルが開く(左下は reveal のメニューのボタン、右上は開発時の警告の一覧、右下は reveal の矢印)。デッキの中身の硬い見た目とは別の、道具としての見た目 */
 .deck-look {
   --look-bg: rgb(17 17 19 / 92%);
   --look-border: rgb(255 255 255 / 12%);
@@ -9,9 +9,8 @@
   --look-hover: rgb(255 255 255 / 8%);
   --look-accent: #3b82f6;
   position: fixed;
-  /* reveal のメニューのボタン(左下)の右に置く */
-  bottom: 12px;
-  left: 56px;
+  top: 12px;
+  left: 12px;
   z-index: 70;
   font: 500 12px/1.4 ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Noto Sans JP', sans-serif;
   color: var(--look-text);
@@ -25,13 +24,15 @@
   cursor: pointer;
 }
 
-/* バッジ */
+/* バッジ: 触っていないときはアイコンだけの小さな丸(スライドの題の書き出しより手前に収まる)。
+   マウスを乗せたとき・開いたときに、テーマの名前を伸ばして見せる */
 .deck-look-badge {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
   height: 32px;
-  padding: 0 12px 0 10px;
+  min-width: 32px;
+  padding: 0 8px;
   background: var(--look-bg);
   border: 1px solid var(--look-border);
   border-radius: 999px;
@@ -52,18 +53,39 @@
 .deck-look-badge:active {
   transform: scale(0.97);
 }
-/* デッキの設定と違うテーマのときの印 */
+.deck-look-label {
+  max-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  opacity: 0;
+  transition:
+    max-width 0.2s ease,
+    opacity 0.15s,
+    margin 0.2s;
+}
+.deck-look-badge:hover .deck-look-label,
+.deck-look-badge[aria-expanded='true'] .deck-look-label,
+.deck-look:focus-within .deck-look-label {
+  max-width: 180px;
+  margin: 0 4px 0 6px;
+  opacity: 1;
+}
+/* デッキの設定と違うテーマのときの印(丸の右上) */
 .deck-look-dot {
-  width: 6px;
-  height: 6px;
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: #f59e0b;
+  box-shadow: 0 0 0 2px rgb(17 17 19);
 }
 
 /* パネル */
 .deck-look-panel {
   position: absolute;
-  bottom: calc(100% + 8px);
+  top: calc(100% + 8px);
   left: 0;
   display: flex;
   flex-direction: column;
@@ -80,7 +102,7 @@
 @keyframes deck-look-in {
   from {
     opacity: 0;
-    transform: translateY(4px);
+    transform: translateY(-4px);
   }
 }
 .deck-look-list {

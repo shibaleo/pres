@@ -4,7 +4,7 @@ import { LOOK_EVENT } from '../deck/mode'
 import './LookSwitcher.css'
 
 /**
- * 開発時だけの「見た目」の切り替え。画面の左下のバッジを押すとパネルが開き、src/theme/presets/themes/ のテーマ
+ * 開発時だけの「見た目」の切り替え。画面の左上のバッジを押すとパネルが開き、src/theme/presets/themes/ のテーマ
  * (1 ファイル = 1 テーマ)をその場で付け替えて試せる(<html data-preset> の中のテーマだけを替え、用途のプリセット math・manual
  * などは残す)。モードの切り替え(開発サーバーの /<デッキ>/<モード>/)と組み合わせて見比べられる。
  * 選んだテーマはそのタブの中でデッキごとに覚え(sessionStorage)、デッキの設定と違うときは style.css に書く 1 行を出す。
@@ -206,7 +206,7 @@ function LookSwitcher({ deckPreset }: { deckPreset: string }) {
       )}
       <button className="deck-look-badge" aria-expanded={open} onClick={() => setOpen((o) => !o)} title="見た目のテーマ(開発時だけ)">
         <PaletteIcon />
-        <span>{displayName(theme)}</span>
+        <span className="deck-look-label">{displayName(theme)}</span>
         {theme !== deckTheme && <span className="deck-look-dot" title="デッキの設定と違う" />}
       </button>
     </div>
