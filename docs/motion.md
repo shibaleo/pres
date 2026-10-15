@@ -82,7 +82,8 @@ impress の substep と Shower の `.next` は、要素を文書順に 1 つず�
 - 段階表示は段の印（substep）
 - 作り直し: impress は初期化のときの置き場所と step しか知らないので、窓の大きさが変わったときと原稿を直したとき（HMR）は、
   置き直して作り直し、同じ番目の step に戻る。impress の `tear` は全体の中身を innerHTML で書き直す（React の要素が別物になり、図が動かなくなる）ので、
-  React の要素を先に外へ出して空の step だけで tear し、元の要素を戻して impress の付けた class と style を外す
+  React の要素を先に外へ出して空の step だけで tear し、元の要素を戻して impress の付けた class と style を外す。impress の中身(tear の書き直し方・.active の前提)に頼るので、package.json で impress.js の版を固定している
+  （Shower もパッケージの内部のファイル `lib/shower.js` を直に読むので、`@shower/core` の版を固定している）
 - 一覧: O キーで全体を見渡す step と、その前のスライドを行き来する。見渡しでスライドを押すとそのスライドへ移る（impress の動き）。
   Esc は impress が全画面の解除に使っているので使わない
 - まだ無いもの: PDF 出力（reveal モードで作る）、発表者ビュー（impress の impressConsole は CSS を URL で読むので単一 HTML では使えない）
