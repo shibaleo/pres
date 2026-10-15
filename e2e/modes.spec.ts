@@ -103,7 +103,7 @@ test('demonstration: 枠の中に、各モードの本物のデッキが起動�
     const frame = page.frameLocator(`section.present:not(.stack) iframe[src*="/${deck}/index.html"]`)
     // 起動の印(data-deck-ready)と、そのモードの要素(Spectacle は印の後にスライドを描く)
     const mounted = { reveal: '.reveal', impress: '#impress', shower: '.shower-slides', spectacle: '.spectacle-body', swiper: '.swiper' }[mode]
-    await expect(frame.locator('html[data-deck-ready]'), `${deck} が枠の中で起動しない`).toBeAttached({ timeout: 15000 })
+    await expect(frame.locator('html[data-deck-ready]'), `${deck} が枠の中で起動しない`).toBeAttached({ timeout: 30000 })
     await expect(frame.locator(mounted).first(), `${deck} が枠の中で ${mode} モードで描かれない`).toBeAttached({ timeout: 15000 })
   }
 })

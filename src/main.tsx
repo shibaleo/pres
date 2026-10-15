@@ -21,6 +21,8 @@ export function startDeck(deck: DeckSource, Mode: ComponentType<DeckSource>): (n
   // <html data-preset> に移す。プリセットは [data-preset~="名前"] の範囲にかかる(theme/presets/)
   const preset = getComputedStyle(document.documentElement).getPropertyValue('--deck-preset').trim()
   if (preset) document.documentElement.dataset.preset = preset
+  // 開発時だけ、見た目のテーマをその場で替えて試す切り替え(devtools/LookSwitcher.tsx。ビルドには入らない)
+  if (import.meta.env.DEV) void import('./devtools/LookSwitcher').then((m) => m.mountLookSwitcher(preset))
 
   setMinSizeVariables()
   // 文書の中のリンク(#名前。\ref・[文字](#名前))でそのスライドへ移る(どのモードでも同じ)

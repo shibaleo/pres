@@ -1,7 +1,7 @@
 import { useRef } from 'react'
 import { Deck, useReveal } from '@revealjs/react'
 import RevealNotes from 'reveal.js/plugin/notes'
-import { announcePresent, markReady, registerGoTo } from '../../deck/mode'
+import { LOOK_EVENT, announcePresent, markReady, registerGoTo } from '../../deck/mode'
 import type { DeckSource } from '../../deck/source'
 import { revealComponents, revealTransition } from './components'
 import Menu from './Menu'
@@ -9,6 +9,9 @@ import { isHandout, isPrint, useSlideSize } from './slide-size'
 import './reveal.css'
 
 type RevealApi = NonNullable<ReturnType<typeof useReveal>>
+
+/** 縦の中央寄せは、見た目のプリセットが CSS の --reveal-center: true で頼んだときだけ(reveal-black など。既定は上寄せ) */
+const centerRequested = () => getComputedStyle(document.documentElement).getPropertyValue('--reveal-center').trim() === 'true'
 
 
 // 開発時(HMR)にスライド位置を保持する。本番では常に1枚目から始める。
@@ -33,8 +36,7 @@ export default function RevealApp({ Slides, motion }: DeckSource) {
         width,
         height,
         margin: 0,
-        // 縦の中央寄せは、見た目のプリセットが CSS の --reveal-center: true で頼んだときだけ(reveal-black。既定は上寄せ)
-        center: getComputedStyle(document.documentElement).getPropertyValue('--reveal-center').trim() === 'true',
+        center: centerRequested(),
         slideNumber: 'c/t',
         hash: true,
         // PDF では 1 枚のスライドを 1 ページに収める(画面と同じく、収まらない部分は切れる。
@@ -56,6 +58,8 @@ export default function RevealApp({ Slides, motion }: DeckSource) {
       plugins={[RevealNotes]}
       onReady={(deck) => {
         deckRef.current = deck
+        // 見た目を替えたら(開発時の見た目の切り替え)、中央寄せを読み直す
+        document.addEventListener(LOOK_EVENT, () => deck.configure({ center: centerRequested() }))
         registerGoTo((slide) => {
           const { h, v } = deck.getIndices(slide)
           deck.slide(h, v)

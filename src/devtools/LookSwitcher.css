@@ -1,0 +1,29 @@
+/* 見た目の切り替え(devtools/LookSwitcher.tsx。開発時だけ読み込むので、ビルドには入らない)。画面の左上に小さく、操作していないときは薄く。
+   開発時の道具なので配色はテーマに依らない */
+.deck-look {
+  position: fixed;
+  top: var(--ui-space);
+  left: var(--ui-space);
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--ui-space) / 2);
+  padding: calc(var(--ui-space) / 2) var(--ui-space);
+  font: 12px/1.4 var(--font-ui);
+  color: #333;
+  background: #fff;
+  border: 1px solid #ccc;
+  opacity: var(--ui-idle);
+  transition: opacity 0.2s;
+}
+.deck-look:hover,
+.deck-look:focus-within {
+  opacity: 1;
+}
+.deck-look select {
+  font: inherit;
+}
+.deck-look code {
+  font-family: var(--font-code);
+  user-select: all;
+}

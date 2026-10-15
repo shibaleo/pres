@@ -54,6 +54,7 @@ npm run shots [-- <名前>...]   # 単一ファイルを reveal モードでビ�
 npm run pdf [-- <名前>...]     # 単一ファイルを reveal モードでビルドし、pdf/<名前>.pdf(段階表示はステップごと)と pdf/<名前>-handout.pdf(配布用)を書き出す
 npm run preview                # ビルド結果をプレビュー(/<名前>/ でデッキ)
 npm run subset                 # フォントを全デッキで使う文字だけに再サブセット(下記)
+npm run themes                 # reveal のテーマ 14 種を見た目のプリセットに写す(src/theme/presets/themes/reveal-*.css。reveal を更新したとき)
 npm run typecheck              # 型チェック(ブラウザ側 tsconfig.json + ビルド側 tsconfig.node.json + e2e)
 npm run test                   # テスト(Vitest)。transform: 記法の変換とビルド設定 / render: 全デッキを実際に描いて番号・参照・構造を確かめる
 npm run test:e2e               # e2e テスト(Playwright)。ビルドしたデッキを Chrome で開き、全デッキのはみ出し(本番のビルド)と書体、legendre の図の操作、landau の PDF 用の表示を確かめる
@@ -119,8 +120,8 @@ src/                   全デッキ・全モードで共有する土台(用途�
     fonts.css          土台の書体(本文の明朝 Noto Serif JP・見出しと強調のゴシック Noto Sans JP・等幅・図のラベルの数式用 New Computer Modern Math)
     presets/math.css   数学向けのプリセット(欧文と数字を New Computer Modern に)
     presets/manual.css 業務マニュアル向けのプリセット(本文もゴシック・太さで強調・等幅数字・手順の番号を太く)
-    presets/reveal-black.css ほか  各ライブラリの既定のテーマの見た目(reveal-black・impress-demo・shower-ribbon・spectacle・
-                       swiper-demo。色・書体・題とページ番号の形を写し、大きさは土台のまま。docs/motion.md)
+    presets/themes/    各ライブラリのテーマの見た目(1 ファイル = 1 テーマ。reveal の 14 種 reveal-*(scripts/reveal-themes.mjs が作る)・
+                       impress-demo・shower-ribbon・spectacle・swiper-demo。色・書体・題とページ番号の形を写し、大きさは土台のまま。docs/motion.md)
   fonts/               subset 済み woff2(全デッキの文字の和)
   render.test.tsx      全デッキを実際に描いて確かめるテスト(節番号・メニュー・参照・数式・文献・構造)
 vite.config.ts         Vite の設定(deckConfig: デッキの名前を受け取ってビルドの設定にする。引数なしは全デッキの開発サーバー)
@@ -446,9 +447,14 @@ export default {
 
 見本は `decks/manual/` と `decks/trial-balance/`（業務マニュアル向けのプリセットをデッキ全体にかけている）。
 
-各ライブラリの既定のテーマの見た目もプリセットにしてあります（reveal-black・impress-demo・shower-ribbon・spectacle・swiper-demo）。
-ほかのプリセットと並べるときは後ろに書きます（`--deck-preset: math reveal-black;`）。見本のデッキは、それぞれのモードのテーマを使っています
+各ライブラリのテーマの見た目もプリセットにしてあります（`src/theme/presets/themes/`。reveal の 14 種 `reveal-beige`〜`reveal-white-contrast`、
+`impress-demo`・`shower-ribbon`・`spectacle`・`swiper-demo`）。デッキの style.css で `@import '@/theme/presets/themes/<名前>.css';` し、
+ほかのプリセットの後ろに書きます（`--deck-preset: math reveal-black;`）。見本のデッキは、それぞれのモードのテーマを使っています
 （`decks/demonstration/` だけは土台の見た目のまま）。
+
+**テーマを試す**: 開発サーバーで開いたデッキの左上の「見た目」で、テーマをその場で付け替えられます（開発時だけ。ビルドには入りません）。
+選んだテーマはそのタブの中でデッキごとに覚え、モードを替えて開き直しても（`/<デッキ>/<モード>/`）そのまま。デッキの設定と違うときは、
+style.css に書く 1 行（`--deck-preset: …;`）が出ます。はみ出しの検査も、替えた見た目で測り直します。
 
 用途に共通する改善はテンプレート（tokens / base）へ、特定の用途に寄った見た目はプリセット
 （`src/theme/presets/`）へ入れます。

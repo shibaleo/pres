@@ -14,6 +14,12 @@
  */
 import { MIN_WIDTH, SLIDE_HEIGHT } from './slide-metrics'
 
+/**
+ * 見た目(<html data-preset>)を替えたときに document に送る出来事の名前(開発時の見た目の切り替え。devtools/LookSwitcher.tsx)。
+ * 見た目の CSS から起動のときに設定を読むモード(reveal の --reveal-center)は、これを受けて読み直す
+ */
+export const LOOK_EVENT = 'deck:look'
+
 /** 今のスライドが変わったときに document に送る出来事の名前。detail は今のスライドの要素 */
 export const PRESENT_EVENT = 'deck:present'
 
