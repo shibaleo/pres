@@ -9,7 +9,7 @@
  *     文書の順で置く(deckSlides が拾う)
  *
  * スライドの表示の大きさは窓と同じ縦横比(deck/view-size.ts。CSS 変数なら watchViewSize の --deck-view-width /
- * --deck-view-height と倍率 --deck-scale)。最小サイズは CSS 変数 --deck-slide-width / --deck-slide-height(main.tsx が付ける。
+ * --deck-view-height と倍率 --deck-scale)。最小サイズは CSS 変数 --deck-min-width / --deck-min-height(main.tsx が付ける。
  * はみ出しの枠が使う)。
  */
 import { MIN_WIDTH, SLIDE_HEIGHT } from './slide-metrics'
@@ -53,9 +53,12 @@ export function deckSlides(): HTMLElement[] {
   return [...document.querySelectorAll<HTMLElement>(SLIDE_SELECTOR)]
 }
 
-/** スライドの大きさ(最小サイズ)を CSS 変数にする。どのモードの CSS もこれを使う */
-export function setSlideSizeVariables() {
+/**
+ * スライドの最小サイズを CSS 変数 --deck-min-width / --deck-min-height にする(はみ出しの枠。devtools/devtools.css)。
+ * 表示の大きさは別の変数(deck/view-size.ts の --deck-view-width / --deck-view-height)
+ */
+export function setMinSizeVariables() {
   const style = document.documentElement.style
-  style.setProperty('--deck-slide-width', `${MIN_WIDTH}px`)
-  style.setProperty('--deck-slide-height', `${SLIDE_HEIGHT}px`)
+  style.setProperty('--deck-min-width', `${MIN_WIDTH}px`)
+  style.setProperty('--deck-min-height', `${SLIDE_HEIGHT}px`)
 }

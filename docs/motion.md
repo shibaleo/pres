@@ -45,7 +45,7 @@ URL の検索の部分で受けるのは、ライブラリ自身の約束（reve
 「このスライドへ移る」の登録（`registerGoTo`。開発時の警告の一覧と、原稿の中のリンク `#名前` から移る。`src/deck/links.ts`）、準備完了の印（`markReady`。`<html data-deck-ready>`）、
 スライドの要素に `.slide` と原稿の位置を付けて `.deck` の中に文書の順で置くこと、の 4 つだけ。これで原稿の警告とはみ出しの検査
 （`src/devtools/`）は全モードで同じに働く。スライドの大きさは窓と同じ縦横比（`src/deck/view-size.ts`。CSS では `watchViewSize` の `--deck-view-width` / `--deck-view-height`、
-窓に合わせる倍率は `--deck-scale`）。最小サイズは `--deck-slide-width` / `--deck-slide-height`（はみ出しの枠）。共通の部品は段の印（`src/modes/marker-steps.tsx`。impress と Shower）と、ページ番号（`src/modes/page-number.tsx`。reveal 以外）。
+窓に合わせる倍率は `--deck-scale`）。最小サイズは `--deck-min-width` / `--deck-min-height`（はみ出しの枠）。共通の部品は段の印（`src/modes/marker-steps.tsx`。impress と Shower）と、ページ番号（`src/modes/page-number.tsx`。reveal 以外）。
 ページ番号は reveal の `c/t` と同じく文書の順のスライドで数え、スライドの中の右上（題の帯の上）に置く。impress・Shower・Swiper には
 ページ番号が無く、Spectacle の template は今のスライドの番号を全スライドに配る作りで、一覧と PDF 用の表示ではどのスライドも同じ番号になるので使わない。
 段階表示の見た目（`.overlay-hidden`）は theme/base.css。

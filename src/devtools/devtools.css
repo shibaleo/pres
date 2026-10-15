@@ -33,7 +33,7 @@
 }
 
 /* スライドの最小サイズからのはみ出し(devtools/overflow.ts。開発時だけ付く)。
-   最小サイズの範囲(--deck-slide-width × --deck-slide-height。deck/mode.ts)を破線の枠で示し、その右上に超過量を出す。
+   最小サイズの範囲(--deck-min-width × --deck-min-height。deck/mode.ts)を破線の枠で示し、その右上に超過量を出す。
    枠もバッジも最小サイズの内側に置き、はみ出しの測定(scrollWidth / scrollHeight)を増やさない
    (増やすと、原稿を直しても警告が消えない) */
 .deck .slide.deck-overflow::before,
@@ -47,13 +47,13 @@
   content: '';
   left: 0;
   box-sizing: border-box;
-  width: var(--deck-slide-width);
-  height: var(--deck-slide-height);
+  width: var(--deck-min-width);
+  height: var(--deck-min-height);
   border: calc(var(--rule) / 2) dashed red;
 }
 .deck .slide.deck-overflow::after {
   content: attr(data-deck-overflow);
-  left: var(--deck-slide-width);
+  left: var(--deck-min-width);
   translate: -100% 0;
   padding: 0 var(--space);
   font: calc(1em / var(--type-ratio) / var(--type-ratio)) / var(--leading) var(--font-ui);
