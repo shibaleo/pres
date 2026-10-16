@@ -1,0 +1,10 @@
+{
+  "name": "decode-uri-component",
+  "version": "0.5.0-cjs.0",
+  "description": "query-string 7 (CommonJS, Spectacle が使う) が require する decode-uri-component を、脆弱性の直った 0.5 系 (ESM だけ) に繋ぐ。README.md を参照",
+  "private": true,
+  "main": "index.js",
+  "dependencies": {
+    "decode-uri-component-esm": "npm:decode-uri-component@^0.5.0"
+  }
+}

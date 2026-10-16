@@ -138,6 +138,7 @@ vite/                  記法の処理(ビルド時)
 docs/                  設計の方向と調査(motion.md: 動きのライブラリごとのモード)
 e2e/                   e2e テスト(Playwright。入っている Chrome を使う)
 fonts-src/             サブセット元のフルフォント(.ttf / .otf)とライセンス。ビルド成果物には含めない
+vendor/                依存の差し替え(package.json の overrides が指す。decode-uri-component: 「既知の制約」)
 scripts/
   deck.mjs             デッキのコマンド(list / new / dev / build / shots / pdf。npm run の各コマンドが呼ぶ)
   capture.mjs          撮影と PDF の書き出し(ビルドした単一 HTML を Chrome で開く)
@@ -571,15 +572,20 @@ PDF 用の表示は reveal モードのものなので、`npm run pdf` と `npm 
 
 ## 既知の制約
 
+- 依存の脆弱性警告は 0 件（`npm audit`）。直った版を上流がまだ使っていない依存は、`package.json` の `overrides` で直った版にしている。
+  上流が直った版に移ったら、その項目を消す。
+  - `prismjs`（1.30.0）・`trim`（0.0.3）: Spectacle が古い版に固定している依存。直った版も同じ使い方。
+  - `micromatch` → `picomatch`: micromatch の依存の `braces` には直った版が無い（3.0.3 以下すべて）。micromatch を使うのは
+    vite-plugin-singlefile（`isMatch` だけ。`inlinePattern` を設定したときだけ呼ぶ）と、React Native の道具の metro（Spectacle の
+    依存の react-spring の native 版の先。ウェブのビルドでは動かない）で、picomatch には同じ形の `isMatch` がある。
+  - `decode-uri-component`: Spectacle の query-string 7 の分を、直った 0.5 系に繋ぐ `vendor/decode-uri-component/` に置き換える
+    （0.5 系は ESM だけで、CommonJS の query-string 7 からはそのまま読めない。query-string 8 以降は Spectacle の名前付きの import が通らない。
+    詳しくは `vendor/decode-uri-component/README.md`）。
 - `@revealjs/react` は 0.x（pre-1.0）。API が変わる可能性あり。
 - 数式は MathJax の SVG と、画面に見えない MathML を埋め込む（字形の輪郭は文書全体で 1 回だけ持つ）。
 
 ## 次にやること
 
-- 依存の脆弱性警告。範囲の中で上げられるものは上げた（`npm audit fix`）。残りは直った版がまだ無いもの:
-  `braces`（`vite-plugin-singlefile` 経由。ビルドの時だけ使い、信頼できない glob は受け取らない）と、spectacle が古い版に固定している
-  `trim`・`prismjs`・`decode-uri-component`（Markdown のスライド・コードの強調・URL の解析。どれも自分の原稿しか通さない。
-  decode-uri-component の直った版は ESM だけで、spectacle の query-string 7 が読めないので overrides でも上げない）。上流の更新を待つ。
 
 ### Spectacle / MDX Deck との比較から（方向は決定。着手の時期は未定）
 
