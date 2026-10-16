@@ -4,7 +4,7 @@
    - 本文と見出し・強調が同じ書体になるので、強調は太さの差で示す(本文 400 / 見出し・強調 600)
    - 行間は和文の横組みの目安(JLReq)の中ほどまで広げ、手順や注意書きを読み飛ばしにくくする
    - 数字は等幅(tabular-nums)。金額・数量の桁が縦に揃う
-   - 番号付きの箇条書き(手順)は番号を太く、表は 1 行おきに地を付けて行を追いやすくする
+   - 番号付きの箇条書き(手順)は番号を太く、表は 1 行おきに地を付けて行を追いやすくする。表の見出しの行は中央寄せ
 
    使い方(デッキの decks/<名前>/style.css): @import '@/theme/presets/manual.css'; したうえで
      デッキ全体に   :root { --deck-preset: manual; }
@@ -25,4 +25,10 @@
 /* 表: 1 行おきに地を付ける(罫線は base.css の booktabs のまま) */
 [data-preset~='manual'] table tbody tr:nth-child(even) {
   background: var(--color-surface);
+}
+
+/* 表の見出しの行は中央寄せ。本文のセルの揃えは GFM の区切りの行(--- / :---: / ---:)のまま。
+   GFM の揃えはセルの要素に直接(style 属性で)付くので、見出しだけは !important で上書きする */
+[data-preset~='manual'] table thead th {
+  text-align: center !important;
 }

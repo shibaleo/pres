@@ -1,6 +1,6 @@
 {/*
-  試算表の作成。表組の見本: 金額の列は右揃え(style.css の .num)・等幅数字(業務マニュアル向けのプリセット)、
-  合計の行は <tfoot>。表の数字はすべて見本のための架空の値(単位: 千円)で、残高試算表と月次の推移は互いに合う。
+  試算表の作成。表は GFM の表で書く: 金額の列は区切りの行の ---: で右揃え・等幅数字(業務マニュアル向けのプリセット)、
+  表の題と合計の行は <Table caption foot>。表の数字はすべて見本のための架空の値(単位: 千円)で、残高試算表と月次の推移は互いに合う。
 */}
 
 \title{試算表の作成}
@@ -25,28 +25,24 @@
 
 <div style={{ fontSize: '0.8em' }}>
 
-<table>
-<caption>残高試算表（6 月末。単位：千円）</caption>
-<thead>
-<tr><th className="num">借方残高</th><th>勘定科目</th><th className="num">貸方残高</th></tr>
-</thead>
-<tbody>
-<tr><td className="num">1,250</td><td>現金預金</td><td className="num"></td></tr>
-<tr><td className="num">880</td><td>売掛金</td><td className="num"></td></tr>
-<tr><td className="num"></td><td>買掛金</td><td className="num">420</td></tr>
-<tr><td className="num"></td><td>未払金</td><td className="num">130</td></tr>
-<tr><td className="num"></td><td>資本金</td><td className="num">1,000</td></tr>
-<tr><td className="num"></td><td>売上高</td><td className="num">2,400</td></tr>
-<tr><td className="num"></td><td>受取利息</td><td className="num">5</td></tr>
-<tr><td className="num">1,180</td><td>仕入高</td><td className="num"></td></tr>
-<tr><td className="num">420</td><td>給料手当</td><td className="num"></td></tr>
-<tr><td className="num">150</td><td>地代家賃</td><td className="num"></td></tr>
-<tr><td className="num">75</td><td>支払報酬</td><td className="num"></td></tr>
-</tbody>
-<tfoot>
-<tr><th className="num">3,955</th><th>合計</th><th className="num">3,955</th></tr>
-</tfoot>
-</table>
+<Table caption="残高試算表（6 月末。単位：千円）" foot={1}>
+
+| 借方残高 | 勘定科目 | 貸方残高 |
+| ---: | --- | ---: |
+| 1,250 | 現金預金 | |
+| 880 | 売掛金 | |
+| | 買掛金 | 420 |
+| | 未払金 | 130 |
+| | 資本金 | 1,000 |
+| | 売上高 | 2,400 |
+| | 受取利息 | 5 |
+| 1,180 | 仕入高 | |
+| 420 | 給料手当 | |
+| 150 | 地代家賃 | |
+| 75 | 支払報酬 | |
+| 3,955 | 合計 | 3,955 |
+
+</Table>
 
 </div>
 
@@ -59,23 +55,19 @@
 
 <div style={{ fontSize: '0.8em' }}>
 
-<table>
-<caption>損益の月次推移（単位：千円）</caption>
-<thead>
-<tr><th>勘定科目</th><th className="num">4 月</th><th className="num">5 月</th><th className="num">6 月</th><th className="num">合計</th></tr>
-</thead>
-<tbody>
-<tr><td>売上高</td><td className="num">780</td><td className="num">800</td><td className="num">820</td><td className="num">2,400</td></tr>
-<tr><td>仕入高</td><td className="num">390</td><td className="num">400</td><td className="num">390</td><td className="num">1,180</td></tr>
-<tr><th>売上総利益</th><td className="num">390</td><td className="num">400</td><td className="num">430</td><td className="num">1,220</td></tr>
-<tr><td>給料手当</td><td className="num">140</td><td className="num">140</td><td className="num">140</td><td className="num">420</td></tr>
-<tr><td>地代家賃</td><td className="num">50</td><td className="num">50</td><td className="num">50</td><td className="num">150</td></tr>
-<tr><td>支払報酬</td><td className="num">25</td><td className="num">25</td><td className="num">25</td><td className="num">75</td></tr>
-</tbody>
-<tfoot>
-<tr><th>営業利益</th><th className="num">175</th><th className="num">185</th><th className="num">215</th><th className="num">575</th></tr>
-</tfoot>
-</table>
+<Table caption="損益の月次推移（単位：千円）" foot={1}>
+
+| 勘定科目 | 4 月 | 5 月 | 6 月 | 合計 |
+| --- | ---: | ---: | ---: | ---: |
+| 売上高 | 780 | 800 | 820 | 2400 |
+| 仕入高 | 390 | 400 | 390 | 1,180 |
+| **売上総利益** | 390 | 400 | 430 | 1,220 |
+| 給料手当 | 140 | 140 | 140 | 420 |
+| 地代家賃 | 50 | 50 | 50 | 150 |
+| 支払報酬 | 25 | 25 | 25 | 75 |
+| 営業利益 | 175 | 185 | 215 | 575 |
+
+</Table>
 
 </div>
 
@@ -87,16 +79,11 @@
 
 <div style={{ fontSize: '0.8em' }}>
 
-<table>
-<thead>
-<tr><th>項目</th><th>勘定科目</th><th className="num">月額（千円）</th><th>確かめること</th></tr>
-</thead>
-<tbody>
-<tr><td>顧問料</td><td>支払報酬</td><td className="num">25</td><td>毎月同じ額で計上されているか</td></tr>
-<tr><td>受取利息</td><td>受取利息</td><td className="num">5（6 月）</td><td>入金のあった月に計上されているか</td></tr>
-<tr><td>家賃</td><td>地代家賃</td><td className="num">50</td><td>毎月同じ額で計上されているか</td></tr>
-</tbody>
-</table>
+| 項目 | 勘定科目 | 月額（千円） | 確かめること |
+| --- | --- | ---: | --- |
+| 顧問料 | 支払報酬 | 25 | 毎月同じ額で計上されているか |
+| 受取利息 | 受取利息 | 5 | 6 月の入金が計上されているか |
+| 家賃 | 地代家賃 | 50 | 毎月同じ額で計上されているか |
 
 </div>
 
@@ -108,16 +95,64 @@
 
 <div style={{ fontSize: '0.8em' }}>
 
-<table>
-<thead>
-<tr><th>確認</th><th>見方</th></tr>
-</thead>
-<tbody>
-<tr><td>貸借の一致</td><td>借方残高の合計と貸方残高の合計が一致する</td></tr>
-<tr><td>現金預金</td><td>通帳・現金出納帳の残高と一致する</td></tr>
-<tr><td>定常的な費用</td><td>顧問料・家賃が毎月同じ額で計上されている</td></tr>
-<tr><td>売掛金・買掛金</td><td>請求書の残高と一致し、回収・支払の漏れがない</td></tr>
-</tbody>
-</table>
+| 確認 | 見方 |
+| --- | --- |
+| 貸借の一致 | 借方残高の合計と貸方残高の合計が一致する |
+| 現金預金 | 通帳・現金出納帳の残高と一致する |
+| 定常的な費用 | 顧問料・家賃が毎月同じ額で計上されている |
+| 売掛金・買掛金 | 請求書の残高と一致し、回収・支払の漏れがない |
+
+</div>
+
+--
+
+## 顧客ごとの取引明細
+
+### 共通月次
+
+<div style={{ fontSize: '0.6em' }}>
+
+| 科目 | 補助 | 部門 | 取引先 | 支払方法 | 備考 |
+| --- | --- | --- | --- | --- | --- |
+| 水道光熱費 | 水道代 | 大名店 | 福岡市水道局 | クレジット（クレディセゾン） | 問題なし |
+| 水道光熱費 | 水道代 | 春日店 |  |  | なし？ |
+| 水道光熱費 | 電気代 | 大名店 |  |  | なし？ |
+| 水道光熱費 | 電気代 | 春日店 |  |  | なし？ |
+| 水道光熱費 | ガス代 | 大名店 | 西部ガス | クレジット（クレディセゾン） |  |
+| 水道光熱費 | ガス代 | 春日店 | 大洋ガステック | クレジット（クレディセゾン） |  |
+| 地代家賃 | ㈱ライフメンテナンス | 大名店 | ライフメンテナンス | 口座振替 | 8月引落不能 |
+| 地代家賃 | 田島不動産 | 春日店 | 田島不動産 | 口座振替 | 問題なし |
+| 雑費 | 税理士法人リライブ |  | リライブ | 口座振替 | 問題なし |
+| 雑費 | 社会保険労務士 |  | やまざわつ | 口座振替 | 問題なし |
+
+</div>
+
+--
+
+### 顧客ごと月次
+
+<div style={{ fontSize: '0.8em' }}>
+
+| 確認 | 見方 |
+| --- | --- |
+| 貸借の一致 | 借方残高の合計と貸方残高の合計が一致する |
+| 現金預金 | 通帳・現金出納帳の残高と一致する |
+| 定常的な費用 | 顧問料・家賃が毎月同じ額で計上されている |
+| 売掛金・買掛金 | 請求書の残高と一致し、回収・支払の漏れがない |
+
+</div>
+
+--
+
+### 顧客ごと随時
+
+<div style={{ fontSize: '0.8em' }}>
+
+| 確認 | 見方 |
+| --- | --- |
+| 貸借の一致 | 借方残高の合計と貸方残高の合計が一致する |
+| 現金預金 | 通帳・現金出納帳の残高と一致する |
+| 定常的な費用 | 顧問料・家賃が毎月同じ額で計上されている |
+| 売掛金・買掛金 | 請求書の残高と一致し、回収・支払の漏れがない |
 
 </div>

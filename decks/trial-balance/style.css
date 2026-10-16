@@ -4,18 +4,28 @@
 @import '@/theme/presets/manual.css';
 /* モードのライブラリの既定の見た目(Swiper の公式デモの見た目)。上のプリセットの後に読み、書体・色・大きさを替える */
 @import '@/theme/presets/themes/swiper-demo.css';
+/* 数字だけの書体 'number'(New Computer Modern の数字。unicode-range で数字の字にだけ当たる)を、表の数値のセルに使うために読む。
+   数学向けのプリセットそのものは有効にしない(--deck-preset に math を入れない) */
+@import '@/theme/presets/math.css';
 
 :root {
   --deck-preset: manual swiper-demo;
+}
+
+/* 表の数値のセル(<td class="num">。右揃えの列の数だけのセル。vite/remark-table-numbers.ts)の数字を New Computer Modern に。
+   見出し(「4 月」)・表の題・本文・数字以外を含むセルの数字は、今の書体(ゴシック)のまま。
+   New Computer Modern の数字はどれも同じ幅なので、金額の桁も縦に揃う */
+:root .deck td.num {
+  font-family: 'number', var(--font-body);
+}
+/* 合計の行は見出しの書体(theme/base.css)。その数字も同じく。土台の見出しの書体の規則は :is(…) の中の
+   いちばん強い候補(.byline > :first-child)の強さで効くので、:root を付けてそれより強くする */
+:root .deck tfoot td.num {
+  font-family: 'number', var(--font-heading);
 }
 
 /* 表のセルは 1 行で読むので、行間は見出しと同じ詰めた値に(プリセットの本文の行間 1.6 のままだと、
    科目の多い試算表が 1 枚に収まらない) */
 .deck :is(td, th) {
   line-height: var(--leading-tight);
-}
-
-/* 金額の列は右揃え(桁が縦にそろう。等幅数字はプリセットが付ける) */
-.deck :is(td, th).num {
-  text-align: right;
 }

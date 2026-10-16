@@ -10,7 +10,7 @@ reveal.js プレゼンテーション。**MDX + TSX** で執筆し、可視化�
 ## 方針
 
 - **記法は確立した標準にあるものだけ**（LaTeX / Beamer、Markdown(CommonMark)・MDX、reveal.js の慣習）。
-  Markdown はどの処理系にも共通する CommonMark に限り、GFM などの方言は使わない。表などは MDX（JSX）で書く。
+  Markdown はどの処理系にも共通する CommonMark と、GFM の表だけ（ほかの GFM の拡張は使わない）。それを超えるものは MDX（JSX）で書く。
   独自の記法は作らない（[CLAUDE.md](CLAUDE.md) の取り決め）。
 - **処理は標準のライブラリと仕組みに任せる**。記法の追加は remark-math や remark-directive と同じ
   unified の標準の作り方（micromark の構文拡張 + 構文木の変換）で行い、数式の番号は MathJax、
@@ -349,9 +349,35 @@ PDF（`?print-pdf`）では段ごとのページでも強調は変わりませ�
 | `<Notes>` | スピーカーノート。発表者ビューにだけ出る（開き方は「動きの設定」のキーの表） |
 | `<Frame color="blue" title="...">` | 色付きフレーム（gray / red / blue / gold / green / purple） |
 | `<Cols>` `<Col>` `<Center>` `<Byline>` `<Note>` `<Code>` | レイアウト |
+| `<Table caption="…" foot={1}>` | GFM の表に、表の題と合計の行（最後の `foot` 行。見出しと同じ書体）を足す（下の「表」） |
 
 一覧は `src/components/index.ts`。個別の図（`Globe` など）はデッキの `components/` に置き、原稿の先頭で import します。
 コード（`` `…` ``、コードブロック、テンプレート文字列）と数式の中の記法は変換されないので、記法の説明はそこに書けます。
+
+### 表（GFM の表）
+表は GFM の表で書きます（Markdown のうち GFM は表だけを使う。ほかの GFM の拡張は使わない。`vite/remark-gfm-table.ts`）。
+列の揃えは区切りの行で書きます（`---` 左、`:---:` 中央、`---:` 右。金額の列は右揃えに）。見出しの行は見出しの書体になります。
+
+```mdx
+<Table caption="残高試算表（6 月末。単位：千円）" foot={1}>
+
+| 借方残高 | 勘定科目 | 貸方残高 |
+| ---: | --- | ---: |
+| 1,250 | 現金預金 | |
+| 880 | 売掛金 | |
+| 2,130 | 合計 | 2,130 |
+
+</Table>
+```
+
+- GFM に無い表の題と合計の行は、部品 `<Table caption foot>` で足します（`foot={n}` で最後の n 行が合計の行 `<tfoot>` になり、見出しと同じ書体）。
+  題も合計の行も要らない表は、GFM の表だけで書けます。中は前後に空行を置き、表を 1 つだけ書きます（表が無い・2 つ以上・`foot` が行の数を超えるとエラー）。
+- セルの中は Markdown（`**太字**`・`$x$` など）。セルの中の `|` は `\|` と書きます（数式の `$|x|$` も同じ）。
+- 右揃えの列で、中身が数字だけのセル（`1250`・`-1250`・`△1250`・`1250.5`）には、3 桁ごとのカンマが自動で付きます（`1,250`。`vite/remark-table-numbers.ts`）。
+  見出しの行・左揃えの列・数字以外を含むセル・すでにカンマのある数字・本文の数字（年や番号）は変えません。
+  こうした数値のセル（カンマ付きも）には印 `num` が付き（`<td class="num">`）、数値だけの見た目をデッキの style.css で決められます
+  （`decks/trial-balance/` は数値のセルの数字だけを New Computer Modern にしている。見出しの「4 月」などはゴシックのまま）。
+- セルの結合など GFM で書けない表は、JSX の `<table>` で書きます。見本は `decks/trial-balance/`。
 
 ### 強調・用語・脚注などの書き方（標準の記法の範囲）
 見本は `decks/legendre/deck.mdx`（色と強調・出典・用語・脚注を、資料の中で使っている）。どれも CommonMark・JSX・LaTeX（MathJax）の標準の書き方で書けます。

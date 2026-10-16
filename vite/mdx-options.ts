@@ -11,6 +11,8 @@ import type { Processor } from 'unified'
 import { relative } from 'node:path'
 import { MIN_WIDTH, SLIDE_HEIGHT } from '../src/deck/slide-metrics.ts'
 import remarkMath from 'remark-math'
+import remarkGfmTable from './remark-gfm-table.ts'
+import remarkTableNumbers from './remark-table-numbers.ts'
 import rehypeCitation from 'rehype-citation'
 import { AllPackages } from 'mathjax-full/js/input/tex/AllPackages.js'
 import remarkBeamer from './remark-beamer/index.ts'
@@ -68,9 +70,13 @@ export function mdxOptions({
   return {
     remarkPlugins: [
       remarkMath,
+      // GFM の表だけ(ほかの GFM の拡張は入れない。remark-gfm-table.ts)
+      remarkGfmTable,
       // Beamer / LaTeX 風記法(スライド分割・定理環境・\ref・\cite・段階表示)。詳細は vite/remark-beamer/
       // strict では警告(参照先なし・未登録の文献)も失敗扱い
       [remarkBeamer, { bibliography, strict, motion }],
+      // 表の金額の列(右揃えの列の数字だけのセル)に 3 桁ごとのカンマ(remark-table-numbers.ts)
+      remarkTableNumbers,
     ],
     rehypePlugins: [
       rehypeMathPositions,

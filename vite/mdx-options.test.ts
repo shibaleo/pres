@@ -67,6 +67,37 @@ describe('ビルド設定(結合)', () => {
     expect(links).toEqual(['arnold2012=1', 'arnold2012=1', 'nakajima2020=2'])
   })
 
+  it('GFM の表は表になり、区切りの行の揃えがセルに付く。ほかの GFM の拡張(取り消し線・自動リンク)は入れない', async () => {
+    const out = String(await build('| 科目 | 金額 |\n| --- | ---: |\n| 現金 | 1,250 |\n\n~消さない~ と https://example.com'))
+    expect(out).toContain('_components.table')
+    expect(out).toContain('textAlign: "right"')
+    expect(out).not.toContain('_components.del')
+    expect(out).not.toContain('href: "https://example.com"')
+  })
+
+  it('表の右揃えの列の数字だけのセルに 3 桁ごとのカンマを打つ(見出し・左揃えの列・数字以外を含むセル・本文は変えない)', async () => {
+    const src = [
+      '| 年 | 項目 | 1000 |',
+      '| --- | --- | ---: |',
+      '| 2026 | 現金 | 1250 |',
+      '| 2027 | 損失 | △12345 |',
+      '| 2028 | 利息 | 1250.5 |',
+      '| 2029 | 家賃 | 5（6 月） |',
+      '| 2030 | 既に | 3,955 |',
+      '| 2031 | 小さい | 999 |',
+      '',
+      '本文の 2064227 は変えない',
+    ].join('\n')
+    const out = String(await build(src))
+    const cells = [...out.matchAll(/children: "([^"]*)"/g)].map((m) => m[1])
+    expect(cells).toEqual(expect.arrayContaining(['1000', '2026', '1,250', '△12,345', '1,250.5', '5（6 月）', '3,955', '999']))
+    expect(out).not.toContain('2,026')
+    expect(out).toContain('2064227')
+    // 数値のセル(右揃えの列の数だけのセル。カンマ付きも)にだけ印 num。数字以外を含むセルと見出しには付けない
+    const numCells = [...out.matchAll(/className: "num",(?:\s*style: \{[^}]*\},)?\s*children: "([^"]*)"/g)].map((m) => m[1])
+    expect(numCells).toEqual(['1,250', '△12,345', '1,250.5', '3,955', '999'])
+  })
+
   it('範囲にまとめた引用([1–4])の番号は、その番号の文献へリンクする', async () => {
     const keys = ['halmos1974', 'rota1997', 'mccarthy', 'higham2020']
     const out = String(

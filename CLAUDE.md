@@ -8,8 +8,11 @@
   - LaTeX（`\begin{theorem}` などの環境、`\label` / `\ref` / `\eqref`、`\cite`、`\input`、数式）と
     CTAN の標準パッケージ（例: import パッケージの `\import` / `\subimport`）。挙動もそのパッケージの仕様に合わせる
   - Beamer（`\pause`、`\only` / `\uncover` / `\visible` / `\onslide` とその overlay 指定 `<2->` など、`\begin{env}<2->`）
-  - Markdown は CommonMark（どの Markdown 処理系にも共通する最小の範囲）だけ。GFM などの方言は使わない。
-    それを超えるもの（表など）は MDX（JSX・import / export）で書く
+  - Markdown は CommonMark（どの Markdown 処理系にも共通する最小の範囲）と、GFM の表だけ。
+    GFM の表は CommonMark に代わりの書き方が無く、ほとんどの処理系が読めるので認める（2026-10-16 にユーザーが承認）。
+    ほかの GFM の拡張と方言は使わない（脚注 `[^1]` は `\footnote` と二重になり文献リストの印 `[^ref]` と衝突し、
+    取り消し線は LaTeX の `~` と衝突し、自動リンクは書いた覚えのないリンクを作る）。
+    それを超えるもの（表の題・合計の行など）は MDX（JSX・import / export）で書く
   - reveal.js の慣習（`---` で横、`--` で縦のスライド区切り）
 - 標準を元にした「似た書き方」や「便利な省略形」も独自記法に含める。
   （過去の失敗例: Beamer の `\item<2->` を元に作った箇条書きの `- <2-> 項目`。削除済み）

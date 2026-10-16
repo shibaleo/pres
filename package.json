@@ -59,6 +59,8 @@
     "hastscript": "^9.0.1",
     "mathjax-full": "^3.2.1",
     "mdast-util-from-markdown": "^2.1.0",
+    "mdast-util-gfm-table": "^2.0.0",
+    "micromark-extension-gfm-table": "^2.1.2",
     "micromark-util-character": "^2.1.1",
     "micromark-util-types": "^2.0.3",
     "rehype-citation": "^2.3.2",

@@ -2,6 +2,7 @@ import Frame from './Frame'
 import Notes from './Notes'
 import { Theorem, Lemma, Proposition, Corollary, Definition, Proof, ThmTitle } from './Theorem'
 import { Center, Cols, Col, Byline, Note, Code } from './layout'
+import Table from './Table'
 
 /**
  * 文書の部品: スライド原稿(decks/<名前>/deck.mdx)から import なしで使える部品のうち、どのモードでも同じもの。
@@ -30,4 +31,6 @@ export const documentComponents = {
   Byline,
   Note,
   Code,
+  // GFM の表に、表の題と合計の行を足す
+  Table,
 }

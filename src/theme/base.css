@@ -163,7 +163,7 @@ body {
 /* 見出しと強調の文字。部品の見出し(Frame の題・定理の見出し・用語・表紙の主の行)も同じ扱い。
    ブラウザが既定で太字にする要素(h1〜h6・th・dt・strong・b)はすべてここに入れ、
    明朝の本文の書体のまま太字にならないようにする(太字ではなく、ゴシックの中太で際立たせる) */
-.deck :is(h1, h2, h3, h4, h5, h6, th, strong, b, dt, .frame-title, .thm-head, .byline > :first-child) {
+.deck :is(h1, h2, h3, h4, h5, h6, th, tfoot td, strong, b, dt, .frame-title, .thm-head, .byline > :first-child) {
   font-family: var(--font-heading);
   font-weight: var(--heading-weight);
 }
